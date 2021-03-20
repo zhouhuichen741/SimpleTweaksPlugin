@@ -188,7 +188,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         public override unsafe void Enable() {
             if (setTextAddress == IntPtr.Zero) {
-                setTextAddress = PluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 49 8B FC") + 9;
+                setTextAddress = PluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 8B 8F ?? ?? 00 00 BB ?? 00 00 00 8B D3") + 9;
                 SimpleLog.Verbose($"SetTextAddress: {setTextAddress.ToInt64():X}");
             }
 

@@ -140,7 +140,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     c-=1;
                     continue;
                 }
-                if ((item.Unknown90 & 2) == 2) inaccurate = true;
+                if ((item.Unknown89 & 2) == 2) inaccurate = true;
                 if (i == 0 && !canHaveOffhand.Contains(item.ItemUICategory.Row)) {
                     sum += item.LevelItem.Row;
                     i++;

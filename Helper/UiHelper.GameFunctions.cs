@@ -20,16 +20,16 @@ namespace SimpleTweaksPlugin.Helper
         private static AtkUnitBaseClose _atkUnitBaseClose;
 
         private delegate AtkResNode* CreateAtkNode(void* unused, NodeType type);
-        private static CreateAtkNode _createAtkNode;
+        // private static CreateAtkNode _createAtkNode;
         
         public static bool Ready = false;
 
         public static void Setup(SigScanner scanner) {
-            _atkTextNodeSetText = Marshal.GetDelegateForFunctionPointer<AtkTextNodeSetText>(scanner.ScanText("E8 ?? ?? ?? ?? 49 8B FC"));
+            _atkTextNodeSetText = Marshal.GetDelegateForFunctionPointer<AtkTextNodeSetText>(scanner.ScanText("E8 ?? ?? ?? ?? 48 8B 8F ?? ?? 00 00 BB ?? 00 00 00 8B D3"));
             _gameAlloc = Marshal.GetDelegateForFunctionPointer<GameAlloc>(scanner.ScanText("E8 ?? ?? ?? ?? 45 8D 67 23"));
             _getGameAllocator = Marshal.GetDelegateForFunctionPointer<GetGameAllocator>(scanner.ScanText("E8 ?? ?? ?? ?? 8B 75 08"));
             _atkUnitBaseClose = Marshal.GetDelegateForFunctionPointer<AtkUnitBaseClose>(scanner.ScanText("40 53 48 83 EC 50 81 A1"));
-            _createAtkNode = Marshal.GetDelegateForFunctionPointer<CreateAtkNode>(scanner.ScanText("E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 48 8B 51 08"));
+            //_createAtkNode = Marshal.GetDelegateForFunctionPointer<CreateAtkNode>(scanner.ScanText("E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 48 8B 51 08"));
             Ready = true;
         }
 
