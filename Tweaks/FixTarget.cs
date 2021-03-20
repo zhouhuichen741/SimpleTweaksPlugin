@@ -20,6 +20,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                 ClientLanguage.German => new Regex(@"^Der Unterbefehl \[Name des Ziels\] an der \d+\. Stelle des Textkommandos \((.+)\) ist fehlerhaft\.$"),
                 ClientLanguage.French => new Regex(@"^Le \d+er? argument “nom de la cible” est incorrect (.*?)\.$"), 
                 ClientLanguage.English => new Regex(@"^“(.+)” is not a valid target name\.$"),
+                ClientLanguage.ChineseSimplified => new Regex(@"^“(.+)”出现问题：\d+?号指定的目标名不正确。$"),
                 _ => null
             };
             
@@ -38,28 +39,41 @@ namespace SimpleTweaksPlugin.Tweaks {
             var match = regex.Match(message.TextValue);
             if (!match.Success) return;
             var searchName = match.Groups[1].Value.ToLowerInvariant();
-
+            
             Actor closestMatch = null;
             var closestDistance = float.MaxValue;
             var player = Plugin.PluginInterface.ClientState.LocalPlayer;
-            foreach (var actor in PluginInterface.ClientState.Actors) {
-                
-                if (actor == null) continue;
-                if (actor.Name.ToLowerInvariant().Contains(searchName)) {
-                    var distance = Vector3.Distance(player.Position, actor.Position);
-                    if (closestMatch == null) {
-                        closestMatch = actor;
-                        closestDistance = distance;
-                        continue;
-                    }
+            try
+            {
+                foreach (var actor in PluginInterface.ClientState.Actors)
+                {
 
-                    if (closestDistance > distance) {
-                        closestMatch = actor;
-                        closestDistance = distance;
+                    if (actor == null) continue;
+                    if (actor.Name.ToLowerInvariant().Contains(searchName))
+                    {
+                        var distance = Vector3.Distance(player.Position, actor.Position);
+                        if (closestMatch == null)
+                        {
+                            closestMatch = actor;
+                            closestDistance = distance;
+                            continue;
+                        }
+
+                        if (closestDistance > distance)
+                        {
+                            closestMatch = actor;
+                            closestDistance = distance;
+                        }
                     }
                 }
-            }
 
+            }
+            catch (System.NullReferenceException)
+            {
+                Dalamud.Plugin.PluginLog.Error("Too much Actors, try to use /target in other area");
+                return;
+            }
+            
             if (closestMatch != null) {
                 isHandled = true;
                 PluginInterface.ClientState.Targets.SetCurrentTarget(closestMatch);
