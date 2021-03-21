@@ -113,11 +113,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public string DefaultName0 => PluginInterface.ClientState.ClientLanguage switch {
             ClientLanguage.French => "Général",
             ClientLanguage.German => "Allgemein",
+            ClientLanguage.ChineseSimplified => "通用",
             _ => "General"
         };
         public string DefaultName1 => PluginInterface.ClientState.ClientLanguage switch {
             ClientLanguage.French => "Combat",
             ClientLanguage.German => "Kampf",
+            ClientLanguage.ChineseSimplified => "战斗",
             _ => "Battle"
         };
         
