@@ -86,7 +86,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 var baseParamDeltas = new Dictionary<uint, int>();
                 var baseParamOriginal = new Dictionary<uint, int>();
                 var baseParamLimits = new Dictionary<uint, int>();
-                foreach (var bp in item.UnkStruct59) {
+                foreach (var bp in item.UnkStruct60) {
                     if (bp.BaseParam == 0) continue;
                     var param = CustomSheet.GetSheet<BaseParam>().GetRow(bp.BaseParam);
                     if (param == null) continue;
@@ -97,7 +97,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 }
 
                 if (itemInfo.IsHQ) {
-                    foreach (var bp in item.UnkStruct73) {
+                    foreach (var bp in item.UnkStruct74) {
                         if (bp.BaseParamSpecial == 0) continue;
                         var param = CustomSheet.GetSheet<BaseParam>().GetRow(bp.BaseParamSpecial);
                         if (param == null) continue;
