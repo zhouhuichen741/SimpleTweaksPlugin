@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Dalamud.Game.Chat.SeStringHandling;
-using Dalamud.Game.Chat.SeStringHandling.Payloads;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using SimpleTweaksPlugin.GameStructs;
@@ -50,7 +50,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             if (id < 2000000) {
                 var hq = id >= 500000;
                 id %= 500000;
-                var item = PluginInterface.Data.Excel.GetSheet<Item>().GetRow((uint)id);
+                var item = PluginInterface.Data.Excel.GetSheet<Sheets.ExtendedItem>().GetRow((uint)id);
 
                 var action = item.ItemAction?.Value;
 

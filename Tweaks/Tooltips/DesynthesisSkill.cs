@@ -1,7 +1,7 @@
 ﻿
 using System;
 using System.Linq;
-using Dalamud.Game.Chat.SeStringHandling.Payloads;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Lumina.Excel.GeneratedSheets;
 using ImGuiNET;
 using SimpleTweaksPlugin.GameStructs;
@@ -27,7 +27,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             if (id < 2000000) {
                 id %= 500000;
 
-                var item = PluginInterface.Data.Excel.GetSheet<Item>().GetRow((uint)id);
+                var item = PluginInterface.Data.Excel.GetSheet<Sheets.ExtendedItem>().GetRow((uint)id);
                 if (item != null && item.Desynth > 0) {
                     var classJobOffset = 2 * (int)(item.ClassJobRepair.Row - 8);
                     var desynthLevel = *(ushort*)(Common.PlayerStaticAddress + (0x69A + classJobOffset)) / 100f;

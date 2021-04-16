@@ -1,12 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Dalamud.Game.Chat.SeStringHandling;
-using Dalamud.Game.Chat.SeStringHandling.Payloads;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Game.Internal;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Data.Parsing.Uld;
 using SimpleTweaksPlugin.Helper;
 using Lumina.Excel.GeneratedSheets;
 
@@ -45,34 +44,34 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 limiter = -10;
                 return;
             }
-            if (deepDungeonUnitBase->ULDData.NodeList == null ||
-                deepDungeonUnitBase->ULDData.NodeListCount < 84) return;
+            if (deepDungeonUnitBase->UldManager.NodeList == null ||
+                deepDungeonUnitBase->UldManager.NodeListCount < 84) return;
 
-            var resNode = deepDungeonUnitBase->ULDData.NodeList[0];
-            var windowCollisionNode = (AtkCollisionNode*) deepDungeonUnitBase->ULDData.NodeList[1];
-            var windowNode = (AtkComponentNode*) deepDungeonUnitBase->ULDData.NodeList[2];
-            var itemsEffectsInfoNode = deepDungeonUnitBase->ULDData.NodeList[3];
-            var magiciteInfoNode = deepDungeonUnitBase->ULDData.NodeList[23];
-            var itemsInfoNode = deepDungeonUnitBase->ULDData.NodeList[33];
-            var gearInfoNode = deepDungeonUnitBase->ULDData.NodeList[71];
+            var resNode = deepDungeonUnitBase->UldManager.NodeList[0];
+            var windowCollisionNode = (AtkCollisionNode*) deepDungeonUnitBase->UldManager.NodeList[1];
+            var windowNode = (AtkComponentNode*) deepDungeonUnitBase->UldManager.NodeList[2];
+            var itemsEffectsInfoNode = deepDungeonUnitBase->UldManager.NodeList[3];
+            var magiciteInfoNode = deepDungeonUnitBase->UldManager.NodeList[23];
+            var itemsInfoNode = deepDungeonUnitBase->UldManager.NodeList[33];
+            var gearInfoNode = deepDungeonUnitBase->UldManager.NodeList[71];
 
-            var armAetherpoolNode = (AtkComponentNode*) deepDungeonUnitBase->ULDData.NodeList[73];
-            var armAetherpoolTextNode = (AtkTextNode*) armAetherpoolNode->Component->ULDData.NodeList[1];
-            var armorAetherpoolNode = (AtkComponentNode*) deepDungeonUnitBase->ULDData.NodeList[72];
-            var armorAetherpoolTextNode = (AtkTextNode*) armorAetherpoolNode->Component->ULDData.NodeList[1];
-            var textNode = (AtkTextNode*) deepDungeonUnitBase->ULDData.NodeList[77]; // "To next level:" node
+            var armAetherpoolNode = (AtkComponentNode*) deepDungeonUnitBase->UldManager.NodeList[73];
+            var armAetherpoolTextNode = (AtkTextNode*) armAetherpoolNode->Component->UldManager.NodeList[1];
+            var armorAetherpoolNode = (AtkComponentNode*) deepDungeonUnitBase->UldManager.NodeList[72];
+            var armorAetherpoolTextNode = (AtkTextNode*) armorAetherpoolNode->Component->UldManager.NodeList[1];
+            var textNode = (AtkTextNode*) deepDungeonUnitBase->UldManager.NodeList[77]; // "To next level:" node
 
             var isHoh = magiciteInfoNode->IsVisible;
 
             if (reset) {
                 UiHelper.Show(gearInfoNode);
-                deepDungeonUnitBase->ULDData.NodeList[76]->Color.A = 255;
-                UiHelper.Show(deepDungeonUnitBase->ULDData.NodeList[76]); // Job infos
-                UiHelper.Show(deepDungeonUnitBase->ULDData.NodeList[78]);
-                UiHelper.Show(deepDungeonUnitBase->ULDData.NodeList[79]);
-                UiHelper.Show(deepDungeonUnitBase->ULDData.NodeList[80]);
-                UiHelper.Show(deepDungeonUnitBase->ULDData.NodeList[81]);
-                UiHelper.Show(deepDungeonUnitBase->ULDData.NodeList[82]);
+                deepDungeonUnitBase->UldManager.NodeList[76]->Color.A = 255;
+                UiHelper.Show(deepDungeonUnitBase->UldManager.NodeList[76]); // Job infos
+                UiHelper.Show(deepDungeonUnitBase->UldManager.NodeList[78]);
+                UiHelper.Show(deepDungeonUnitBase->UldManager.NodeList[79]);
+                UiHelper.Show(deepDungeonUnitBase->UldManager.NodeList[80]);
+                UiHelper.Show(deepDungeonUnitBase->UldManager.NodeList[81]);
+                UiHelper.Show(deepDungeonUnitBase->UldManager.NodeList[82]);
 
                 UiHelper.SetPosition(itemsEffectsInfoNode, null, isHoh ? 486 : 410);
                 if (isHoh)
@@ -91,13 +90,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
 
             UiHelper.Hide(gearInfoNode);
-            deepDungeonUnitBase->ULDData.NodeList[76]->Color.A = 0;
-            UiHelper.Hide(deepDungeonUnitBase->ULDData.NodeList[76]); // Job infos
-            UiHelper.Hide(deepDungeonUnitBase->ULDData.NodeList[78]);
-            UiHelper.Hide(deepDungeonUnitBase->ULDData.NodeList[79]);
-            UiHelper.Hide(deepDungeonUnitBase->ULDData.NodeList[80]);
-            UiHelper.Hide(deepDungeonUnitBase->ULDData.NodeList[81]);
-            UiHelper.Hide(deepDungeonUnitBase->ULDData.NodeList[82]);
+            deepDungeonUnitBase->UldManager.NodeList[76]->Color.A = 0;
+            UiHelper.Hide(deepDungeonUnitBase->UldManager.NodeList[76]); // Job infos
+            UiHelper.Hide(deepDungeonUnitBase->UldManager.NodeList[78]);
+            UiHelper.Hide(deepDungeonUnitBase->UldManager.NodeList[79]);
+            UiHelper.Hide(deepDungeonUnitBase->UldManager.NodeList[80]);
+            UiHelper.Hide(deepDungeonUnitBase->UldManager.NodeList[81]);
+            UiHelper.Hide(deepDungeonUnitBase->UldManager.NodeList[82]);
 
             UiHelper.SetPosition(itemsEffectsInfoNode, null, isHoh ? 270 : 194);
             if (isHoh)
@@ -110,14 +109,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             // Limit expensive SeString manipulations
             switch (limiter)
             {
-                case var _ when limiter > 0:
+                case > 0:
                     limiter--;
                     return;
                 // Burst when the window is created
-                case var _ when limiter < 0:
+                case < 0:
                     limiter++;
                     break;
-                case var _ when limiter == 0:
+                case 0:
                     limiter = 50;
                     break;
             }
@@ -141,7 +140,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             width ??= windowNode->AtkResNode.Width;
             height ??= windowNode->AtkResNode.Height;
 
-            var n = windowNode->Component->ULDData.RootNode;
+            var n = windowNode->Component->UldManager.RootNode;
             UiHelper.SetSize(windowNode, width, height);  // Window
             UiHelper.SetSize(n, width, height);  // Collision
             n = n->PrevSiblingNode->PrevSiblingNode;
@@ -152,7 +151,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             windowNode->AtkResNode.Flags_2 |= 0x1;
         }
 
-        private static IEnumerable<Payload> GetAetherpoolPayloads(SeString aetherpoolSeStr)
+        private IEnumerable<Payload> GetAetherpoolPayloads(SeString aetherpoolSeStr)
         {
             var aetherpool = string.Empty;
 
@@ -168,19 +167,25 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             if (string.IsNullOrEmpty(aetherpool))
                 aetherpool = "+0";
 
-            var payloads = new List<Payload>();
+            var isSynced = aetherpoolSeStr.Payloads.Any(payload =>
+                payload is EmphasisItalicPayload {IsEnabled: true});
 
+            var payloads = new List<Payload> {new TextPayload(aetherpool)};
+            
+            if (isSynced)
+            {
+                payloads.Insert(0, new EmphasisItalicPayload(true));
+                payloads.Insert(payloads.Count, new EmphasisItalicPayload(false));
+            }
+            
             if (aetherpool == "+99")
             {
-                payloads.Add(new RawPayload(new byte[] { 2, 72, 4, 242, 1, 244, 3 })); // UIForeground
-                payloads.Add(new RawPayload(new byte[] { 2, 73, 4, 242, 1, 245, 3 })); // UIGlow
-                payloads.Add(new TextPayload(aetherpool));
-                payloads.Add(new RawPayload(new byte[] { 2, 73, 2, 1, 3 })); // UIGlow
-                payloads.Add(new RawPayload(new byte[] { 2, 72, 2, 1, 3 })); // UIForeground
+                payloads.Insert(0, new UIGlowPayload(PluginInterface.Data, 501));
+                payloads.Insert(payloads.Count, new UIGlowPayload(PluginInterface.Data, 0));
+                payloads.Insert(0, new UIForegroundPayload(PluginInterface.Data, 500));
+                payloads.Insert(payloads.Count, new UIForegroundPayload(PluginInterface.Data, 0));
             }
-            else
-                payloads.Add(new TextPayload(aetherpool));
-
+            
             return payloads;
         }
     }
