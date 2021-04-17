@@ -40,8 +40,8 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
         private readonly string weirdTabChar = Encoding.UTF8.GetString(new byte[] {0xE3, 0x80, 0x80});
 
-        public override string Name => "Item Hotkeys";
-        public override string Description => "Adds hotkeys for various actions when the item detail window is visible.";
+        public override string Name => "物品快捷键";
+        public override string Description => "当显示物品详情时可以使用快捷键进行一系列操作";
         public override void OnItemTooltip(TooltipTweaks.ItemTooltip tooltip, InventoryItem itemInfo) {
             if (Config.HideHotkeysOnTooltip) return;
             var seStr = tooltip[TooltipTweaks.ItemTooltip.TooltipField.ControlsDisplay];
@@ -53,10 +53,10 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 seStr.Payloads.Add(new TextPayload(string.Join("\n", split)));
             }
 
-            if (Config.CopyHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.CopyHotkey.Select(k => k.GetKeyName()))}  Copy item name"));
-            if (Config.TeamcraftLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.TeamcraftLinkHotkey.Select(k => k.GetKeyName()))}  View on Teamcraft"));
-            if (Config.GardlandToolsLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GardlandToolsLinkHotkey.Select(k => k.GetKeyName()))}  View on Garland Tools"));
-            if (Config.GamerEscapeLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GamerEscapeLinkHotkey.Select(k => k.GetKeyName()))}  View on Gamer Escape"));
+            if (Config.CopyHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.CopyHotkey.Select(k => k.GetKeyName()))}  复制物品名"));
+            if (Config.TeamcraftLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.TeamcraftLinkHotkey.Select(k => k.GetKeyName()))}  在Teamcraft查看"));
+            if (Config.GardlandToolsLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GardlandToolsLinkHotkey.Select(k => k.GetKeyName()))}  在Garland Tools查看"));
+            if (Config.GamerEscapeLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GamerEscapeLinkHotkey.Select(k => k.GetKeyName()))}  在Gamer Escape查看"));
 
             SimpleLog.Verbose(seStr.Payloads);
             tooltip[TooltipTweaks.ItemTooltip.TooltipField.ControlsDisplay] = seStr;
@@ -113,7 +113,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                     focused = name;
                 } else {
                     ImGui.SameLine();
-                    if (ImGui.Button(newKeys.Count > 0 ? $"Confirm##{name}" : $"Cancel##{name}")) {
+                    if (ImGui.Button(newKeys.Count > 0 ? $"确认##{name}" : $"取消##{name}")) {
                         settingKey = null;
                         if (newKeys.Count > 0) keys = newKeys.ToArray();
                         newKeys.Clear();
@@ -130,7 +130,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 }
             } else {
                 ImGui.SameLine();
-                if (ImGui.Button($"Set Keybind###setHotkeyButton{name}")) {
+                if (ImGui.Button($"设置快捷键###setHotkeyButton{name}")) {
                     settingKey = name;
                 }
             }
@@ -140,15 +140,15 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             ImGui.Columns(2);
             ImGui.SetColumnWidth(0, 180 * ImGui.GetIO().FontGlobalScale);
             var c = Config;
-            DrawHotkeyConfig("Copy Item Name", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("复制物品名", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Teamcraft", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("在Teamcraft查看", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
             ImGui.SameLine();
-            ImGui.Checkbox($"Browser Only###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
+            ImGui.Checkbox($"使用浏览器###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Garland Tools", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("在Garland Tools查看", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Gamer Escape", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("在Gamer Escape查看", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
             ImGui.Columns();
             ImGui.Dummy(new Vector2(5 * ImGui.GetIO().FontGlobalScale));
             hasChanged |= ImGui.Checkbox("Don't show hotkey help on Tooltip", ref c.HideHotkeysOnTooltip);

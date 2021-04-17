@@ -31,11 +31,11 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public Configs Config => PluginConfig.UiAdjustments.ExtendedDesynthesisWindow;
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Block clicking on gearset items.", ref Config.BlockClickOnGearset);
+            hasChanged |= ImGui.Checkbox("禁止点击套装内装备", ref Config.BlockClickOnGearset);
         };
 
-        public override string Name => "Extended Desynthesis Window";
-        public override string Description => "Shows your current desynthesis level and the item's optimal level on the desynthesis item selection window.\nAlso indicates if an item is part of a gear set, optionally preventing selection of gearset items.";
+        public override string Name => "分解窗口增强";
+        public override string Description => "在分解窗口显示你的当前分解等级及物品的推荐分解等级\n显示装备是否在套装中，可禁止点击套装内装备以防误操作";
 
         private const ushort OriginalWidth = 600;
         private const ushort AddedWidth = 110;
@@ -182,7 +182,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 UiHelper.ExpandNodeList(atkUnitBase, 2);
                 var newHeaderItem = (AtkTextNode*)UiHelper.CloneNode(nodeList[6]);
                 newHeaderItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)newHeaderItem->NodeText.BufSize);
-                UiHelper.SetText(newHeaderItem, "Skill");
+                UiHelper.SetText(newHeaderItem, "技能");
                 
                 newHeaderItem->AtkResNode.X = NewWidth - (AddedWidth + 60);
                 newHeaderItem->AtkResNode.Width = AddedWidth;
@@ -193,7 +193,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 
                 var gsHeaderItem = (AtkTextNode*)UiHelper.CloneNode(nodeList[6]);
                 gsHeaderItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)gsHeaderItem->NodeText.BufSize);
-                UiHelper.SetText(gsHeaderItem, "Gear\nSet");
+                UiHelper.SetText(gsHeaderItem, "套装");
                 gsHeaderItem->TextFlags |= (byte) TextFlags.MultiLine;
                 gsHeaderItem->AtkResNode.X = NewWidth - 80;
                 gsHeaderItem->AlignmentFontType = (byte) AlignmentType.Bottom;

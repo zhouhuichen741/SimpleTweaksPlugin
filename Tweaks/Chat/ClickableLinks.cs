@@ -8,8 +8,8 @@ using SimpleTweaksPlugin.Enums;
 
 namespace SimpleTweaksPlugin.Tweaks.Chat {
     class ClickableLinks : ChatTweaks.SubTweak {
-        public override string Name => "Clickable Links in Chat";
-        public override string Description => "Parses links posted in chat and allows them to be clicked.";
+        public override string Name => "聊天中链接可被点击";
+        public override string Description => "过滤聊天中的链接，并使其可被点击";
 
         public override void Enable() {
             urlLinkPayload = PluginInterface.AddChatLinkHandler((uint) LinkHandlerId.OpenUrlLink, UrlLinkHandle);

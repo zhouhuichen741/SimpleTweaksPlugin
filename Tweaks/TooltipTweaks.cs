@@ -101,7 +101,7 @@ namespace SimpleTweaksPlugin.Tweaks {
 
         private ItemTooltip tooltip;
 
-        public override string Name => "Tooltip Tweaks";
+        public override string Name => "提示优化";
         private IntPtr tooltipAddress;
         private unsafe delegate IntPtr TooltipDelegate(IntPtr a1, uint** a2, byte*** a3);
         private Hook<TooltipDelegate> tooltipHook;

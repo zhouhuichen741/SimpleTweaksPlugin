@@ -20,7 +20,7 @@ namespace SimpleTweaksPlugin.Tweaks {
             public override string Key => $"{nameof(UiAdjustments)}@{base.Key}";
         }
 
-        public override string Name => "UI Tweaks";
+        public override string Name => "UI优化";
 
         public enum Step {
             Parent,

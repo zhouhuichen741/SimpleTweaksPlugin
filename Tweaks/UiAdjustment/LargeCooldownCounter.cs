@@ -20,8 +20,8 @@ namespace SimpleTweaksPlugin {
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class LargeCooldownCounter : UiAdjustments.SubTweak {
         
-        public override string Name => "Large Cooldown Counter";
-        public override string Description => "Increases the size of cooldown counters on hotbars.";
+        public override string Name => "更大的冷却时间";
+        public override string Description => "增大快捷栏中技能的冷却时间文字大小";
 
         public override void Enable() {
             PluginInterface.Framework.OnUpdateEvent += FrameworkUpdate;
@@ -60,7 +60,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
             ImGui.SetNextItemWidth(160 * ImGui.GetIO().FontGlobalScale);
-            if (ImGui.BeginCombo("Font###st_uiAdjustment_largeCooldownCounter_fontSelect", $"{Config.Font}")) {
+            if (ImGui.BeginCombo("字体###st_uiAdjustment_largeCooldownCounter_fontSelect", $"{Config.Font}")) {
                 foreach (var f in (Font[])Enum.GetValues(typeof(Font))) {
                     if (ImGui.Selectable($"{f}##st_uiAdjustment_largeCooldownCount_fontOption", f == Config.Font)) {
                         Config.Font = f;
@@ -70,15 +70,15 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 ImGui.EndCombo();
             }
             ImGui.SetNextItemWidth(160 * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.SliderInt("Font Size Adjust##st_uiAdjustment_largEcooldownCounter_fontSize", ref Config.FontSizeAdjust, -15, 30);
-            hasChanged |= ImGui.Checkbox("Simple Mode##st_uiAdjustment_largeCooldownCounter_simpleMode", ref Config.SimpleMode);
+            hasChanged |= ImGui.SliderInt("字体大小调节##st_uiAdjustment_largEcooldownCounter_fontSize", ref Config.FontSizeAdjust, -15, 30);
+            hasChanged |= ImGui.Checkbox("简化模式##st_uiAdjustment_largeCooldownCounter_simpleMode", ref Config.SimpleMode);
             if (ImGui.IsItemHovered()) {
                 ImGui.BeginTooltip();
-                ImGui.Text("Simple Mode");
+                ImGui.Text("简化模式");
                 ImGui.Separator();
-                ImGui.Text("Reverts to old cooldown checking.");
-                ImGui.Text("Fixes issues with XIVCombo.");
-                ImGui.Text("Has some issues when out of range.");
+                ImGui.Text("使用老式的冷却时间检测");
+                ImGui.Text("兼容XIVCombo");
+                ImGui.Text("超出范围时偶尔会出现问题");
                 ImGui.EndTooltip();
             }
         };

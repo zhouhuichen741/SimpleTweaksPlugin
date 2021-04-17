@@ -11,8 +11,8 @@ using Lumina.Excel.GeneratedSheets;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class ReducedDeepDungeonInfo : UiAdjustments.SubTweak {
-        public override string Name => "Reduced Deep Dungeon Info";
-        public override string Description => "Removes the redundant infos from the deep dungeon character info.";
+        public override string Name => "简化深层迷宫界面";
+        public override string Description => "简化深层迷宫界面";
         protected override string Author => "Aireil";
 
         public override void Enable() {

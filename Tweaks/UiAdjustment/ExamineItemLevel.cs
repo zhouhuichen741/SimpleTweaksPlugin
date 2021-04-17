@@ -38,13 +38,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private readonly uint[] canHaveOffhand = { 2, 6, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32 };
         private readonly uint[] ignoreCategory = { 105 };
 
-        public override string Name => "Item Level in Examine";
-        public override string Description => "Calculates the item level of other players when examining them.\nRed value means the player is wearing an item that scales to their level and it is showing the max level.";
+        public override string Name => "显示目标角色装等";
+        public override string Description => "计算并显示你查看的角色的装等\n红色表示该角色有至少一件装备被等级同步，显示值为原始值";
 
         private IntPtr examineIsValidPtr = IntPtr.Zero;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Show Item Level Icon", ref PluginConfig.UiAdjustments.ExamineItemLevel.ShowItemLevelIcon);
+            hasChanged |= ImGui.Checkbox("显示装等图标", ref PluginConfig.UiAdjustments.ExamineItemLevel.ShowItemLevelIcon);
         };
 
         public override void Setup() {

@@ -13,8 +13,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.Chat {
     public unsafe class DisableChatAutoscroll : ChatTweaks.SubTweak {
-        public override string Name => "Smart AutoScroll";
-        public override string Description => "Attempts to prevent autoscrolling when recieving new chat messages while scrolled up.";
+        public override string Name => "智能滚动聊天框";
+        public override string Description => "查看既往聊天记录时不会因收到新消息而自动滚动";
 
         public class Configs {
             public bool DisablePanel0;
@@ -26,12 +26,12 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
         public Configs Config => PluginConfig.ChatTweaks.DisableChatAutoscroll;
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            ImGui.Text("Always allow autoscrolling in:");
+            ImGui.Text("总是允许自动滚动:");
             ImGui.Indent();
-            hasChanged |= ImGui.Checkbox("Tab 1##allowAutoscroll", ref Config.DisablePanel0);
-            hasChanged |= ImGui.Checkbox("Tab 2##allowAutoscroll", ref Config.DisablePanel1);
-            hasChanged |= ImGui.Checkbox("Tab 3##allowAutoscroll", ref Config.DisablePanel2);
-            hasChanged |= ImGui.Checkbox("Tab 4##allowAutoscroll", ref Config.DisablePanel3);
+            hasChanged |= ImGui.Checkbox("聊天框 1##allowAutoscroll", ref Config.DisablePanel0);
+            hasChanged |= ImGui.Checkbox("聊天框 2##allowAutoscroll", ref Config.DisablePanel1);
+            hasChanged |= ImGui.Checkbox("聊天框 3##allowAutoscroll", ref Config.DisablePanel2);
+            hasChanged |= ImGui.Checkbox("聊天框 4##allowAutoscroll", ref Config.DisablePanel3);
             ImGui.Unindent();
         };
         

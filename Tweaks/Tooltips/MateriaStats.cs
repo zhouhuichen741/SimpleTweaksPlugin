@@ -16,8 +16,8 @@ namespace SimpleTweaksPlugin {
 namespace SimpleTweaksPlugin.Tweaks.Tooltips {
     
     public class MateriaStats : TooltipTweaks.SubTweak {
-        public override string Name => "Materia Stats";
-        public override string Description => "Includes an item's attached materia when displaying the stats.";
+        public override string Name => "魔晶石属性";
+        public override string Description => "在装备属性显示中包括镶嵌魔晶石所带来的属性";
         
         public class Configs {
             public bool Total = true;
@@ -30,14 +30,14 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
             ImGui.BeginGroup();
-            if (ImGui.Checkbox("Show Total##materiaStatsTooltipTweak", ref Config.Total)) {
+            if (ImGui.Checkbox("显示总值##materiaStatsTooltipTweak", ref Config.Total)) {
                 if (!Config.Total && !Config.Delta) {
                     Config.Delta = true;
                 }
 
                 hasChanged = true;
             }
-            if (ImGui.Checkbox("Show Delta##materiaStatsTooltipTweak", ref Config.Delta)) {
+            if (ImGui.Checkbox("显示差值##materiaStatsTooltipTweak", ref Config.Delta)) {
                 if (!Config.Total && !Config.Delta) {
                     Config.Total = true;
                 }
@@ -51,14 +51,14 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 var groupSize = ImGui.GetItemRectSize();
                 ImGui.SameLine();
                     
-                var text = "Simplified Combined Display";
+                var text = "简化显示";
                 var textSize = ImGui.CalcTextSize(text);
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (groupSize.Y / 2) - (textSize.Y / 2));
                 hasChanged |= ImGui.Checkbox($"{text}##materiaStatSTooltipTweak", ref Config.SimpleCombined);
                 ImGui.SetCursorPosY(y);
             }
                 
-            hasChanged |= ImGui.Checkbox("Colour Value##materiaStatsTooltipTweak", ref Config.Colour);
+            hasChanged |= ImGui.Checkbox("着色##materiaStatsTooltipTweak", ref Config.Colour);
         };
 
         public IEnumerable<TooltipTweaks.ItemTooltip.TooltipField> Fields() {

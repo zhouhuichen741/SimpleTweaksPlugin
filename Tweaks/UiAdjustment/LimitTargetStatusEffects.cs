@@ -12,8 +12,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class LimitTargetStatusEffects : UiAdjustments.SubTweak {
-        public override string Name => "Limit Target Status Effects";
-        public override string Description => "Sets a limit on the number of status effects displayed on your target.";
+        public override string Name => "限制目标Debuff显示";
+        public override string Description => "限制目标框显示目标的Buff和Debuff数量";
         protected override string Author => "Aireil";
 
         public class Configs {
@@ -24,7 +24,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
             ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.InputInt("Number of status effects displayed##nbStatusEffectsDisplayed", ref Config.NbStatusEffects, 1);
+            hasChanged |= ImGui.InputInt("显示数量##nbStatusEffectsDisplayed", ref Config.NbStatusEffects, 1);
             if (Config.NbStatusEffects < 0) Config.NbStatusEffects = 0;
             if (Config.NbStatusEffects > 30) Config.NbStatusEffects = 30;
 

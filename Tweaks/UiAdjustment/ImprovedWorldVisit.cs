@@ -12,8 +12,8 @@ using AlignmentType = FFXIVClientStructs.FFXIV.Component.GUI.AlignmentType;
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class ImprovedWorldVisit : UiAdjustments.SubTweak {
 
-        public override string Name => "Cleaner World Visit Menu";
-        public override string Description => "Cleans up the world visit menu and shows your current location in order on the list.";
+        public override string Name => "简化跨界传送界面";
+        public override string Description => "简化跨界传送界面并显示原服务器";
 
         public override void Enable() {
             PluginInterface.Framework.OnUpdateEvent += FrameworkOnOnUpdateEvent;

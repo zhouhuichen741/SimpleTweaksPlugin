@@ -24,15 +24,15 @@ namespace SimpleTweaksPlugin.Tweaks {
         public Configs Config => PluginConfig.DisableClickTargeting;
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Disable Right Click Targeting", ref Config.DisableRightClick);
-            hasChanged |= ImGui.Checkbox("Disable Left Click Targeting", ref Config.DisableLeftClick);
+            hasChanged |= ImGui.Checkbox("禁用右键选中", ref Config.DisableRightClick);
+            hasChanged |= ImGui.Checkbox("禁用左键选中", ref Config.DisableLeftClick);
 
             if (!(Config.DisableLeftClick || Config.DisableRightClick)) {
-                ImGui.Text("It is doing nothing if both are disabled...");
+                ImGui.Text("都不禁用你开这个选项干什么...");
             }
 
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.Checkbox("Only disable in combat", ref Config.OnlyDisableInCombat);
+            hasChanged |= ImGui.Checkbox("仅在战斗中禁用", ref Config.OnlyDisableInCombat);
             
             if (hasChanged && Enabled) {
                 Disable();
@@ -40,8 +40,8 @@ namespace SimpleTweaksPlugin.Tweaks {
             }
         };
 
-        public override string Name => "Disable Click Targeting";
-        public override string Description => "Allows disabling of the target function on left and right mouse clicks.";
+        public override string Name => "禁用目标选中";
+        public override string Description => "可以禁用鼠标点击选中目标的功能";
 
         private delegate void* ClickTarget(void** a1, void* a2, bool a3);
         private Hook<ClickTarget> rightClickTargetHook;

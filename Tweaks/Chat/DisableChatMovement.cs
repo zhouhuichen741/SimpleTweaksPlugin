@@ -5,8 +5,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     
     public class DisableChatMovement : ChatTweaks.SubTweak {
 
-        public override string Name => "Disable Chat Movement";
-        public override string Description => "Prevents movement of the chat window.";
+        public override string Name => "禁止移动聊天框";
+        public override string Description => "禁止对聊天框的移动操作";
 
         private delegate IntPtr SetUiPositionDelegate(IntPtr _this, IntPtr uiObject, ulong y);
 

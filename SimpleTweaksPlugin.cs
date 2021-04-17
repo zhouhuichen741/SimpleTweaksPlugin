@@ -18,7 +18,7 @@ using SimpleTweaksPlugin.Debugging;
 #pragma warning disable CS0659
 namespace SimpleTweaksPlugin {
     public class SimpleTweaksPlugin : IDalamudPlugin {
-        public string Name => "Simple Tweaks";
+        public string Name => "简单优化";
         public DalamudPluginInterface PluginInterface { get; private set; }
         public SimpleTweaksPluginConfig PluginConfig { get; private set; }
 
@@ -182,7 +182,7 @@ namespace SimpleTweaksPlugin {
 
         public void SetupCommands() {
             PluginInterface.CommandManager.AddHandler("/tweaks", new Dalamud.Game.Command.CommandInfo(OnConfigCommandHandler) {
-                HelpMessage = $"Open config window for {this.Name}",
+                HelpMessage = $"打开{this.Name}的设置窗口",
                 ShowInHelp = true
             });
         }
@@ -229,13 +229,13 @@ namespace SimpleTweaksPlugin {
                         }
                         ImGui.Text($"{e.Exception}");
 
-                        if (ImGui.Button($"Clear this Error###clearErrorButton{i}")) {
+                        if (ImGui.Button($"清除错误通知###clearErrorButton{i}")) {
                             e.Closed = true;
                         }
 
                         if (e.Count > 1) {
                             ImGui.SameLine();
-                            ImGui.Text($"This error has occured {e.Count} times.");
+                            ImGui.Text($"该错误已发生了{e.Count}次");
                         }
 
 

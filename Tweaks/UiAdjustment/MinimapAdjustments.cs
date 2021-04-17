@@ -32,29 +32,29 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public Configs Config => PluginConfig.UiAdjustments.MinimapAdjustments;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Hide Coordinates", ref Config.HideCoordinates);
-            hasChanged |= ImGui.Checkbox("Hide Compass Lock", ref Config.HideCompassLock);
-            hasChanged |= ImGui.Checkbox("Hide Compass Directions", ref Config.HideCompassDirections);
-            hasChanged |= ImGui.Checkbox("Hide Zoom Buttons", ref Config.HideZoom);
-            hasChanged |= ImGui.Checkbox("Hide Sun", ref Config.HideSun);
-            hasChanged |= ImGui.Checkbox("Hide Weather", ref Config.HideWeather);
+            hasChanged |= ImGui.Checkbox("隐藏当前位置", ref Config.HideCoordinates);
+            hasChanged |= ImGui.Checkbox("隐藏方向锁定", ref Config.HideCompassLock);
+            hasChanged |= ImGui.Checkbox("隐藏东南西北", ref Config.HideCompassDirections);
+            hasChanged |= ImGui.Checkbox("隐藏放大/缩小按钮", ref Config.HideZoom);
+            hasChanged |= ImGui.Checkbox("隐藏太阳位置", ref Config.HideSun);
+            hasChanged |= ImGui.Checkbox("隐藏天气", ref Config.HideWeather);
             if (!Config.HideWeather) {
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(150);
-                hasChanged |= ImGui.SliderAngle("Position##weatherPosition", ref Config.WeatherPosition, 0, 360);
+                hasChanged |= ImGui.SliderAngle("位置##weatherPosition", ref Config.WeatherPosition, 0, 360);
             }
 
-            hasChanged |= ImGui.Checkbox("Clean Border", ref Config.CleanBorder);
+            hasChanged |= ImGui.Checkbox("简化外框", ref Config.CleanBorder);
             if (Config.CleanBorder) {
                 ImGui.SameLine();
-                hasChanged |= ImGui.Checkbox("No Border", ref Config.NoBorder);
+                hasChanged |= ImGui.Checkbox("不显示外框", ref Config.NoBorder);
             }
 
             if (hasChanged) Update();
         };
 
-        public override string Name => "Minimap Adjustments";
-        public override string Description => "Allows hiding elements of the minimap display.";
+        public override string Name => "小地图修改";
+        public override string Description => "隐藏和修改小地图元素";
 
         public override void Enable() {
             PluginInterface.ClientState.OnLogin += OnLogin;

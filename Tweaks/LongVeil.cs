@@ -15,8 +15,8 @@ namespace SimpleTweaksPlugin.Tweaks {
         private delegate bool FlagSlotUpdateDelegate(IntPtr a1, uint a2, EquipData* a3);
         private Hook<FlagSlotUpdateDelegate> flagSlotUpdateHook;
         
-        public override string Name => "Long Veil";
-        public override string Description => "Replaces the wedding veils with their long variants that are usually only shown in the sanctum of the twelve.";
+        public override string Name => "显示长婚礼头纱";
+        public override string Description => "显示婚礼头纱的加长版本(烙印过场时的版本)";
 
         public override void Enable() {
             flagSlotUpdateHook ??= new Hook<FlagSlotUpdateDelegate>(

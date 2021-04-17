@@ -27,8 +27,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private IntPtr shortenedWandererTag;
         private delegate IntPtr PlayerNamePlateSetText(byte* a1, byte a2, byte a3, byte* a4, byte* a5, byte* a6, uint a7);
 
-        public override string Name => "Hide FC Name on Name Plate";
-        public override string Description => "Hides the free company tags (and wanderer tag) from player nameplates.";
+        public override string Name => "隐藏部队名";
+        public override string Description => "隐藏姓名版中的部队名和'放浪神'";
 
         public override void Setup() {
             try {
@@ -77,6 +77,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     var isWanderer = config.KeepWandererTag && PluginInterface.ClientState.ClientLanguage switch {
                         ClientLanguage.German => str == "Wanderin" || str == "Wanderer",
                         ClientLanguage.French => str == "Baroudeuse" || str == "Baroudeur",
+                        ClientLanguage.ChineseSimplified => str == "放浪神加护",
                         _ => str == "Wanderer",
                     };
 
@@ -96,12 +97,12 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private string inputStringIgnoreTag = string.Empty;
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("Don't Hide Wanderer Tag", ref config.KeepWandererTag);
+            ImGui.Checkbox("显示'放浪神'", ref config.KeepWandererTag);
             if (config.KeepWandererTag) {
                 ImGui.SameLine();
-                ImGui.Checkbox($"Use '{(char) SeIconChar.CrossWorld}' for Wanderer", ref config.ShortenedWandererTag);
+                ImGui.Checkbox($"使用'{(char) SeIconChar.CrossWorld}'代表'放浪神'", ref config.ShortenedWandererTag);
             }
-            ImGui.Text("Unhidden FC Tags:");
+            ImGui.Text("显示部队:");
             ImGui.Indent();
             foreach (var keep in config.KeepNameVisible) {
                 ImGui.Text(keep);
@@ -118,7 +119,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
             ImGui.InputText("###addIgnoredFCTag", ref inputStringIgnoreTag, 5);
             ImGui.SameLine();
-            if (ImGui.SmallButton("Add##allowNamePlateFC")) {
+            if (ImGui.SmallButton("添加##allowNamePlateFC")) {
                 if (inputStringIgnoreTag.Length > 0 && !config.KeepNameVisible.Contains(inputStringIgnoreTag)) {
                     config.KeepNameVisible.Add(inputStringIgnoreTag);
                     inputStringIgnoreTag = string.Empty;
