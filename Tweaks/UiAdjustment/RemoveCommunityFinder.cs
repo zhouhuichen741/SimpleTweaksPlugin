@@ -5,8 +5,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public class RemoveCommunityFinder : UiAdjustments.SubTweak {
-        public override string Name => "隐藏组队查找";
-        public override string Description => "隐藏各个界面的组队查找图标（国服没有）";
+        public override string Name => "隐藏社区(国服不可用)";
+        public override string Description => "隐藏各个界面的社区图标（国服没有）";
 
         private List<string> windowsWithCommunityFinder = new List<string>() {
             "Social",
