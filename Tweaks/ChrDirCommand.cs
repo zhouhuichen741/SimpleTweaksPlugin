@@ -12,7 +12,7 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public class ChrDirCommand : Tweak {
-        public override string Name => "角色文件夹命令(国服无效)";
+        public override string Name => "角色文件夹命令";
         public override string Description => "添加命令以显示或打开本地角色文件夹";
 
         public override void Setup() {
