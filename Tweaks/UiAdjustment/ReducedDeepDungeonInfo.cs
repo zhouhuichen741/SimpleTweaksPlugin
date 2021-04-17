@@ -11,8 +11,8 @@ using Lumina.Excel.GeneratedSheets;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class ReducedDeepDungeonInfo : UiAdjustments.SubTweak {
-        public override string Name => "¼ò»¯Éî²ãÃÔ¹¬½çÃæ";
-        public override string Description => "¼ò»¯Éî²ãÃÔ¹¬½çÃæ";
+        public override string Name => "ç®€åŒ–æ·±å±‚è¿·å®«ç•Œé¢";
+        public override string Description => "åˆ é™¤æ·±å±‚è¿·å®«ä¸­çš„æ— ç”¨æ˜¾ç¤ºä»¥èŠ‚çº¦ç©ºé—´";
         protected override string Author => "Aireil";
 
         public override void Enable() {
