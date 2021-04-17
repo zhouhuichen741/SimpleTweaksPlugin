@@ -5,8 +5,8 @@ using SimpleTweaksPlugin.Helper;
 using static SimpleTweaksPlugin.Tweaks.TooltipTweaks.ItemTooltip.TooltipField;
 namespace SimpleTweaksPlugin.Tweaks.Tooltips {
     public class ShowItemID : TooltipTweaks.SubTweak {
-        public override string Name => "Show ID";
-        public override string Description => "Show the ID of actions and items on their tooltips.";
+        public override string Name => "显示ID";
+        public override string Description => "显示物品及动作的对应ID";
         public override void OnItemTooltip(TooltipTweaks.ItemTooltip tooltip, InventoryItem itemInfo) {
             var seStr = tooltip[ItemUiCategory];
             if (seStr == null) return;

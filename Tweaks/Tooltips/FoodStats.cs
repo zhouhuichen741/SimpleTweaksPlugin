@@ -15,8 +15,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.Tooltips {
     public class FoodStats : TooltipTweaks.SubTweak {
-        public override string Name => "Show expected food and potion stats";
-        public override string Description => "Calculates the stat results a consumable will have based on your current stats.";
+        public override string Name => "显示食物/药品期望值";
+        public override string Description => "基于角色当前属性 计算食物/药品属性增加量的期望值";
 
         private IntPtr playerStaticAddress;
         private IntPtr getBaseParamAddress;
@@ -40,7 +40,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Highlight Active", ref PluginConfig.TooltipTweaks.FoodStatsHighlight);
+            hasChanged |= ImGui.Checkbox("高亮显示", ref PluginConfig.TooltipTweaks.FoodStatsHighlight);
         };
 
         public override void OnItemTooltip(TooltipTweaks.ItemTooltip tooltip, InventoryItem itemInfo) {
@@ -81,14 +81,14 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                                 payloads.Add(new TextPayload($"{value}%"));
                                 if (change < max) {
                                     if (PluginConfig.TooltipTweaks.FoodStatsHighlight) payloads.Add(new UIForegroundPayload(PluginInterface.Data, 0));
-                                    payloads.Add(new TextPayload($" (Current "));
+                                    payloads.Add(new TextPayload($" (当前 "));
                                     if (PluginConfig.TooltipTweaks.FoodStatsHighlight) payloads.Add(new UIForegroundPayload(PluginInterface.Data, 500));
                                     payloads.Add(new TextPayload($"{change}"));
                                     if (PluginConfig.TooltipTweaks.FoodStatsHighlight) payloads.Add(new UIForegroundPayload(PluginInterface.Data, 0));
                                     payloads.Add(new TextPayload($")"));
                                 }
 
-                                payloads.Add(new TextPayload(" (Max "));
+                                payloads.Add(new TextPayload(" (最大 "));
                                 if (PluginConfig.TooltipTweaks.FoodStatsHighlight && change == max) payloads.Add(new UIForegroundPayload(PluginInterface.Data, 500));
                                 payloads.Add(new TextPayload($"{max}"));
                                 if (PluginConfig.TooltipTweaks.FoodStatsHighlight && change == max) payloads.Add(new UIForegroundPayload(PluginInterface.Data, 0));

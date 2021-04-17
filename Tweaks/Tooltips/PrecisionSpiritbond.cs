@@ -14,8 +14,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public class PrecisionSpiritbond : SubTweak {
-        public override string Name => "Precise Spiritbond";
-        public override string Description => "Show partial percentages for Spiritbond.";
+        public override string Name => "精炼度精确化";
+        public override string Description => "显示较为精确的精炼度百分比";
 
         public override void OnItemTooltip(ItemTooltip tooltip, InventoryItem itemInfo) {
             var c = tooltip[SpiritbondPercent];
@@ -25,7 +25,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox($"Trailing Zeros###{GetType().Name}TrailingZeros", ref PluginConfig.TooltipTweaks.PrecisionSpiritbondTrailingZeros);
+            hasChanged |= ImGui.Checkbox($"显示尾随0###{GetType().Name}TrailingZeros", ref PluginConfig.TooltipTweaks.PrecisionSpiritbondTrailingZeros);
         };
     }
 

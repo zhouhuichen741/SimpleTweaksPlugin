@@ -92,10 +92,10 @@ namespace SimpleTweaksPlugin {
             var scale = ImGui.GetIO().FontGlobalScale;
             var windowFlags = ImGuiWindowFlags.NoCollapse;
             ImGui.SetNextWindowSizeConstraints(new Vector2(600 * scale, 200 * scale), new Vector2(800 * scale, 800 * scale));
-            ImGui.Begin($"{plugin.Name} Config", ref drawConfig, windowFlags);
+            ImGui.Begin($"{plugin.Name}设置", ref drawConfig, windowFlags);
             
             var showbutton = plugin.ErrorList.Count != 0 || !HideKofi;
-            var buttonText = plugin.ErrorList.Count > 0 ? $"{plugin.ErrorList.Count} Errors Detected" : "Support on Ko-fi";
+            var buttonText = plugin.ErrorList.Count > 0 ? $"{plugin.ErrorList.Count} 个错误已发生" : "赞助Ko-fi";
             var buttonColor = (uint) (plugin.ErrorList.Count > 0 ? 0x000000FF : 0x005E5BFF);
             
             if (showbutton) {
@@ -104,7 +104,7 @@ namespace SimpleTweaksPlugin {
                 ImGui.SetNextItemWidth(-1);
             }
             
-            ImGui.InputTextWithHint("###tweakSearchInput", "Search...", ref searchInput, 100);
+            ImGui.InputTextWithHint("###tweakSearchInput", "查找...", ref searchInput, 100);
 
             if (showbutton) {
                 ImGui.SameLine();
@@ -160,7 +160,7 @@ namespace SimpleTweaksPlugin {
                     if (settingTab && setTab == null) {
                         settingTab = false;
                     } else {
-                        if (ImGui.BeginTabItem("General Tweaks")) {
+                        if (ImGui.BeginTabItem("常规优化")) {
                             ImGui.BeginChild("generalTweaks", new Vector2(-1, -1), false);
                             foreach (var t in plugin.Tweaks.Where(t => t is SubTweakManager).Cast<SubTweakManager>()) {
                                 if (t.AlwaysEnabled) continue;
@@ -228,13 +228,13 @@ namespace SimpleTweaksPlugin {
                         }
                     }
 
-                    if (ImGui.BeginTabItem("General Options")) {
+                    if (ImGui.BeginTabItem("常规选项")) {
                         ImGui.BeginChild($"generalOptions-scroll", new Vector2(-1, -1));
-                        if (ImGui.Checkbox("Show Experimental Tweaks.", ref ShowExperimentalTweaks)) Save();
+                        if (ImGui.Checkbox("显示试验性功能", ref ShowExperimentalTweaks)) Save();
                         ImGui.Separator();
-                        if (ImGui.Checkbox("Show tweak descriptions.", ref ShowTweakDescriptions)) Save();
+                        if (ImGui.Checkbox("显示优化描述", ref ShowTweakDescriptions)) Save();
                         ImGui.Separator();
-                        if (ImGui.Checkbox("Hide Ko-fi link.", ref HideKofi)) Save();
+                        if (ImGui.Checkbox("隐藏Ko-fi链接", ref HideKofi)) Save();
                         ImGui.Separator();
                         ImGui.EndChild();
                         ImGui.EndTabItem();

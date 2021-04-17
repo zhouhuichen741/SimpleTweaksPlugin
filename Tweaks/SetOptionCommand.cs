@@ -12,8 +12,8 @@ using SimpleTweaksPlugin.TweakSystem;
 namespace SimpleTweaksPlugin.Tweaks {
     public class SetOptionCommand : Tweak {
 
-        public override string Name => "Set Option Command";
-        public override string Description => "Adds commands to change various settings.";
+        public override string Name => "聊天框快捷指令";
+        public override string Description => "添加数个聊天栏指令以快速修改游戏设置";
 
         private IntPtr setOptionAddress = IntPtr.Zero;
 
@@ -77,14 +77,14 @@ namespace SimpleTweaksPlugin.Tweaks {
             ImGui.TextDisabled("/setopt list");
             ImGui.TextDisabled("/setopt [option] [value]");
 
-            if (ImGui.TreeNode("Available Options##optionListTree")) {
+            if (ImGui.TreeNode("可用选项##optionListTree")) {
                     
                 ImGui.Columns(3);
-                ImGui.Text("option");
+                ImGui.Text("选项");
                 ImGui.NextColumn();
-                ImGui.Text("values");
+                ImGui.Text("可用值");
                 ImGui.NextColumn();
-                ImGui.Text("alias");
+                ImGui.Text("简写");
                 ImGui.Separator();
 
                 foreach (var o in optionKinds) {
@@ -113,8 +113,8 @@ namespace SimpleTweaksPlugin.Tweaks {
             setOptionHook ??= new Hook<SetOptionDelegate>(setOptionAddress, new SetOptionDelegate(SetOptionDetour));
             setOptionHook?.Enable();
 
-            PluginInterface.CommandManager.AddHandler("/setoption", new CommandInfo(OptionCommand) {HelpMessage = "Set the skill tooltips on or off.", ShowInHelp = true});
-            PluginInterface.CommandManager.AddHandler("/setopt", new CommandInfo(OptionCommand) {HelpMessage = "Set the skill tooltips on or off.", ShowInHelp = false});
+            PluginInterface.CommandManager.AddHandler("/setoption", new CommandInfo(OptionCommand) {HelpMessage = "打开或关闭技能帮助", ShowInHelp = true});
+            PluginInterface.CommandManager.AddHandler("/setopt", new CommandInfo(OptionCommand) {HelpMessage = "打开或关闭技能帮助", ShowInHelp = false});
 
             Enabled = true;
         }
@@ -122,7 +122,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         private void OptionCommand(string command, string arguments) {
 
             if (baseAddress == IntPtr.Zero) {
-                PluginInterface.Framework.Gui.Chat.PrintError("Waiting for setup. Please switch zone.");
+                PluginInterface.Framework.Gui.Chat.PrintError("设置中,请切换地图");
                 return;
             }
 
@@ -136,7 +136,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                     if (optionKinds[o].type == OptionType.ToggleGamepadMode) continue;
                     sb.Append(o + " ");
                 }
-                PluginInterface.Framework.Gui.Chat.Print($"Options:\n{sb}");
+                PluginInterface.Framework.Gui.Chat.Print($"选项:\n{sb}");
 
                 return;
             }
@@ -150,8 +150,8 @@ namespace SimpleTweaksPlugin.Tweaks {
                 var fromAlias = optionKinds.Values.Where(ok => ok.alias.Contains(optionKind)).ToArray();
 
                 if (fromAlias.Length == 0) {
-                    PluginInterface.Framework.Gui.Chat.PrintError("Unknown Option");
-                    PluginInterface.Framework.Gui.Chat.PrintError("/setoption list for a list of options");
+                    PluginInterface.Framework.Gui.Chat.PrintError("未知选项");
+                    PluginInterface.Framework.Gui.Chat.PrintError("/setoption list 以显示可用选项");
                     return;
                 } 
                 optionDefinition = fromAlias[0];
@@ -189,7 +189,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                                 setOption(baseAddress, optionDefinition.key, cVal == 1 ? 0UL : 1UL, 2);
                                 setValue = cVal == 1 ? 1 : 0UL;
                             } else {
-                                PluginInterface.Framework.Gui.Chat.PrintError($"Toggle not available for {optionKind}");
+                                PluginInterface.Framework.Gui.Chat.PrintError($"该值对{optionKind}无效");
                             }
                             break;
                         default:
@@ -200,7 +200,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                     break;
                 }
                 default:
-                    PluginInterface.Framework.Gui.Chat.PrintError("Unsupported Option");
+                    PluginInterface.Framework.Gui.Chat.PrintError("不支持的选项");
                     return;
             }
 

@@ -26,8 +26,8 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
             public string ChatTab1Name = string.Empty;
         }
 
-        public override string Name => "Rename Chat Tabs";
-        public override string Description => "Allows renaming the General and Battle tabs in the chat window.";
+        public override string Name => "重命名聊天框";
+        public override string Description => "允许修改通用及战斗聊天框的名称";
 
         private Task renameTask;
         private CancellationTokenSource cancellationToken;
@@ -64,12 +64,12 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
             hasChanged |= ImGui.Checkbox("###enabledRenameTab0", ref TweakConfig.DoRenameTab0);
             ImGui.SameLine();
             ImGui.SetNextItemWidth(90 * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.InputTextWithHint("Tab 1###nameTab0", DefaultName0, ref TweakConfig.ChatTab0Name, 16);
+            hasChanged |= ImGui.InputTextWithHint("聊天框 1###nameTab0", DefaultName0, ref TweakConfig.ChatTab0Name, 16);
 
             hasChanged |= ImGui.Checkbox("###enabledRenameTab1", ref TweakConfig.DoRenameTab1);
             ImGui.SameLine();
             ImGui.SetNextItemWidth(90 * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.InputTextWithHint("Tab 2###nameTab1", DefaultName1, ref TweakConfig.ChatTab1Name, 16);
+            hasChanged |= ImGui.InputTextWithHint("聊天框 2###nameTab1", DefaultName1, ref TweakConfig.ChatTab1Name, 16);
         };
 
         private void OnLogin(object sender, EventArgs e) {

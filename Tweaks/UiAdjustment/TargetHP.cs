@@ -26,20 +26,20 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
         
         public enum DisplayFormat {
-            [Description("Full Number")] 
+            [Description("完整数值")] 
             FullNumber,
-            [Description("Short Number (5K, 5M)")]
+            [Description("简写 (5K, 5M)")]
             ZeroDecimalPrecision,
-            [Description("1 Decimal (5.5K, 5.5M)")]
+            [Description("一位小数 (5.5K, 5.5M)")]
             OneDecimalPrecision,
-            [Description("2 Decimal (5.55K, 5.55M)")]
+            [Description("两位小数 (5.55K, 5.55M)")]
             TwoDecimalPrecision,
         }
         
         public Configs Config => PluginConfig.UiAdjustments.TargetHP;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            if (ImGui.BeginCombo("Display Format###targetHpFormat", Config.DisplayFormat.GetDescription())) {
+            if (ImGui.BeginCombo("显示格式###targetHpFormat", Config.DisplayFormat.GetDescription())) {
                 foreach (var v in (DisplayFormat[])Enum.GetValues(typeof(DisplayFormat))) {
                     if (!ImGui.Selectable($"{v.GetDescription()}##targetHpFormatSelect", Config.DisplayFormat == v)) continue;
                     Config.DisplayFormat = v;
@@ -49,23 +49,23 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
 
             ImGui.SetNextItemWidth(150);
-            hasChanged |= ImGui.InputFloat("X Offset##AdjustTargetHPPositionX", ref Config.Position.X, 1, 5, "%.0f");
+            hasChanged |= ImGui.InputFloat("水平偏移##AdjustTargetHPPositionX", ref Config.Position.X, 1, 5, "%.0f");
             ImGui.SetNextItemWidth(150);
-            hasChanged |= ImGui.InputFloat("Y Offset##AdjustTargetHPPositionY", ref Config.Position.Y, 1, 5, "%0.f");
+            hasChanged |= ImGui.InputFloat("垂直偏移##AdjustTargetHPPositionY", ref Config.Position.Y, 1, 5, "%0.f");
             
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.Checkbox("Disable Focus Target HP", ref Config.NoFocus);
+            hasChanged |= ImGui.Checkbox("不显示焦点目标HP", ref Config.NoFocus);
 
             if (!Config.NoFocus) {
                 ImGui.SetNextItemWidth(150);
-                hasChanged |= ImGui.InputFloat("Focus Target X Offset##AdjustTargetHPFocusPositionX", ref Config.FocusPosition.X, 1, 5, "%.0f");
+                hasChanged |= ImGui.InputFloat("焦点目标水平偏移##AdjustTargetHPFocusPositionX", ref Config.FocusPosition.X, 1, 5, "%.0f");
                 ImGui.SetNextItemWidth(150);
-                hasChanged |= ImGui.InputFloat("Focus Target Y Offset##AdjustTargetHPFocusPositionY", ref Config.FocusPosition.Y, 1, 5, "%0.f");
+                hasChanged |= ImGui.InputFloat("焦点目标垂直偏移##AdjustTargetHPFocusPositionY", ref Config.FocusPosition.Y, 1, 5, "%0.f");
             }
         };
         
-        public override string Name => "Target HP";
-        public override string Description => "Displays the exact (or optionally rounded) value of target's hitpoints.";
+        public override string Name => "目标HP";
+        public override string Description => "显示目标的精确HP(或简化后的数值)";
 
         public override void Enable() {
             PluginInterface.Framework.OnUpdateEvent += FrameworkUpdate;

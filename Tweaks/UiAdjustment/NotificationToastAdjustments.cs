@@ -19,8 +19,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class NotificationToastAdjustments : UiAdjustments.SubTweak {
-        public override string Name => "Notification Toast Adjustments";
-        public override string Description => "Allow moving or hiding the notifications that appear in the middle of the screen at various times.";
+        public override string Name => "弹出通知修改";
+        public override string Description => "移动或隐藏屏幕中央显示的弹出通知内容";
         protected override string Author => "Aireil";
 
         public class Configs {
@@ -39,18 +39,18 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private CancellationTokenSource tokenSource;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Hide", ref Config.Hide);
+            hasChanged |= ImGui.Checkbox("隐藏", ref Config.Hide);
             if (Config.Hide) {
                 ImGui.SameLine();
-                hasChanged |= ImGui.Checkbox("Show in combat", ref Config.ShowInCombat);
+                hasChanged |= ImGui.Checkbox("战斗中显示", ref Config.ShowInCombat);
             }
 
             if (!Config.Hide || Config.ShowInCombat) {
                 var offsetChanged = false;
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.InputInt("Horizontal Offset##offsetPosition", ref Config.OffsetXPosition, 1);
+                offsetChanged |= ImGui.InputInt("水平偏移##offsetPosition", ref Config.OffsetXPosition, 1);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.InputInt("Vertical Offset##offsetPosition", ref Config.OffsetYPosition, 1);
+                offsetChanged |= ImGui.InputInt("垂直偏移##offsetPosition", ref Config.OffsetYPosition, 1);
                 if (offsetChanged) {
                     if (!isPreviewing) {
                         isPreviewing = true;
@@ -65,7 +65,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
 
             if (!Config.Hide) {
-                ImGui.Text("Hide toast if text contains:");
+                ImGui.Text("如果通知含有以下内容则隐藏:");
                 for (int i = 0; i < Config.Exceptions.Count; i++) {
                     ImGui.PushID($"Exception_{i}");
                     var exception = Config.Exceptions[i];
@@ -182,7 +182,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 if (isPreviewing) {
                     var text = Marshal.PtrToStringAnsi(new IntPtr(toastTextNode->NodeText.StringPtr));
                     if (text == String.Empty) {
-                        UiHelper.SetText(toastTextNode, "No notification toast history, this is a preview.");
+                        UiHelper.SetText(toastTextNode, "这只是一个预览，不是游戏通知");
                     }
 
                     toastNode1->Color.A = 255;

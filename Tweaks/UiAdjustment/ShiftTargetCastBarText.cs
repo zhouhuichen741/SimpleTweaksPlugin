@@ -23,8 +23,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             public int Offset = 8;
         }
 
-        public override string Name => "Reposition Target Castbar Text";
-        public override string Description => "Moves the text on target castbars to make it easier to read";
+        public override string Name => "调整目标咏唱栏文字位置";
+        public override string Description => "调整目标咏唱栏文字位置以方便阅读";
         
         private readonly Vector2 buttonSize = new Vector2(26, 22);
 
@@ -44,7 +44,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 changed = true;
             }
             ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("Above progress bar");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("显示在进度条上方");
 
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);
@@ -53,7 +53,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 changed = true;
             }
             ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("Original Position");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("初始位置");
 
             
             ImGui.SameLine();
@@ -63,10 +63,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 changed = true;
             }
             ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("Below progress bar");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("显示在进度条下方");
             ImGui.PopStyleVar();
             ImGui.SameLine();
-            ImGui.Text("Ability name vertical offset");
+            ImGui.Text("垂直偏移量");
         };
 
         public void OnFrameworkUpdate(Framework framework) {

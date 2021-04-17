@@ -15,8 +15,8 @@ namespace SimpleTweaksPlugin {
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     
     public class PrecisionDurability : TooltipTweaks.SubTweak {
-        public override string Name => "Precise Durability";
-        public override string Description => "Show partial percentages for durability.";
+        public override string Name => "耐久度精确化";
+        public override string Description => "显示较为精确的装备耐久百分比";
 
         public override void OnItemTooltip(TooltipTweaks.ItemTooltip tooltip, InventoryItem itemInfo) {
             var c = tooltip[DurabilityPercent];
@@ -27,7 +27,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox($"Trailing Zeros###{GetType().Name}TrailingZeros", ref PluginConfig.TooltipTweaks.PrecisionDurabilityTrailingZeros);
+            hasChanged |= ImGui.Checkbox($"显示尾随0###{GetType().Name}TrailingZeros", ref PluginConfig.TooltipTweaks.PrecisionDurabilityTrailingZeros);
         };
     }
 }

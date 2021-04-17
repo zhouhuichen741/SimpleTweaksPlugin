@@ -5,8 +5,8 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public class LegacyCameraLock : Tweak {
-        public override string Name => "Legacy Camera Lock";
-        public override string Description => "Prevents camera rotation when using Legacy movement type.";
+        public override string Name => "传统视角镜头锁";
+        public override string Description => "传统模式下禁止镜头自动摆动";
 
         private IntPtr changeAddress = IntPtr.Zero;
         private byte[] originalBytes = new byte[6];
