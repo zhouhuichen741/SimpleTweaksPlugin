@@ -35,7 +35,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         }
 
         private void CommandHandler(string command, string arguments) {
-            var saveDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "FINAL FANTASY XIV - A Realm Reborn", $"FFXIV_CHR{PluginInterface.ClientState.LocalContentId:X16}");
+            var saveDir = Path.Combine(Process.GetCurrentProcess().MainModule.FileName.Replace("ffxiv_dx11.exe","").Replace("ffxiv.exe", ""), "My Games", "FINAL FANTASY XIV - A Realm Reborn", $"FFXIV_CHR{PluginInterface.ClientState.LocalContentId:X16}");
             if (arguments == "open") {
                 Process.Start("explorer.exe", saveDir);
                 return;
