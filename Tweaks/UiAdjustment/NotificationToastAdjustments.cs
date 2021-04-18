@@ -19,7 +19,7 @@ namespace SimpleTweaksPlugin {
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class NotificationToastAdjustments : UiAdjustments.SubTweak {
         public override string Name => "弹出通知修改";
-        public override string Description => "在多种情况下移动或隐藏屏幕中央显示的弹出通知内容";
+        public override string Description => "允许移动或隐藏在不同时间出现在屏幕中间的通知";
         protected override string Author => "Aireil";
 
         public class Configs {

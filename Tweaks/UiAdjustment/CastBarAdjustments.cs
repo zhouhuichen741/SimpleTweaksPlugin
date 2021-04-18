@@ -20,7 +20,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
         public override string Name => "咏唱栏修改";
         public override string Description => "隐藏或移动咏唱栏的特定部分";
-        public override IEnumerable<string> Tags => new[] {"SlideCast", "Slide Cast"};
+        public override IEnumerable<string> Tags => new[] {"SlideCast", "Slide Cast", "咏唱", "咏唱栏"};
         public enum Alignment : byte {
             Left = 3,
             Center = 4,
