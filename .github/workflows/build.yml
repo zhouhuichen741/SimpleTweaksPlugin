@@ -24,13 +24,13 @@ jobs:
         if: "!contains(github.event.head_commit.message, '[stg]')"
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
-          Expand-Archive -Force latest.zip "$env:DalamudLibPath"
+          Expand-Archive -Force latest.zip "$env:DalamudLibPath/"
 
       - name: Download Dalamud staging
         if: "contains(github.event.head_commit.message, '[stg]')"
         run: |
             Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/stg/latest.zip -OutFile latest.zip
-            Expand-Archive -Force latest.zip "$env:DalamudLibPath"
+            Expand-Archive -Force latest.zip "$env:DalamudLibPath/"
             
       - name: Build
         run: msbuild SimpleTweaksPlugin.sln /p:Configuration=Release
