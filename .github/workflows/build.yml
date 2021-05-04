@@ -26,8 +26,8 @@ jobs:
           $fileName = "dalamud_" + $remoteVersion + ".zip"
           Invoke-WebRequest -Uri https://dalamud-1253720819.cos.ap-nanjing.myqcloud.com/$fileName -OutFile latest.zip
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
-          echo "$env:AppData\XIVLauncher\addon\Hooks\dev\" >> $env:DalamudLibPath
-          echo $env:DalamudLibPath
+          echo "##[set-env name=DalamudLibPath;]$(dirname $env:AppData\XIVLauncher\addon\Hooks\dev)"
+          echo env
                       
       - name: Build
         run: msbuild SimpleTweaksPlugin.sln /p:Configuration=Release
