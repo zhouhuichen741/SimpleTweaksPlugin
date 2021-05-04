@@ -30,12 +30,3 @@ jobs:
             
       - name: Build
         run: msbuild SimpleTweaksPlugin.sln /p:Configuration=Release
-
-      - name: Extract Publish
-        run: |
-          Expand-Archive -Force ./Publish/*.zip ./Artifact
-          
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2.2.1
-        with:
-          path: ./Artifact/*
