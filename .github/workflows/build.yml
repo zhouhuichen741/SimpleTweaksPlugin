@@ -33,8 +33,7 @@ jobs:
 
       - name: Extract Publish
         run: |
-          Expand-Archive -Force ./Publish/SimpleTweaksPlugin.zip ./Artifact
-          Expand-Archive -Force ./Publish/latest.zip ./Artifact
+          Expand-Archive -Force ./Publish/*.zip ./Artifact
           
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.2.1
