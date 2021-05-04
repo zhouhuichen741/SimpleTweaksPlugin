@@ -21,8 +21,8 @@ jobs:
         run: nuget restore SimpleTweaksPlugin.sln
 
       - name: Download Dalamud
-        run: 
-          Invoke-WebRequest -Uri https://dalamud-1253720819.cos.ap-nanjing.myqcloud.com/dalamud.ver $remoteVersion
+        run: |
+          $remoteVersion = Invoke-WebRequest -Uri https://dalamud-1253720819.cos.ap-nanjing.myqcloud.com/dalamud.ver 
           $fileName = "dalamud_" + remoteVersion + ".zip"
           Invoke-WebRequest -Uri https://dalamud-1253720819.cos.ap-nanjing.myqcloud.com/$fileName -OutFile latest.zip
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
