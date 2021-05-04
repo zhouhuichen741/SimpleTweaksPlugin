@@ -24,13 +24,15 @@ jobs:
         if: "!contains(github.event.head_commit.message, '[stg]')"
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
-          Expand-Archive -Force latest.zip "$env:DalamudLibPath/"
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
+          Expand-Archive -Force latest.zip "$env:DalamudLibPath\"
 
       - name: Download Dalamud staging
         if: "contains(github.event.head_commit.message, '[stg]')"
         run: |
             Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/stg/latest.zip -OutFile latest.zip
-            Expand-Archive -Force latest.zip "$env:DalamudLibPath/"
+            Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
+            Expand-Archive -Force latest.zip "$env:DalamudLibPath\"
             
       - name: Build
         run: msbuild SimpleTweaksPlugin.sln /p:Configuration=Release
@@ -38,6 +40,7 @@ jobs:
       - name: Extract Publish
         run: |
           Expand-Archive -Force ./Publish/SimpleTweaksPlugin.zip ./Artifact
+          Expand-Archive -Force ./Publish/latest.zip ./Artifact
           
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.2.1
