@@ -7,8 +7,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 {
     public unsafe class ShowShieldOnHPBar: UiAdjustments.SubTweak
     {
-        public override string Name => "Shield on HP Bar";
-        public override string Description => "Show approximate shield on the HP Bar.";
+        public override string Name => "盾量显示（HP条）";
+        public override string Description => "在血条上显示护盾（粗略值）";
 
         protected override string Author => "Chivalrik";
 
