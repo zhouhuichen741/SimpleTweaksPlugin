@@ -52,7 +52,11 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             changed |= ImGui.Checkbox("将护盾条与血条重合显示", ref Config.ShieldShift);
 
 
-            if (changed) RefreshHooks();
+            if (changed)
+            {
+                if (Config.ShieldShift) ShiftShield();
+                RefreshHooks();
+            }
         };
 
 
@@ -104,9 +108,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
                 if (Config.ShieldShift) ShiftShield();
 
-                SimpleLog.Information("NewAddress:");
-                SimpleLog.Information("L1:" + l1.ToString("X") + " L2:" + l2.ToString("X"));
-                SimpleLog.Information("L3:" + l3.ToString("X"));
+                SimpleLog.Debug("NewAddress:");
+                SimpleLog.Debug("L1:" + l1.ToString("X") + " L2:" + l2.ToString("X"));
+                SimpleLog.Debug("L3:" + l3.ToString("X"));
             }
 
             var ret = partyUiUpdateHook.Original(a1, a2, a3);
@@ -154,7 +158,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         private static AtkResNode* GetNodeById(AtkComponentBase* compBase, int id)
         {
             if (compBase == null) return null;
-            if ((compBase->UldManager.Flags1 & 1) == 0 || id == 0) return null;
+            if ((compBase->UldManager.Flags1 & 1) == 0 || id <= 0) return null;
             if (compBase->UldManager.Objects == null) return null;
             var count = compBase->UldManager.Objects->NodeCount;
             var ptr = (long) compBase->UldManager.Objects->NodeList;
@@ -172,22 +176,24 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
         private void ShiftShield()
         {
+            if (l1 == IntPtr.Zero) return;
             for (var i = 0; i < 12; i++)
             {
                 var hpBarComponentBase = party->Member(i).hpBarComponentBase;
+                if (hpBarComponentBase == null) return;
                 var shieldNode = (AtkNineGridNode*) GetNodeById(hpBarComponentBase, 5);
                 var overShieldNode = (AtkImageNode*) GetNodeById(hpBarComponentBase, 2);
                 if (shieldNode != null)
-                    if (Math.Abs(shieldNode->AtkResNode.OriginY - 8f) < 1f)
+                    if (Math.Abs(shieldNode->AtkResNode.Y - 8f) < 1f)
                     {
-                        shieldNode->AtkResNode.OriginY += 8f;
+                        shieldNode->AtkResNode.Y += 8f;
                         *(float*) ((long) shieldNode + 0x6C) += 8f;
                     }
 
                 if (overShieldNode != null)
-                    if (Math.Abs(overShieldNode->AtkResNode.OriginY - 8f) < 1f)
+                    if (Math.Abs(overShieldNode->AtkResNode.Y -9f) < 1f)
                     {
-                        overShieldNode->AtkResNode.OriginY += 8f;
+                        overShieldNode->AtkResNode.Y += 8f;
                         *(float*) ((long) overShieldNode + 0x6C) += 8f;
                     }
             }
@@ -199,19 +205,20 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             for (var i = 0; i < 12; i++)
             {
                 var hpBarComponentBase = party->Member(i).hpBarComponentBase;
+                if (hpBarComponentBase == null) return;
                 var shieldNode = (AtkNineGridNode*) GetNodeById(hpBarComponentBase, 5);
                 var overShieldNode = (AtkImageNode*) GetNodeById(hpBarComponentBase, 2);
                 if (shieldNode != null)
-                    if (Math.Abs(shieldNode->AtkResNode.OriginY - 16f) < 1f)
+                    if (Math.Abs(shieldNode->AtkResNode.Y - 16f) < 1f)
                     {
-                        shieldNode->AtkResNode.OriginY -= 8f;
+                        shieldNode->AtkResNode.Y -= 8f;
                         *(float*) ((long) shieldNode + 0x6C) -= 8f;
                     }
 
                 if (overShieldNode != null)
-                    if (Math.Abs(overShieldNode->AtkResNode.OriginY - 16f) < 1f)
+                    if (Math.Abs(overShieldNode->AtkResNode.Y - 17f) < 1f)
                     {
-                        overShieldNode->AtkResNode.OriginY -= 8f;
+                        overShieldNode->AtkResNode.Y -= 8f;
                         *(float*) ((long) overShieldNode + 0x6C) -= 8f;
                     }
             }
@@ -245,6 +252,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             for (var index = 0; index < 12; index++)
             {
                 var node1 = (AtkTextNode*) GetNodeById(party->Member(index).mpBarComponentBase, 3);
+                if (node1 == null) return;
                 if (node1->FontSize == 12)
                 {
                     node1->FontSize = 10;
@@ -256,7 +264,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
         private void UpdatePartyUi(bool done)
         {
-            if (PluginInterface.ClientState.Actors[0] == null) return;
             try
             {
                 for (var index = 0; index < data->LocalCount + data->CrossRealmCount; index++)
