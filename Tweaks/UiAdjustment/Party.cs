@@ -224,7 +224,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             }
         }
 
-        private void MpShield(int index)
+        private void ShieldOnMp(int index)
         {
             if (l1 == IntPtr.Zero) return;
             var memberdata = data->MemberData(index);
@@ -278,7 +278,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
                             if (textNode != null) SetHp(textNode, data->MemberData(index));
                         }
 
-                        if (Config.MpShield) MpShield(index);
+                        if (Config.MpShield) ShieldOnMp(index);
                     }
             }
             catch (Exception e)
