@@ -68,7 +68,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
                     Common.Scanner.ScanText(
                         "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B 7A ?? 48 8B D9 49 8B 70 ?? 48 8B 47"),
                     new PartyUiUpdate(PartyListUpdateDelegate));
-                if (Config.HpPercent) partyUiUpdateHook?.Enable();
+                if (Enabled) partyUiUpdateHook?.Enable();
                 else partyUiUpdateHook?.Disable();
 
                 if (!Config.ShieldShift) UnShiftShield();
