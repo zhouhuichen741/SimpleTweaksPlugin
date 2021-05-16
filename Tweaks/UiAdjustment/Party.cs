@@ -54,8 +54,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
             if (changed)
             {
-                if (Config.ShieldShift) ShiftShield();
                 RefreshHooks();
+                if (Config.ShieldShift) ShiftShield();
             }
         };
 
