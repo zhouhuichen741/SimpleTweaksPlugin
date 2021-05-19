@@ -14,13 +14,13 @@ namespace SimpleTweaksPlugin
 {
     public partial class UiAdjustmentsConfig
     {
-        public PartyListAdjustments.Configs PartyListAdjustments = new();
+        public PartyUiAdjustments.Configs PartyUiAdjustments = new();
     }
 }
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 {
-    public unsafe class PartyListAdjustments : UiAdjustments.SubTweak
+    public unsafe class PartyUiAdjustments : UiAdjustments.SubTweak
     {
         public class Configs
         {
@@ -29,7 +29,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             public bool MpShield;
         }
 
-        public Configs Config => PluginConfig.UiAdjustments.PartyListAdjustments;
+        public Configs Config => PluginConfig.UiAdjustments.PartyUiAdjustments;
 
         private delegate long PartyUiUpdate(long a1, long a2, long a3);
 
@@ -68,7 +68,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
                     Common.Scanner.ScanText(
                         "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B 7A ?? 48 8B D9 49 8B 70 ?? 48 8B 47"),
                     new PartyUiUpdate(PartyListUpdateDelegate));
-                if (Enabled) partyUiUpdateHook?.Enable();
+                if (Config.HpPercent||Config.MpShield||Config.ShieldShift) partyUiUpdateHook?.Enable();
                 else partyUiUpdateHook?.Disable();
 
                 if (!Config.ShieldShift) UnShiftShield();
