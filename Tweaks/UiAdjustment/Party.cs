@@ -24,9 +24,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
     {
         public class Configs
         {
-            public bool HpPercent = true;
-            public bool ShieldShift;
+            public bool HpPercent;
+            public bool ShieldShift =true;
             public bool MpShield;
+            public int Option1, Option2;
         }
 
         public Configs Config => PluginConfig.UiAdjustments.PartyUiAdjustments;
@@ -47,8 +48,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool changed) =>
         {
-            changed |= ImGui.Checkbox("HP及盾值百分比显示", ref Config.HpPercent);
-            changed |= ImGui.Checkbox("盾值(估计值)替换MP值", ref Config.MpShield);
+            changed |= ImGui.Checkbox("HP及盾值百分比显示 替换HP值为:", ref Config.HpPercent);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(120);
+            changed |= ImGui.Combo("##血量选项", ref Config.Option1, new string[2] {"血量百分比", "血量百分比+盾比"}, 2);
+            changed |= ImGui.Checkbox("盾值(估计值)或百分比显示 替换MP值为:", ref Config.MpShield);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(120);
+            changed |= ImGui.Combo("##盾量选项", ref Config.Option2, new string[2] {"盾量百分比", "盾值"}, 2);
             changed |= ImGui.Checkbox("将护盾条与血条重合显示", ref Config.ShieldShift);
 
 
@@ -142,11 +149,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
                         new(PluginInterface.Data, 559);
                     UIForegroundPayload uiNoColor =
                         new(PluginInterface.Data, 0);
-
-                    se.Payloads.Add(new TextPayload("+"));
-                    se.Payloads.Add(uiYellow);
-                    se.Payloads.Add(new TextPayload(member.ShieldPercent.ToString()));
-                    se.Payloads.Add(uiNoColor);
+                    if (Config.Option1 ==1)
+                    {
+                        se.Payloads.Add(new TextPayload("+"));
+                        se.Payloads.Add(uiYellow);
+                        se.Payloads.Add(new TextPayload(member.ShieldPercent.ToString()));
+                        se.Payloads.Add(uiNoColor);
+                    }
                 }
 
                 se.Payloads.Add(new TextPayload("%"));
@@ -228,14 +237,22 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         {
             if (l1 == IntPtr.Zero) return;
             var memberdata = data->MemberData(index);
-            var shield = memberdata.ShieldPercent * memberdata.MaxHp / 100;
             var node1 = (AtkTextNode*) GetNodeById(party->Member(index).mpBarComponentBase, 3);
             var node2 = (AtkTextNode*) GetNodeById(party->Member(index).mpBarComponentBase, 2);
             UIForegroundPayload uiYellow =
                 new(PluginInterface.Data, 559);
             SeString se = new(new List<Payload>());
             se.Payloads.Add(uiYellow);
-            se.Payloads.Add(new TextPayload(shield.ToString()));
+            if (Config.Option2 == 0)
+            {
+                se.Payloads.Add(new TextPayload(memberdata.ShieldPercent.ToString()));
+                se.Payloads.Add(new TextPayload("%"));
+            }
+            else
+            {
+                var shield = memberdata.ShieldPercent * memberdata.MaxHp / 100;
+                se.Payloads.Add(new TextPayload(shield.ToString()));
+            }
             Plugin.Common.WriteSeString(node1->NodeText, se);
             if (node1->FontSize != 12)
             {
