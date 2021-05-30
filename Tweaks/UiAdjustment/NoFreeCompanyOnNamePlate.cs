@@ -9,18 +9,26 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Interface;
 using ImGuiNET;
-using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Tweaks.UiAdjustment;
 
-namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
+namespace SimpleTweaksPlugin
+{
+    public partial class UiAdjustmentsConfig {
+        public NoFreeCompanyOnNamePlate.Configs NoFreeCompanyOnNamePlate = new();
+    }
+}
+
+namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
+{
     public unsafe class NoFreeCompanyOnNamePlate : UiAdjustments.SubTweak {
 
-        public class Configs : TweakConfig {
+        public class Configs {
             public bool KeepWandererTag;
             public bool ShortenedWandererTag;
             public List<string> KeepNameVisible = new();
         }
 
-        private Configs config;
+        public Configs Config => PluginConfig.UiAdjustments.NoFreeCompanyOnNamePlate;
         
         private IntPtr playerNamePlateSetTextAddress;
         private Hook<PlayerNamePlateSetText> playerNamePlateSetTextHook;
@@ -49,14 +57,12 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         public override void Enable() {
-            config = LoadConfig<Configs>() ?? new Configs();
             playerNamePlateSetTextHook ??= new Hook<PlayerNamePlateSetText>(playerNamePlateSetTextAddress, new PlayerNamePlateSetText(NamePlateDetour));
             playerNamePlateSetTextHook?.Enable();
             base.Enable();
         }
 
         public override void Disable() {
-            SaveConfig(config);
             playerNamePlateSetTextHook?.Disable();
             base.Disable();
         }
@@ -69,20 +75,20 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private IntPtr NamePlateDetour(byte* a1, byte a2, byte a3, byte* a4, byte* a5, byte* a6, uint a7) {
             var isHidden = true;
-            if (config.KeepWandererTag || config.KeepNameVisible.Count > 0) {
+            if (Config.KeepWandererTag || Config.KeepNameVisible.Count > 0) {
                 var i = 0;
                 for (i = 0; i < 20; i++) if (a6[i] == 0) break;
                 if (i >= 1) {
                     var str = Encoding.UTF8.GetString(a6, i).Trim(' ', '«', '»');
-                    var isWanderer = config.KeepWandererTag && PluginInterface.ClientState.ClientLanguage switch {
+                    var isWanderer = Config.KeepWandererTag && PluginInterface.ClientState.ClientLanguage switch {
                         ClientLanguage.German => str == "Wanderin" || str == "Wanderer",
                         ClientLanguage.French => str == "Baroudeuse" || str == "Baroudeur",
                         ClientLanguage.ChineseSimplified => str == "放浪神加护",
                         _ => str == "Wanderer",
                     };
 
-                    if (isWanderer || config.KeepNameVisible.Contains(str)) {
-                        if (isWanderer && config.ShortenedWandererTag) {
+                    if (isWanderer || Config.KeepNameVisible.Contains(str)) {
+                        if (isWanderer && Config.ShortenedWandererTag) {
                             a6 = (byte*) shortenedWandererTag;
                         }
                         isHidden = false;
@@ -97,19 +103,19 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private string inputStringIgnoreTag = string.Empty;
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("显示'放浪神'", ref config.KeepWandererTag);
-            if (config.KeepWandererTag) {
+            ImGui.Checkbox("显示'放浪神'", ref Config.KeepWandererTag);
+            if (Config.KeepWandererTag) {
                 ImGui.SameLine();
-                ImGui.Checkbox($"使用'{(char) SeIconChar.CrossWorld}'代表'放浪神'", ref config.ShortenedWandererTag);
+                ImGui.Checkbox($"使用'{(char) SeIconChar.CrossWorld}'代表'放浪神'", ref Config.ShortenedWandererTag);
             }
             ImGui.Text("显示部队:");
             ImGui.Indent();
-            foreach (var keep in config.KeepNameVisible) {
+            foreach (var keep in Config.KeepNameVisible) {
                 ImGui.Text(keep);
                 ImGui.SameLine();
                 ImGui.PushFont(UiBuilder.IconFont);
                 if (ImGui.SmallButton($"{(char) FontAwesomeIcon.Times}##removeIgnoredFC_{keep}")) {
-                    config.KeepNameVisible.Remove(keep);
+                    Config.KeepNameVisible.Remove(keep);
                     ImGui.PopFont();
                     break;
                 }
@@ -120,8 +126,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.InputText("###addIgnoredFCTag", ref inputStringIgnoreTag, 5);
             ImGui.SameLine();
             if (ImGui.SmallButton("添加##allowNamePlateFC")) {
-                if (inputStringIgnoreTag.Length > 0 && !config.KeepNameVisible.Contains(inputStringIgnoreTag)) {
-                    config.KeepNameVisible.Add(inputStringIgnoreTag);
+                if (inputStringIgnoreTag.Length > 0 && !Config.KeepNameVisible.Contains(inputStringIgnoreTag)) {
+                    Config.KeepNameVisible.Add(inputStringIgnoreTag);
                     inputStringIgnoreTag = string.Empty;
                 }
             }

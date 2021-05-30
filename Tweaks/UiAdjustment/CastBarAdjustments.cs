@@ -7,7 +7,13 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.GameStructs;
 using SimpleTweaksPlugin.Helper;
-using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Tweaks.UiAdjustment;
+
+namespace SimpleTweaksPlugin {
+    public partial class UiAdjustmentsConfig {
+        public CastBarAdjustments.Configs CastBarAdjustments = new();
+    }
+}
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
@@ -20,7 +26,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             Right = 5,
         }
 
-        public class Configs : TweakConfig {
+        public class Configs {
             public bool RemoveCastingText;
             public bool RemoveIcon;
             public bool RemoveCounter;
@@ -38,7 +44,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             public int OffsetCounterPosition = 0;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config => PluginConfig.UiAdjustments.CastBarAdjustments;
 
         private bool DrawAlignmentSelector(string name, ref Alignment selectedAlignment) {
             var changed = false;
@@ -135,7 +141,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         };
 
         public override void Enable() {
-            Config = LoadConfig<Configs>() ?? new Configs();
             PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
             base.Enable();
         }
@@ -143,7 +148,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override void Disable() {
             PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
             UpdateCastBar(true);
-            SaveConfig(Config);
             base.Disable();
         }
 
