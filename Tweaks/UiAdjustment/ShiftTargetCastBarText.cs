@@ -6,57 +6,47 @@ using Dalamud.Game.Internal;
 using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
-using static SimpleTweaksPlugin.Tweaks.UiAdjustments.Step;
-using Addon = Dalamud.Game.Internal.Gui.Addon.Addon;
+using SimpleTweaksPlugin.TweakSystem;
 
-namespace SimpleTweaksPlugin
-{
-    public partial class UiAdjustmentsConfig
-    {
+namespace SimpleTweaksPlugin {
+    public partial class UiAdjustmentsConfig {
         public ShiftTargetCastBarText.Config ShiftTargetCastBarText = new();
     }
 }
 
-namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
-{
-    public class ShiftTargetCastBarText : UiAdjustments.SubTweak
-    {
-        public class Config
-        {
-            public int Offset = 8;
-            public bool EnableCastTime;
-            public int CastTimeFontSize = 15;
-            public int CastTimeOffsetX = 8;
-            public int CastTimeOffsetY;
-        }
+namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
+    public unsafe class ShiftTargetCastBarText : UiAdjustments.SubTweak {
 
+        public class Config : TweakConfig {
+            public int Offset = 8;
+            public Alignment NameAlignment = Alignment.BottomRight;
+        }
+        
+        public Config LoadedConfig { get; private set; }
+        
         public override string Name => "调整目标咏唱栏文字位置";
         public override string Description => "调整目标咏唱栏文字位置以方便阅读";
-
-        private readonly Vector2 buttonSize = new(26, 22);
+        
+        private readonly Vector2 buttonSize = new Vector2(26, 22);
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool changed) =>
         {
             var bSize = buttonSize * ImGui.GetIO().FontGlobalScale;
             ImGui.SetNextItemWidth(90 * ImGui.GetIO().FontGlobalScale);
-            if (ImGui.InputInt($"###{GetType().Name}_Offset",
-                ref PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset))
-            {
-                if (PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset > MaxOffset)
-                    PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = MaxOffset;
-                if (PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset < MinOffset)
-                    PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = MinOffset;
+            if (ImGui.InputInt($"###{GetType().Name}_Offset", ref LoadedConfig.Offset)) {
+                if (LoadedConfig.Offset > MaxOffset) LoadedConfig.Offset = MaxOffset;
+                if (LoadedConfig.Offset < MinOffset) LoadedConfig.Offset = MinOffset;
                 changed = true;
             }
 
             ImGui.SameLine();
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2));
             ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{(char) FontAwesomeIcon.ArrowUp}", bSize))
-            {
-                PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = 8;
+            if (ImGui.Button($"{(char)FontAwesomeIcon.ArrowUp}", bSize)) {
+                LoadedConfig.Offset = 8;
                 changed = true;
             }
 
@@ -65,9 +55,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{(char) FontAwesomeIcon.CircleNotch}", bSize))
-            {
-                PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = 24;
+            if (ImGui.Button($"{(char) FontAwesomeIcon.CircleNotch}", bSize)) {
+                LoadedConfig.Offset = 24;
                 changed = true;
             }
 
@@ -77,9 +66,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
 
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);
-            if (ImGui.Button($"{(char) FontAwesomeIcon.ArrowDown}", bSize))
-            {
-                PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = 32;
+            if (ImGui.Button($"{(char)FontAwesomeIcon.ArrowDown}", bSize)) {
+                LoadedConfig.Offset = 32;
                 changed = true;
             }
 
@@ -88,6 +76,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             ImGui.PopStyleVar();
             ImGui.SameLine();
             ImGui.Text("垂直偏移量");
+
+            changed |= ImGuiExt.HorizontalAlignmentSelector("Ability Name Alignment", ref LoadedConfig.NameAlignment, VerticalAlignment.Bottom);
 
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Checkbox($"###{GetType().Name}_EnableCastTime",
@@ -121,14 +111,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             ImGui.Text("咏唱时间垂直偏移");
         };
 
-        public void OnFrameworkUpdate(Framework framework)
-        {
-            try
-            {
-                HandleBars(framework);
-            }
-            catch (Exception ex)
-            {
+        public void OnFrameworkUpdate(Framework framework) {
+            try {
+                HandleBars();
+            } catch (Exception ex) {
                 Plugin.Error(this, ex);
             }
         }
@@ -193,9 +179,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             var textNode = (AtkTextNode*) GetNodeById(addonStruct,5);
             AddCastTimeTextNode(addonStruct, textNode, textNode->AtkResNode.IsVisible);
         }
-
-        private const int MinOffset = 0;
-        private const int MaxOffset = 48;
+        
+        private const int MinOffset = -24;
+        private const int MaxOffset = 24;
 
         private unsafe void DoShift(AtkResNode* node, bool reset = false)
         {
@@ -203,10 +189,20 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             if (node->ChildCount < 5) return; // Should have 5 children
             var skillTextNode = UiAdjustments.GetResNodeByPath(node, Child, Previous, Previous, Previous);
             if (skillTextNode == null) return;
-            var p = PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset;
+            var p = LoadedConfig.Offset;
             if (p < MinOffset) p = MinOffset;
             if (p > MaxOffset) p = MaxOffset;
-            Marshal.WriteInt16(new IntPtr(skillTextNode), 0x92, reset ? (short) 24 : (short) p);
+            node->Height = reset ? (ushort) 24 : (ushort) p;
+            var textNode = (AtkTextNode*) node;
+            textNode->AlignmentFontType = reset ? (byte) AlignmentType.BottomRight : (byte) LoadedConfig.NameAlignment;
+            if (reset) {
+                UiHelper.SetPosition(node, 0, null);
+                UiHelper.SetSize(node, 197, null);
+            } else {
+                UiHelper.SetPosition(node, 8, null);
+                UiHelper.SetSize(node, 188, null);
+            }
+            
         }
 
         private const int TargetCastNodeId = 99990002;
@@ -242,7 +238,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             }
             else
             {
-                textNode->AlignmentFontType = 0x26;
+                textNode->AlignmentFontType = 0x25;
                 UiHelper.SetPosition(textNode, PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeOffsetX,
                     PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeOffsetY);
                 UiHelper.SetSize(textNode, cloneTextNode->AtkResNode.Width, cloneTextNode->AtkResNode.Height);
@@ -293,6 +289,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         public override void Enable()
         {
             if (Enabled) return;
+            LoadedConfig = LoadConfig<Config>() ?? PluginConfig.UiAdjustments.ShiftTargetCastBarText ?? new Config();
             PluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdate;
             Enabled = true;
         }
@@ -300,9 +297,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         public override void Disable()
         {
             if (!Enabled) return;
+            SaveConfig(LoadedConfig);
             PluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdate;
             SimpleLog.Debug($"[{GetType().Name}] Reset");
-            HandleBars(PluginInterface.Framework, true);
+            HandleBars(true);
             Enabled = false;
         }
 
