@@ -173,14 +173,15 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 UiHelper.ExpandNodeList(unit, 1);
                 unit->UldManager.NodeList[unit->UldManager.NodeListCount++] = (AtkResNode*) textNode;
 
-                var nextNode = (AtkTextNode*)GetNodeById(unit, cloneTextNode->AtkResNode.NodeID-1);
+                var nextNode = (AtkResNode*)cloneTextNode;
+                while (nextNode->PrevSiblingNode != null) nextNode = nextNode->PrevSiblingNode;
 
-                textNode->AtkResNode.ParentNode = nextNode->AtkResNode.ParentNode;
+                textNode->AtkResNode.ParentNode = nextNode->ParentNode;
                 textNode->AtkResNode.ChildNode = null;
-                //textNode->AtkResNode.NextSiblingNode = (AtkResNode*) nextNode;
-                //textNode->AtkResNode.PrevSiblingNode = null;
-                //nextNode->AtkResNode.PrevSiblingNode = (AtkResNode*) textNode;
-                nextNode->AtkResNode.ParentNode->ChildCount += 1;
+                textNode->AtkResNode.NextSiblingNode = nextNode;
+                textNode->AtkResNode.PrevSiblingNode = null;
+                nextNode->PrevSiblingNode = (AtkResNode*) textNode;
+                nextNode->ParentNode->ChildCount += 1;
             }
 
             if (!visible)
