@@ -9,8 +9,8 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class BattleTalkAdjustments : UiAdjustments.SubTweak {
-        public override string Name => "Battle Talk Adjustments";
-        public override string Description => "Allows moving of the dialogue box that appears in the middle of battles.";
+        public override string Name => "调整战斗中对话位置";
+        public override string Description => "用于调整战斗中对话框显示的位置.";
         protected override string Author => "Chivalrik";
 
         public class Configuration : TweakConfig {
@@ -26,9 +26,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool changed) => {
             ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-            changed |= ImGui.InputInt("X Offset##battletalkadjustments_offsetPosition", ref Config.OffsetX, 1);
+            changed |= ImGui.InputInt("水平偏移##battletalkadjustments_offsetPosition", ref Config.OffsetX, 1);
             ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-            changed |= ImGui.InputInt("Y Offset##battletalkadjustments_offsetPosition", ref Config.OffsetY, 1);
+            changed |= ImGui.InputInt("垂直偏移##battletalkadjustments_offsetPosition", ref Config.OffsetY, 1);
             ImGui.SetNextItemWidth(200 * ImGui.GetIO().FontGlobalScale);
             changed |= ImGui.SliderFloat("##battletalkadjustments_Scale", ref Config.Scale, 0.01f, 3f, "Scale: %.2fx");
             
@@ -51,7 +51,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.Begin("###BattleTalkAdjustments_PreviewWindow", flags);
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
             ImGui.Dummy(new Vector2(25,0) * ImGui.GetIO().FontGlobalScale);
-            ImGui.Text("NEW BATTLE TALK DIALOGUE BOX POSITION");
+            ImGui.Text("新的战斗对话框位置");
             ImGui.End();
             if (!changed) return;
             PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;

@@ -8,8 +8,8 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public class SmartNameplates : UiAdjustments.SubTweak {
-        public override string Name => "Smart Nameplates";
-        public override string Description => "Provides options to hide other player's nameplates in combat under certain conditions.";
+        public override string Name => "智能姓名版";
+        public override string Description => "提供在特定条件下隐藏制定目标姓名版的选项.";
         protected override string Author => "UnknownX";
 
         public class Configs : TweakConfig {
@@ -29,18 +29,18 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private Hook<ShouldDisplayNameplateDelegate> shouldDisplayNameplateHook;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("Show HP##SmartNameplatesShowHP", ref config.ShowHP);
+            ImGui.Checkbox("显示HP##SmartNameplatesShowHP", ref config.ShowHP);
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Will not hide HP bars for affected players.");
+                ImGui.SetTooltip("总是显示特定目标的HP条.");
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("The following options will disable the tweak for certain players.");
-            ImGui.Checkbox("Ignore Party Members##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
-            ImGui.Checkbox("Ignore Alliance Members##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
-            ImGui.Checkbox("Ignore Friends##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
-            ImGui.Checkbox("Ignore Dead Players##SmartNameplatesIgnoreDead", ref config.IgnoreDead);
-            ImGui.Checkbox("Ignore Targeted Players##SmartNameplatesIgnoreTargets", ref config.IgnoreTargets);
+            ImGui.TextUnformatted("对以下目标不启用插件效果.");
+            ImGui.Checkbox("队友##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
+            ImGui.Checkbox("团队成员##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
+            ImGui.Checkbox("好友##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
+            ImGui.Checkbox("已死亡角色##SmartNameplatesIgnoreDead", ref config.IgnoreDead);
+            ImGui.Checkbox("目标角色##SmartNameplatesIgnoreTargets", ref config.IgnoreTargets);
         };
 
         // Crashes the game if ANY Dalamud Actor is created from within it, which is why everything is using offsets

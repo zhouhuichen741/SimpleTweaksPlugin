@@ -7,8 +7,8 @@ using SimpleTweaksPlugin.Helper;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class TimerOnDutyWaiting : UiAdjustments.SubTweak {
-        public override string Name => "Timer on Duty Waiting";
-        public override string Description => "Shows the 45 second countdown after readying for a duty.";
+        public override string Name => "显示就位倒计时";
+        public override string Description => "在任务准备确认阶段显示45秒倒计时.";
 
         public override void Enable() {
             PluginInterface.Framework.OnUpdateEvent += UpdateFramework;
@@ -16,7 +16,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             base.Enable();
         }
 
-        private string prefix = "Checking member status...";
+        private string prefix = "监测队友状态...";
 
         private int lastValue;
         

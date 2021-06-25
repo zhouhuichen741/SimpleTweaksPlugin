@@ -7,8 +7,8 @@ using SimpleTweaksPlugin.Helper;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class TimeUntilGpMax : UiAdjustments.SubTweak {
-        public override string Name => "Time Until GP Max";
-        public override string Description => "Shows a countdown when playing Gathering classes to estimate the time until their GP is capped.";
+        public override string Name => "显示GP回复时间";
+        public override string Description => "显示GP恢复至满所需要的时间.";
         
         private readonly Stopwatch lastGpChangeStopwatch = new();
         private readonly Stopwatch lastUpdate = new();
