@@ -2,14 +2,15 @@
 using Dalamud.Game.ClientState.Actors;
 using Dalamud.Game.ClientState.Structs;
 using Dalamud.Hooking;
+using Dalamud.Plugin;
 using ImGuiNET;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public class SmartNameplates : UiAdjustments.SubTweak {
-        public override string Name => "智能姓名版";
-        public override string Description => "提供在特定条件下隐藏制定目标姓名版的选项.";
+        public override string Name => "智能隐藏姓名版";
+        public override string Description => "提供隐藏特定目标姓名版的选项.";
         protected override string Author => "UnknownX";
 
         public class Configs : TweakConfig {
@@ -23,19 +24,19 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private Configs config;
 
-        private const int statusFlagsOffset = 0x19A0;
+        private const int statusFlagsOffset = 0x1980;//0x19A0; 5.5
         private IntPtr targetManager = IntPtr.Zero;
         private delegate byte ShouldDisplayNameplateDelegate(IntPtr raptureAtkModule, IntPtr actor, IntPtr localPlayer, float distance);
         private Hook<ShouldDisplayNameplateDelegate> shouldDisplayNameplateHook;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("显示HP##SmartNameplatesShowHP", ref config.ShowHP);
+            ImGui.Checkbox("总是显示以下目标姓名版##SmartNameplatesShowHP", ref config.ShowHP);
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("总是显示特定目标的HP条.");
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("对以下目标不启用插件效果.");
+            ImGui.TextUnformatted("总是显示以下目标的姓名版:");
             ImGui.Checkbox("队友##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
             ImGui.Checkbox("团队成员##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
             ImGui.Checkbox("好友##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
@@ -47,7 +48,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         // returns 2 bits (b01 == display name, b10 == display hp)
         private unsafe byte ShouldDisplayNameplateDetour(IntPtr raptureAtkModule, IntPtr actor, IntPtr localPlayer, float distance) {
             var actorStatusFlags = *(byte*)(actor + statusFlagsOffset);
-
             // true is a placeholder for config
             if (actor == localPlayer // Ignore localplayer
                 || (*(byte*)(localPlayer + statusFlagsOffset) & 2) == 0 // Alternate in combat flag
@@ -63,7 +63,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     || *(IntPtr*)(targetManager + TargetOffsets.SoftTarget) == actor
                     || *(IntPtr*)(targetManager + TargetOffsets.FocusTarget) == actor)))
                 return shouldDisplayNameplateHook.Original(raptureAtkModule, actor, localPlayer, distance);
-
             return (byte)(config.ShowHP ? (shouldDisplayNameplateHook.Original(raptureAtkModule, actor, localPlayer, distance) & ~1) : 0); // Ignore HP
         }
         
