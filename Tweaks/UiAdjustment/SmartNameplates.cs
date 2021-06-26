@@ -10,7 +10,7 @@ using SimpleTweaksPlugin.TweakSystem;
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public class SmartNameplates : UiAdjustments.SubTweak {
         public override string Name => "智能隐藏姓名版";
-        public override string Description => "提供隐藏特定目标姓名版的选项.";
+        public override string Description => "提供在战斗中隐藏特定目标姓名版的选项.";
         protected override string Author => "UnknownX";
 
         public class Configs : TweakConfig {
@@ -30,13 +30,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private Hook<ShouldDisplayNameplateDelegate> shouldDisplayNameplateHook;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("总是显示以下目标姓名版##SmartNameplatesShowHP", ref config.ShowHP);
+            ImGui.Checkbox("在战斗中不隐藏以下目标姓名版##SmartNameplatesShowHP", ref config.ShowHP);
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("总是显示特定目标的HP条.");
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("总是显示以下目标的姓名版:");
+            ImGui.TextUnformatted("不隐藏以下目标的姓名版:");
             ImGui.Checkbox("队友##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
             ImGui.Checkbox("团队成员##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
             ImGui.Checkbox("好友##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
