@@ -102,8 +102,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
         }
 
-        private void HandleBars(bool reset = false) {
+        private void HandleBars(bool reset = false)
+        {
 
+            if (PluginInterface.ClientState.LocalPlayer == null) return;
             var focusTargetInfo = Common.GetUnitBase("_FocusTargetInfo");
             if (focusTargetInfo != null && (focusTargetInfo->IsVisible || reset)) {
                 DoShift(focusTargetInfo->UldManager.NodeList[16]);
