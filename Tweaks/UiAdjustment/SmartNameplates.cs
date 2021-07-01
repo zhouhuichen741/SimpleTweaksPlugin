@@ -36,7 +36,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("不隐藏以下目标的姓名版:");
+            ImGui.TextUnformatted("不隐藏以下目标的的HP条:");
             ImGui.Checkbox("队友##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
             ImGui.Checkbox("团队成员##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
             ImGui.Checkbox("好友##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
