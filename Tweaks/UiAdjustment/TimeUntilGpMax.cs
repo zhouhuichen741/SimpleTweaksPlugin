@@ -20,7 +20,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private Hook<UpdateParamDelegate> updateParamHook;
         
         public class Configs : TweakConfig {
-            [TweakConfigOption("Target GP", EditorSize = 200, IntMin = -1, IntMax = 1000, IntType = TweakConfigOptionAttribute.IntEditType.Slider)]
+            [TweakConfigOption("目标 GP", EditorSize = 200, IntMin = -1, IntMax = 1000, IntType = TweakConfigOptionAttribute.IntEditType.Slider)]
             public int GpGoal = -1;
         }
 

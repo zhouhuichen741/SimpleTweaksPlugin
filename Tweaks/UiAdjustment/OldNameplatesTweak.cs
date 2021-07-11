@@ -5,7 +5,7 @@ using SimpleTweaksPlugin.Helper;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class OldNameplatesTweak : UiAdjustments.SubTweak {
-        public override string Name => "老版本姓名版(5.5之前谁开谁炸)";
+        public override string Name => "老版本姓名版";
         public override string Description => "显示5.5版本前的姓名版样式.";
         protected override string Author => "aers";
 

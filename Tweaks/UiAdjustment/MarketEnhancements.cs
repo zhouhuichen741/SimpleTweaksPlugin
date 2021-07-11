@@ -13,23 +13,23 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class MarketEnhancements : UiAdjustments.SubTweak {
         
         public class MarketEnhancementsConfig : TweakConfig {
-            [TweakConfigOption("Include tax in total price.")]
+            [TweakConfigOption("总价中包括税值.")]
             public bool IncludeTaxInTotalPrice;
             
-            [TweakConfigOption("Include tax in single price.")]
+            [TweakConfigOption("单价中包括税值.")]
             public bool IncludeTaxInSinglePrice;
             
-            [TweakConfigOption("Highlight items that can be sold to NPC for more. (Green)")]
+            [TweakConfigOption("高亮显示可以出售给NPC以获得更多金币的物品. (绿色)")]
             public bool HighlightNpcSellProfit;
             
-            [TweakConfigOption("Highlight items that can be purchased from an NPC for cheaper. (Red)")]
+            [TweakConfigOption("高亮显示可以从NPC购买以减少开支的物品. (红色)")]
             public bool HighlightLazyTax;
         }
         
         public MarketEnhancementsConfig Config { get; private set; }
         
-        public override string Name => "Market Enhancements";
-        public override string Description => "UI Enhancements for market board such as including tax and highlighting laxy tax.";
+        public override string Name => "市场增强";
+        public override string Description => "板子UI增强以显示税金和智商税.";
         public override bool UseAutoConfig => true;
         
         private delegate void UpdateResultDelegate(AtkUnitBase* addonItemSearchResult, uint a2, ulong* a3, void* a4);
