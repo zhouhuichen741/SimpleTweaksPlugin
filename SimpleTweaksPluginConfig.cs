@@ -26,6 +26,7 @@ namespace SimpleTweaksPlugin {
         public bool ShowExperimentalTweaks;
 
         public bool ShowTweakDescriptions = true;
+        public bool ShowTweakIDs;
 
         public void Init(SimpleTweaksPlugin plugin, DalamudPluginInterface pluginInterface) {
             this.plugin = plugin;
@@ -234,7 +235,9 @@ namespace SimpleTweaksPlugin {
                         ImGui.Separator();
                         if (ImGui.Checkbox("显示优化描述", ref ShowTweakDescriptions)) Save();
                         ImGui.Separator();
-                        if (ImGui.Checkbox("隐藏Ko-fi链接", ref HideKofi)) Save();
+                        if (ImGui.Checkbox("显示优化IDs.", ref ShowTweakIDs)) Save();
+                        ImGui.Separator();
+                        if (ImGui.Checkbox("隐藏Ko-fi链接.", ref HideKofi)) Save();
                         ImGui.Separator();
                         ImGui.EndChild();
                         ImGui.EndTabItem();
