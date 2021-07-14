@@ -54,8 +54,7 @@ namespace SimpleTweaksPlugin.Tweaks {
             {
                 foreach (var actor in PluginInterface.ClientState.Actors)
                 {
-
-                    if (actor == null) continue;
+                    if (actor?.Name == null) continue;
                     if (actor.Name.ToLowerInvariant().Contains(searchName))
                     {
                         var distance = Vector3.Distance(player.Position, actor.Position);
