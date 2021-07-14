@@ -9,10 +9,12 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
+using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin {
     public partial class UiAdjustmentsConfig {
-        public NotificationToastAdjustments.Configs NotificationToastAdjustments = new NotificationToastAdjustments.Configs();
+        public bool ShouldSerializeNotificationToastAdjustments() => NotificationToastAdjustments != null;
+        public NotificationToastAdjustments.Configs NotificationToastAdjustments = null;
     }
 }
 
@@ -22,7 +24,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override string Description => "允许移动或隐藏在不同时间出现在屏幕中间的通知";
         protected override string Author => "Aireil";
 
-        public class Configs {
+        public class Configs : TweakConfig {
             public bool Hide = false;
             public bool ShowInCombat = false;
             public int OffsetXPosition = 0;
@@ -31,7 +33,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             public readonly List<string> Exceptions = new List<string>();
         }
 
-        public Configs Config => PluginConfig.UiAdjustments.NotificationToastAdjustments;
+        public Configs Config { get; private set; }
 
         private string newException = string.Empty;
 
@@ -52,7 +54,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 offsetChanged |= ImGui.SliderFloat("##toastScale", ref Config.Scale, 0.1f, 5f, "通知大小: %.1fx");
                 if (offsetChanged)
                 {
-                    var toastNode = GetToastNode();
+                    var toastNode = GetToastNode(2);
                     if (toastNode != null && !toastNode->IsVisible)
                         this.PluginInterface.Framework.Gui.Toast.ShowNormal("这是一个通知的预览");
                     hasChanged = true;
@@ -91,28 +93,36 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         };
 
         public override void Enable() {
+            Config = LoadConfig<Configs>() ?? PluginConfig.UiAdjustments.NotificationToastAdjustments ?? new Configs();
             PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
             PluginInterface.Framework.Gui.Toast.OnToast += OnToast;
             base.Enable();
         }
 
         public override void Disable() {
+            SaveConfig(Config);
+            PluginConfig.UiAdjustments.NotificationToastAdjustments = null;
             PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
             PluginInterface.Framework.Gui.Toast.OnToast -= OnToast;
-            UpdateNotificationToastText(true);
+            UpdateNotificationToast(true);
             base.Disable();
         }
 
         private void FrameworkOnUpdate(Framework framework) {
             try {
-                UpdateNotificationToastText();
+                UpdateNotificationToast();
             } catch (Exception ex) {
                 SimpleLog.Error(ex);
             }
         }
 
-        private void UpdateNotificationToastText(bool reset = false) {
-            var toastNode = GetToastNode();
+        private void UpdateNotificationToast(bool reset = false) {
+            UpdateNotificationToastText(reset, 1);
+            UpdateNotificationToastText(reset, 2);
+        }
+
+        private void UpdateNotificationToastText(bool reset, int index) {
+            var toastNode = GetToastNode(index);
             if (toastNode == null) return;
             
             if (reset) {
@@ -164,8 +174,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             UiHelper.SetScale(toastNode, Config.Scale);
         }
 
-        private static AtkResNode* GetToastNode() {
-            var toastUnitBase = Common.GetUnitBase("_WideText", 2);
+        // index: 1 - special toast, e.g. BLU active actions set load/save
+        //        2 - common toast
+        private static AtkResNode* GetToastNode(int index) {
+            var toastUnitBase = Common.GetUnitBase("_WideText", index);
             if (toastUnitBase == null) return null;
             if (toastUnitBase->UldManager.NodeList == null || toastUnitBase->UldManager.NodeListCount < 4) return null;
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Numerics;
@@ -12,10 +11,23 @@ using Dalamud.Game.Internal;
 using ImGuiNET;
 using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.GameStructs;
+using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Sheets;
+using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin {
     public partial class TooltipTweakConfig {
+        public bool ShouldSerializeCopyHotkey() => false;
+        public bool ShouldSerializeCopyHotkeyEnabled() => false;
+        public bool ShouldSerializeTeamcraftLinkHotkey() => false;
+        public bool ShouldSerializeTeamcraftLinkHotkeyEnabled() => false;
+        public bool ShouldSerializeTeamcraftLinkHotkeyForceBrowser() => false;
+        public bool ShouldSerializeGardlandToolsLinkHotkey() => false;
+        public bool ShouldSerializeGardlandToolsLinkHotkeyEnabled() => false;
+        public bool ShouldSerializeGamerEscapeLinkHotkey() => false;
+        public bool ShouldSerializeGamerEscapeLinkHotkeyEnabled() => false;
+        public bool ShouldSerializeHideHotkeysOnTooltip() => false;
+
         public VK[] CopyHotkey = { VK.Ctrl, VK.C };
         public bool CopyHotkeyEnabled = false;
 
@@ -36,7 +48,24 @@ namespace SimpleTweaksPlugin {
 namespace SimpleTweaksPlugin.Tweaks.Tooltips {
     public class CopyHotkey : TooltipTweaks.SubTweak {
 
-        public TooltipTweakConfig Config => PluginConfig.TooltipTweaks;
+        public class Configs : TweakConfig {
+            public VK[] CopyHotkey = { VK.Ctrl, VK.C };
+            public bool CopyHotkeyEnabled = false;
+
+            public VK[] TeamcraftLinkHotkey = {VK.Ctrl, VK.T};
+            public bool TeamcraftLinkHotkeyEnabled = false;
+            public bool TeamcraftLinkHotkeyForceBrowser = false;
+
+            public VK[] GardlandToolsLinkHotkey = {VK.Ctrl, VK.G};
+            public bool GardlandToolsLinkHotkeyEnabled = false;
+
+            public VK[] GamerEscapeLinkHotkey = {VK.Ctrl, VK.E};
+            public bool GamerEscapeLinkHotkeyEnabled = false;
+
+            public bool HideHotkeysOnTooltip = false;
+        }
+        
+        public Configs Config { get; private set; }
 
         private readonly string weirdTabChar = Encoding.UTF8.GetString(new byte[] {0xE3, 0x80, 0x80});
 
@@ -155,11 +184,25 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
         };
 
         public override void Enable() {
+            Config = LoadConfig<Configs>() ?? new Configs() {
+                CopyHotkey = PluginConfig.TooltipTweaks.CopyHotkey,
+                CopyHotkeyEnabled = PluginConfig.TooltipTweaks.CopyHotkeyEnabled,
+                GamerEscapeLinkHotkey = PluginConfig.TooltipTweaks.GamerEscapeLinkHotkey,
+                GamerEscapeLinkHotkeyEnabled = PluginConfig.TooltipTweaks.GamerEscapeLinkHotkeyEnabled,
+                GardlandToolsLinkHotkey = PluginConfig.TooltipTweaks.GardlandToolsLinkHotkey,
+                GardlandToolsLinkHotkeyEnabled = PluginConfig.TooltipTweaks.GardlandToolsLinkHotkeyEnabled,
+                HideHotkeysOnTooltip = PluginConfig.TooltipTweaks.HideHotkeysOnTooltip,
+                TeamcraftLinkHotkey = PluginConfig.TooltipTweaks.TeamcraftLinkHotkey,
+                TeamcraftLinkHotkeyEnabled = PluginConfig.TooltipTweaks.TeamcraftLinkHotkeyEnabled,
+                TeamcraftLinkHotkeyForceBrowser = PluginConfig.TooltipTweaks.TeamcraftLinkHotkeyForceBrowser
+            };
+            
             PluginInterface.Framework.OnUpdateEvent += FrameworkOnOnUpdateEvent;
             base.Enable();
         }
 
         public override void Disable() {
+            SaveConfig(Config);
             PluginInterface.Framework.OnUpdateEvent -= FrameworkOnOnUpdateEvent;
             base.Disable();
         }
@@ -172,7 +215,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
         private void OpenTeamcraft(ExtendedItem extendedItem) {
             if (teamcraftLocalFailed || Config.TeamcraftLinkHotkeyForceBrowser) {
-                Process.Start($"https://ffxivteamcraft.com/db/en/item/{extendedItem.RowId}");
+                Common.OpenBrowser($"https://ffxivteamcraft.com/db/en/item/{extendedItem.RowId}");
                 return;
             }
             Task.Run(() => {
@@ -184,26 +227,26 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 } catch {
                     try {
                         if (System.IO.Directory.Exists(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ffxiv-teamcraft"))) {
-                            Process.Start($"teamcraft:///db/en/item/{extendedItem.RowId}");
+                            Common.OpenBrowser($"teamcraft:///db/en/item/{extendedItem.RowId}");
                         } else {
                             teamcraftLocalFailed = true;
-                            Process.Start($"https://ffxivteamcraft.com/db/en/item/{extendedItem.RowId}");
+                            Common.OpenBrowser($"https://ffxivteamcraft.com/db/en/item/{extendedItem.RowId}");
                         }
                     } catch {
                         teamcraftLocalFailed = true;
-                        Process.Start($"https://ffxivteamcraft.com/db/en/item/{extendedItem.RowId}");
+                        Common.OpenBrowser($"https://ffxivteamcraft.com/db/en/item/{extendedItem.RowId}");
                     }
                 }
             });
         }
 
         private void OpenGarlandTools(ExtendedItem extendedItem) {
-            Process.Start($"https://www.garlandtools.org/db/#item/{extendedItem.RowId}");
+            Common.OpenBrowser($"https://www.garlandtools.org/db/#item/{extendedItem.RowId}");
         }
         
         private void OpenGamerEscape(ExtendedItem extendedItem) {
             var name = Uri.EscapeUriString(extendedItem.Name);
-            Process.Start($"https://ffxiv.gamerescape.com/w/index.php?search={name}");
+            Common.OpenBrowser($"https://ffxiv.gamerescape.com/w/index.php?search={name}");
         }
 
         private bool isHotkeyPress(VK[] keys) {

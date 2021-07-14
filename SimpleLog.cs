@@ -56,7 +56,7 @@ namespace SimpleTweaksPlugin {
         }
 
         public static void Log(object message) {
-            foreach (var m in SplitMessage(message)) PluginLog.Log($"{m}");
+            foreach (var m in SplitMessage(message)) PluginLog.Debug($"{m}");
         }
 
         public static void Error(object message) {

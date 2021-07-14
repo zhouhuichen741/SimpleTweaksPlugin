@@ -1,28 +1,37 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Game.Internal;
 using Dalamud.Interface;
 using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using SimpleTweaksPlugin.Enums;
+using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
-using static SimpleTweaksPlugin.Tweaks.UiAdjustments.Step;
-using Addon = Dalamud.Game.Internal.Gui.Addon.Addon;
+using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin {
     public partial class UiAdjustmentsConfig {
-        public ShiftTargetCastBarText.Config ShiftTargetCastBarText = new ShiftTargetCastBarText.Config();
+        public bool ShouldSerializeShiftTargetCastBarText() => ShiftTargetCastBarText != null;
+        public ShiftTargetCastBarText.Config ShiftTargetCastBarText = null;
     }
 }
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
-    public class ShiftTargetCastBarText : UiAdjustments.SubTweak {
+    public unsafe class ShiftTargetCastBarText : UiAdjustments.SubTweak {
 
-        public class Config {
+        public class Config : TweakConfig {
             public int Offset = 8;
+            public Alignment NameAlignment = Alignment.BottomRight;
+            public bool ShowCastTimeLeft;
+            public Alignment CastTimeAlignment = Alignment.TopLeft;
+            public int TimerOffset = 8;
         }
-
+        
+        public Config LoadedConfig { get; private set; }
+        
         public override string Name => "调整目标咏唱栏文字位置";
         public override string Description => "调整目标咏唱栏文字位置以方便阅读";
         
@@ -31,25 +40,25 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         protected override DrawConfigDelegate DrawConfigTree => (ref bool changed) => {
             var bSize = buttonSize * ImGui.GetIO().FontGlobalScale;
             ImGui.SetNextItemWidth(90 * ImGui.GetIO().FontGlobalScale);
-            if (ImGui.InputInt($"###{GetType().Name}_Offset", ref PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset)) {
-                if (PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset > MaxOffset) PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = MaxOffset;
-                if (PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset < MinOffset) PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = MinOffset;
+            if (ImGui.InputInt($"###{GetType().Name}_Offset", ref LoadedConfig.Offset)) {
+                if (LoadedConfig.Offset > MaxOffset) LoadedConfig.Offset = MaxOffset;
+                if (LoadedConfig.Offset < MinOffset) LoadedConfig.Offset = MinOffset;
                 changed = true;
             }
             ImGui.SameLine();
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2));
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button($"{(char)FontAwesomeIcon.ArrowUp}", bSize)) {
-                PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = 8;
+                LoadedConfig.Offset = 8;
                 changed = true;
             }
             ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("显示在进度条上方");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("在进度条上方");
 
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button($"{(char) FontAwesomeIcon.CircleNotch}", bSize)) {
-                PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = 24;
+                LoadedConfig.Offset = 24;
                 changed = true;
             }
             ImGui.PopFont();
@@ -59,110 +68,194 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);
             if (ImGui.Button($"{(char)FontAwesomeIcon.ArrowDown}", bSize)) {
-                PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset = 32;
+                LoadedConfig.Offset = 32;
                 changed = true;
             }
             ImGui.PopFont();
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("显示在进度条下方");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("在进度条下方");
             ImGui.PopStyleVar();
             ImGui.SameLine();
-            ImGui.Text("垂直偏移量");
+            ImGui.Text("技能名垂直偏移");
+
+            changed |= ImGuiExt.HorizontalAlignmentSelector("技能名对齐方式", ref LoadedConfig.NameAlignment, VerticalAlignment.Bottom);
+
+            ImGui.Checkbox("显示读条剩余时间", ref LoadedConfig.ShowCastTimeLeft);
+            if (LoadedConfig.ShowCastTimeLeft)
+            {
+                
+                changed |= ImGuiExt.HorizontalAlignmentSelector("读条剩余时间对齐方式", ref LoadedConfig.CastTimeAlignment, VerticalAlignment.Top);
+                ImGui.SetNextItemWidth(90 * ImGui.GetIO().FontGlobalScale);
+                if (ImGui.InputInt($"###Target Cast Time Left_Offset", ref LoadedConfig.TimerOffset)) {
+                    if (LoadedConfig.TimerOffset > MaxOffset) LoadedConfig.TimerOffset = MaxOffset;
+                    if (LoadedConfig.TimerOffset < MinOffset) LoadedConfig.TimerOffset = MinOffset;
+                    changed = true;
+                }
+                ImGui.SameLine();
+                ImGui.Text("读条剩余时间垂直偏移");
+            }
         };
 
         public void OnFrameworkUpdate(Framework framework) {
             try {
-                HandleBars(framework);
+                HandleBars();
             } catch (Exception ex) {
                 Plugin.Error(this, ex);
             }
         }
 
-        private void HandleBars(Framework framework, bool reset = false) {
+        private void HandleBars(bool reset = false)
+        {
 
-            var focusTargetInfo = framework.Gui.GetAddonByName("_FocusTargetInfo", 1);
-            if (focusTargetInfo != null && (focusTargetInfo.Visible || reset)) {
-                HandleFocusTargetInfo(focusTargetInfo, reset);
+            if (PluginInterface.ClientState.LocalPlayer == null) return;
+            var focusTargetInfo = Common.GetUnitBase("_FocusTargetInfo");
+            if (focusTargetInfo != null && focusTargetInfo->UldManager.NodeList != null && focusTargetInfo->UldManager.NodeListCount > 16 && (focusTargetInfo->IsVisible || reset)) {
+                DoShift(focusTargetInfo->UldManager.NodeList[16]);
+                if (LoadedConfig.ShowCastTimeLeft)
+                {
+                    AddCastTimeTextNode(focusTargetInfo, (AtkTextNode*)focusTargetInfo->UldManager.NodeList[16], focusTargetInfo->UldManager.NodeList[16]->IsVisible);
+                }
+
             }
 
 
-            var seperatedCastBar = framework.Gui.GetAddonByName("_TargetInfoCastBar", 1);
-            if (seperatedCastBar != null && (seperatedCastBar.Visible || reset)) {
-                HandleSeperatedCastBar(seperatedCastBar, reset);
+            var splitCastBar = Common.GetUnitBase("_TargetInfoCastBar");
+            if (splitCastBar != null && splitCastBar->UldManager.NodeList != null && splitCastBar->UldManager.NodeListCount > 5 && (splitCastBar->IsVisible || reset)) {
+                DoShift(splitCastBar->UldManager.NodeList[5]);
+                if (LoadedConfig.ShowCastTimeLeft)
+                {
+                    AddCastTimeTextNode(splitCastBar,(AtkTextNode*)splitCastBar->UldManager.NodeList[5],splitCastBar->UldManager.NodeList[5]->IsVisible);
+                }
                 if (!reset) return;
             }
 
-            var mainTargetInfo = framework.Gui.GetAddonByName("_TargetInfo", 1);
-            if (mainTargetInfo != null && (mainTargetInfo.Visible || reset)) {
-                HandleMainTargetInfo(mainTargetInfo, reset);
+            var mainTargetInfo = Common.GetUnitBase("_TargetInfo");
+            if (mainTargetInfo != null && mainTargetInfo->UldManager.NodeList != null && mainTargetInfo->UldManager.NodeListCount > 44 && (mainTargetInfo->IsVisible || reset)) {
+                DoShift(mainTargetInfo->UldManager.NodeList[44]);
+                if (LoadedConfig.ShowCastTimeLeft)
+                {
+                    AddCastTimeTextNode(mainTargetInfo,(AtkTextNode*)mainTargetInfo->UldManager.NodeList[44],mainTargetInfo->UldManager.NodeList[44]->IsVisible);
+                }
             }
         }
-
-        private unsafe void HandleSeperatedCastBar(Addon addon, bool reset = false) {
-            var addonStruct = (AtkUnitBase*) (addon.Address);
-            if (addonStruct->RootNode == null) return;
-            var rootNode = addonStruct->RootNode;
-            if (rootNode->ChildNode == null) return;
-            var child = rootNode->ChildNode;
-            DoShift(child, reset);
-        }
-
-        private unsafe void HandleMainTargetInfo(Addon addon, bool reset = false) {
-            var addonStruct =(AtkUnitBase*) (addon.Address);
-            if (addonStruct->RootNode == null) return;
-
-
-            var rootNode = addonStruct->RootNode;
-            if (rootNode->ChildNode == null) return;
-            var child = rootNode->ChildNode;
-            for (var i = 0; i < 8; i++) {
-                if (child->PrevSiblingNode == null) return;
-                child = child->PrevSiblingNode;
-            }
-
-            DoShift(child, reset);
-        }
-
-        private unsafe void HandleFocusTargetInfo(Addon addon, bool reset = false) {
-            var addonStruct = (AtkUnitBase*)(addon.Address);
-            if (addonStruct->RootNode == null) return;
-
-
-            var rootNode = addonStruct->RootNode;
-            if (rootNode->ChildNode == null) return;
-            var child = rootNode->ChildNode;
-            for (var i = 0; i < 6; i++) {
-                if (child->PrevSiblingNode == null) return;
-                child = child->PrevSiblingNode;
-            }
-
-            DoShift(child, reset);
-        }
-
+        
         private const int MinOffset = 0;
         private const int MaxOffset = 48;
 
-        private unsafe void DoShift(AtkResNode* node, bool reset = false) {
+        private void DoShift(AtkResNode* node, bool reset = false) {
             if (node == null) return;
-            if (node->ChildCount != 5) return; // Should have 5 children
-            var skillTextNode = UiAdjustments.GetResNodeByPath(node, Child, Previous, Previous, Previous);
-            if (skillTextNode == null) return;
-            var p = PluginConfig.UiAdjustments.ShiftTargetCastBarText.Offset;
+            var p = LoadedConfig.Offset;
             if (p < MinOffset) p = MinOffset;
             if (p > MaxOffset) p = MaxOffset;
-            Marshal.WriteInt16(new IntPtr(skillTextNode), 0x92, reset ? (short) 24 : (short) p);
+            node->Height = reset ? (ushort) 24 : (ushort) p;
+            var textNode = (AtkTextNode*) node;
+            textNode->AlignmentFontType = reset ? (byte) AlignmentType.BottomRight : (byte) LoadedConfig.NameAlignment;
+            if (reset) {
+                UiHelper.SetPosition(node, 0, null);
+                UiHelper.SetSize(node, 197, null);
+            } else {
+                UiHelper.SetPosition(node, 8, null);
+                UiHelper.SetSize(node, 188, null);
+            }
+            
+        }
+
+        private const int TargetCastNodeId = 99990002;
+
+        private void AddCastTimeTextNode(AtkUnitBase* unit, AtkTextNode* cloneTextNode, bool visible = false)
+        {
+            var textNode = (AtkTextNode*)GetNodeById(unit, TargetCastNodeId);
+            
+            if (textNode == null)
+            {
+                textNode = UiHelper.CloneNode(cloneTextNode);
+                textNode->AtkResNode.NodeID = TargetCastNodeId;
+                var newStrPtr = Common.Alloc(512);
+                textNode->NodeText.StringPtr = (byte*) newStrPtr;
+                textNode->NodeText.BufSize = 512;
+                UiHelper.SetText(textNode, "");
+                UiHelper.ExpandNodeList(unit, 1);
+                unit->UldManager.NodeList[unit->UldManager.NodeListCount++] = (AtkResNode*) textNode;
+
+                var nextNode = (AtkResNode*)cloneTextNode;
+                while (nextNode->PrevSiblingNode != null) nextNode = nextNode->PrevSiblingNode;
+
+                textNode->AtkResNode.ParentNode = nextNode->ParentNode;
+                textNode->AtkResNode.ChildNode = null;
+                textNode->AtkResNode.NextSiblingNode = nextNode;
+                textNode->AtkResNode.PrevSiblingNode = null;
+                nextNode->PrevSiblingNode = (AtkResNode*) textNode;
+                nextNode->ParentNode->ChildCount += 1;
+            }
+
+            if (!visible)
+            {
+                UiHelper.Hide(textNode);
+            }
+            else
+            {
+                textNode->AlignmentFontType = (byte)(0x26 + (byte)LoadedConfig.CastTimeAlignment);
+                textNode->AtkResNode.Height = (ushort) LoadedConfig.TimerOffset;
+                //UiHelper.SetPosition(textNode, PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeOffsetX,
+                //    PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeOffsetY);
+                //UiHelper.SetSize(textNode, cloneTextNode->AtkResNode.Width, cloneTextNode->AtkResNode.Height);
+                textNode->FontSize = 15;//(byte) PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeFontSize;
+                UiHelper.SetText(textNode, GetTargetCastTime().ToString("00.00"));
+                UiHelper.Show(textNode);
+            }
+
+        }
+
+
+        private float GetTargetCastTime()
+        {
+            if (PluginInterface.ClientState.LocalPlayer == null ||
+                PluginInterface.ClientState.Targets.CurrentTarget == null)
+                return 0;
+            var target = PluginInterface.ClientState.Targets.CurrentTarget;
+            if (target is Chara)
+            {
+                var castTime =
+                    Marshal.PtrToStructure<float>(target.Address +
+                                                  Dalamud.Game.ClientState.Structs.ActorOffsets.CurrentCastTime);
+                var totalCastTime =
+                    Marshal.PtrToStructure<float>(target.Address +
+                                                  Dalamud.Game.ClientState.Structs.ActorOffsets.TotalCastTime);
+                return totalCastTime - castTime;
+            }
+
+            return 0;
+        }
+
+        
+        private static AtkResNode* GetNodeById(AtkUnitBase* compBase, uint id)
+        {
+            if (compBase == null) return null;
+            if ((compBase->UldManager.Flags1 & 1) == 0 || id <= 0) return null;
+            var count = compBase->UldManager.NodeListCount;
+            for (var i = 0; i < count; i++)
+            {
+                
+                var node = compBase->UldManager.NodeList[i];
+                //SimpleLog.Information(i+"@"+node->NodeID);
+                if (node->NodeID == id) return node;
+            }
+            return null;
         }
 
         public override void Enable() {
             if (Enabled) return;
+            LoadedConfig = LoadConfig<Config>() ?? PluginConfig.UiAdjustments.ShiftTargetCastBarText ?? new Config();
             PluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdate;
             Enabled = true;
         }
 
         public override void Disable() {
             if (!Enabled) return;
+            SaveConfig(LoadedConfig);
+            PluginConfig.UiAdjustments.ShiftTargetCastBarText = null;
             PluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdate;
             SimpleLog.Debug($"[{GetType().Name}] Reset");
-            HandleBars(PluginInterface.Framework, true);
+            HandleBars(true);
             Enabled = false;
         }
 

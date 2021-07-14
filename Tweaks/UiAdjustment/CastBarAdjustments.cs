@@ -2,29 +2,31 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Game.Internal;
-using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.GameStructs;
 using SimpleTweaksPlugin.Helper;
-using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Tweaks.UiAdjustment;
+
+namespace SimpleTweaksPlugin {
+    public partial class UiAdjustmentsConfig {
+        public CastBarAdjustments.Configs CastBarAdjustments = new();
+    }
+}
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
         public override string Name => "咏唱栏修改";
         public override string Description => "隐藏或移动咏唱栏的特定部分";
-        public override IEnumerable<string> Tags => new[] {"SlideCast", "Slide Cast", "咏唱", "咏唱栏"};
-        public enum Alignment : byte {
-            Left = 3,
-            Center = 4,
-            Right = 5,
-        }
+        public override IEnumerable<string> Tags => new[] {"滑步", "咏唱", "咏唱栏"};
 
-        public class Configs : TweakConfig {
+        public class Configs {
             public bool RemoveCastingText;
             public bool RemoveIcon;
             public bool RemoveCounter;
             public bool RemoveName;
+            public bool RemoveInterruptedText;
 
             public bool SlideCast;
             public int SlideCastAdjust = 500;
@@ -38,61 +40,22 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             public int OffsetCounterPosition = 0;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config => PluginConfig.UiAdjustments.CastBarAdjustments;
 
-        private bool DrawAlignmentSelector(string name, ref Alignment selectedAlignment) {
-            var changed = false;
 
-            ImGui.PushStyleVar(ImGuiStyleVar.FrameBorderSize, 2);
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.One);
-
-            ImGui.PushID(name);
-            ImGui.BeginGroup();
-            ImGui.PushFont(UiBuilder.IconFont);
-
-            ImGui.PushStyleColor(ImGuiCol.Border, selectedAlignment == Alignment.Left ? 0xFF00A5FF: 0x0);
-            if (ImGui.Button($"{(char) FontAwesomeIcon.AlignLeft}##{name}")) {
-                selectedAlignment = Alignment.Left;
-                changed = true;
-            }
-            ImGui.PopStyleColor();
-            ImGui.SameLine();
-            ImGui.PushStyleColor(ImGuiCol.Border, selectedAlignment == Alignment.Center ? 0xFF00A5FF : 0x0);
-            if (ImGui.Button($"{(char) FontAwesomeIcon.AlignCenter}##{name}")) {
-                selectedAlignment = Alignment.Center;
-                changed = true;
-            }
-            ImGui.PopStyleColor();
-            ImGui.SameLine();
-            ImGui.PushStyleColor(ImGuiCol.Border, selectedAlignment == Alignment.Right ? 0xFF00A5FF : 0x0);
-            if (ImGui.Button($"{(char) FontAwesomeIcon.AlignRight}##{name}")) {
-                selectedAlignment = Alignment.Right;
-                changed = true;
-            }
-            ImGui.PopStyleColor();
-
-            ImGui.PopFont();
-            ImGui.PopStyleVar();
-            ImGui.SameLine();
-            ImGui.Text(name);
-            ImGui.EndGroup();
-
-            ImGui.PopStyleVar();
-            ImGui.PopID();
-            return changed;
-        }
         
         private float configAlignmentX;
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
             hasChanged |= ImGui.Checkbox("隐藏'发动中'文字", ref Config.RemoveCastingText);
             hasChanged |= ImGui.Checkbox("隐藏图标", ref Config.RemoveIcon);
+            hasChanged |= ImGui.Checkbox("隐藏'打断成功'文字", ref Config.RemoveInterruptedText);
             hasChanged |= ImGui.Checkbox("隐藏剩余时间", ref Config.RemoveCounter);
             if (Config.RemoveCastingText && !Config.RemoveCounter) {
                 ImGui.SameLine();
                 if (ImGui.GetCursorPosX() > configAlignmentX) configAlignmentX = ImGui.GetCursorPosX();
                 ImGui.SetCursorPosX(configAlignmentX);
-                hasChanged |= DrawAlignmentSelector("剩余时间对齐", ref Config.AlignCounter);
+                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("剩余时间对齐", ref Config.AlignCounter);
 
                 ImGui.SetCursorPosX(configAlignmentX);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
@@ -106,7 +69,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 ImGui.SameLine();
                 if (ImGui.GetCursorPosX() > configAlignmentX) configAlignmentX = ImGui.GetCursorPosX();
                 ImGui.SetCursorPosX(configAlignmentX);
-                hasChanged |= DrawAlignmentSelector("技能名对齐", ref Config.AlignName);
+                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("技能名对齐", ref Config.AlignName);
                 ImGui.SetCursorPosX(configAlignmentX);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
                 hasChanged |= ImGui.InputInt("偏移##offsetNamePosition", ref Config.OffsetNamePosition);
@@ -135,7 +98,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         };
 
         public override void Enable() {
-            Config = LoadConfig<Configs>() ?? new Configs();
             PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
             base.Enable();
         }
@@ -143,7 +105,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override void Disable() {
             PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
             UpdateCastBar(true);
-            SaveConfig(Config);
             base.Disable();
         }
 
@@ -169,6 +130,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             var castingText = (AtkTextNode*) castBar->AtkUnitBase.UldManager.NodeList[9];
             var skillNameText = (AtkTextNode*) castBar->AtkUnitBase.UldManager.NodeList[11];
             var progressBar = (AtkNineGridNode*) castBar->AtkUnitBase.UldManager.NodeList[5];
+            var interruptedText = (AtkTextNode*) castBar->AtkUnitBase.UldManager.NodeList[12];
             var slideMarker = (AtkNineGridNode*) null;
 
             for (var i = 13; i < castBar->AtkUnitBase.UldManager.NodeListCount; i++) {
@@ -189,6 +151,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
                 UiHelper.SetSize(countdownText, 42, null);
                 UiHelper.SetPosition(countdownText, 170, null);
+                UiHelper.SetScale(interruptedText, 1);
 
 
                 if (slideMarker != null) {
@@ -220,6 +183,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 skillNameText->AlignmentFontType = (byte) (0x00 | (byte) Config.AlignName);
                 UiHelper.SetPosition(skillNameText, (barNode->X + 4) + Config.OffsetNamePosition, null);
                 UiHelper.SetSize(skillNameText, barNode->Width - 8, null);
+            }
+
+            if (Config.RemoveInterruptedText) {
+                UiHelper.SetScale(interruptedText, 0);
             }
 
             if (Config.SlideCast) {
