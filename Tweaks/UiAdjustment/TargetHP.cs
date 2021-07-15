@@ -162,7 +162,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private const int TargetHPNodeID = 99990001;
         
         private void UpdateGaugeBar(AtkComponentNode* gauge, AtkTextNode* cloneTextNode, Actor target, Vector2 positionOffset, Vector4? customColor, byte fontSize, bool reset = false) {
-            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000) return;
+            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000 || PluginInterface.ClientState.LocalPlayer == null) return;
             
             AtkTextNode* textNode = null;
 
