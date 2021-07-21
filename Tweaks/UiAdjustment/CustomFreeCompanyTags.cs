@@ -33,8 +33,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private delegate void* UpdateNameplateDelegate(RaptureAtkModuleStruct* raptureAtkModule, NamePlateInfo* namePlateInfo, NumberArrayData* numArray, StringArrayData* stringArray, GameObject* gameObject, int numArrayIndex, int stringArrayIndex);
         private HookWrapper<UpdateNameplateDelegate> updateNameplateHook;
         
-        public override string Name => "Custom Free Company Tags";
-        public override string Description => "Allows hiding or customizing Free Company and Wanderer tags.";
+        public override string Name => "自定义部队Tag";
+        public override string Description => "自定义姓名版部队Tag和放浪神的显示.";
         
         public override void Enable() {
             if (Enabled) return;
@@ -195,16 +195,16 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private bool errored;
         
-        private string defaultString = "Default (FC)";
-        private string wandererString = "Wanderer";
+        private string defaultString = "默认";
+        private string wandererString = "放浪神";
         private string newFcName = string.Empty;
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
 
             if (ImGui.BeginTable("fcList#noFreeCompanyOnNamePlate", 4)) {
                 ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, 28 * ImGui.GetIO().FontGlobalScale);
-                ImGui.TableSetupColumn($"Replace", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 50 * ImGui.GetIO().FontGlobalScale);
-                ImGui.TableSetupColumn("FC Tag", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 75* ImGui.GetIO().FontGlobalScale);
-                ImGui.TableSetupColumn("Replacement", ImGuiTableColumnFlags.NoClip);
+                ImGui.TableSetupColumn($"启用", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 50 * ImGui.GetIO().FontGlobalScale);
+                ImGui.TableSetupColumn("部队Tag", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 75* ImGui.GetIO().FontGlobalScale);
+                ImGui.TableSetupColumn("替换为", ImGuiTableColumnFlags.NoClip);
                 ImGui.TableHeadersRow();
 
 
@@ -237,7 +237,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 
                 ImGui.TableNextColumn();
                 ImGui.TableNextColumn();
-                ImGui.Text("Add FC:");
+                ImGui.Text("添加:");
                 
                 ImGui.TableNextColumn();
                 ImGui.SetNextItemWidth(-1);
@@ -252,10 +252,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
                 if (newFcName.Length == 0) {
                     ImGui.SameLine();
-                    ImGui.TextDisabled("Enter name to add FC to list.");
+                    ImGui.TextDisabled("回车以添加.");
                 } else if (config.FcCustomizations.ContainsKey(newFcName)) {
                     ImGui.SameLine();
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "FC is already on list.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "该名称已被添加.");
                 }
 
 
@@ -278,7 +278,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 if (ImGui.Button($"X##fcList#{GetType().Name}_delete_{name}", new Vector2(-1, 24 * ImGui.GetIO().FontGlobalScale))) {
                     changeType = ChangeType.Delete;
                 }
-                if (ImGui.IsItemHovered()) ImGui.SetTooltip($"Remove {name}");
+                if (ImGui.IsItemHovered()) ImGui.SetTooltip($"移除 {name}");
             }
             ImGui.TableNextColumn();
             ImGui.Checkbox($"##fcList#{GetType().Name}_enable_{name}", ref tc.Enabled);
@@ -303,16 +303,16 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.TableNextColumn();
             if (isEditingName) {
                 if (config.FcCustomizations.ContainsKey(name)) {
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "This name is already added.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "该名称已被添加.");
                 } else {
-                    ImGui.TextDisabled("Press ENTER to save FC Tag.");
+                    ImGui.TextDisabled("回车以保存.");
                 }
                 
             } else {
                 ImGui.SetNextItemWidth(-1);
             
                 if (tc.Enabled) {
-                    ImGui.InputTextWithHint($"##fcList#{GetType().Name}_replacement_{name}", "Hidden", ref tc.Replacement, 200);
+                    ImGui.InputTextWithHint($"##fcList#{GetType().Name}_replacement_{name}", "隐藏", ref tc.Replacement, 200);
                     if (ImGui.IsItemFocused() && ImGui.IsItemActive()) {
                         
                         ImGui.SetNextWindowPos(new Vector2(ImGui.GetCursorScreenPos().X + ImGui.GetItemRectSize().X - placeholderTooltipSize.X, ImGui.GetCursorScreenPos().Y));
@@ -349,7 +349,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     }
                 } else {
                     var s = string.Empty;
-                    ImGui.InputTextWithHint($"##fcList#{GetType().Name}_replacement_{name}", "Unchanged", ref s, 50, ImGuiInputTextFlags.ReadOnly);
+                    ImGui.InputTextWithHint($"##fcList#{GetType().Name}_replacement_{name}", "不变", ref s, 50, ImGuiInputTextFlags.ReadOnly);
                 }
             }
             
