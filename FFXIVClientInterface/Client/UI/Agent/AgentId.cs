@@ -64,7 +64,7 @@
         // Cutscene,
         CutsceneReplay = 68,
         MonsterNote = 69,
-        Market = 70,
+        Market = 69,
         FateReward = 72, // FateProgress (Shared FATE)
         // Catch,
         FreeCompany = 74,
