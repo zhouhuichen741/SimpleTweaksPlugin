@@ -22,6 +22,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                 ClientLanguage.German => new Regex(@"^Der Unterbefehl \[Name des Ziels\] an der \d+\. Stelle des Textkommandos \((.+)\) ist fehlerhaft\.$"),
                 ClientLanguage.French => new Regex(@"^Le \d+er? argument “nom de la cible” est incorrect (.*?)\.$"), 
                 ClientLanguage.English => new Regex(@"^“(.+)” is not a valid target name\.$"),
+                ClientLanguage.ChineseSimplified => new Regex(@"^“(.+)”出现问题：\d+?号指定的目标名不正确。$"),
                 _ => null
             };
             
@@ -38,7 +39,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         private unsafe void OnChatMessage(XivChatType type, uint senderid, ref SeString sender, ref SeString message, ref bool isHandled) {
             if (type != XivChatType.ErrorMessage) return;
             var lastCommandStr = Encoding.UTF8.GetString(Common.LastCommand->StringPtr, (int) Common.LastCommand->BufUsed);
-            if (!(lastCommandStr.StartsWith("/target ") || lastCommandStr.StartsWith("/ziel ") || lastCommandStr.StartsWith("/cibler "))) {
+            if (!(lastCommandStr.StartsWith("/target ") || lastCommandStr.StartsWith("/ziel ") || lastCommandStr.StartsWith("/cibler ") || lastCommandStr.StartsWith("/选中 "))) {
                 return;
             }
 

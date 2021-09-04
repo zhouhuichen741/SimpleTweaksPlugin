@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Dalamud;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -34,8 +35,9 @@ namespace SimpleTweaksPlugin.Tweaks {
             Process.Start("explorer.exe", arg2.TextValue);
         }
 
-        private void CommandHandler(string command, string arguments) {
-            var saveDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "FINAL FANTASY XIV - A Realm Reborn", $"FFXIV_CHR{External.ClientState.LocalContentId:X16}");
+        private void CommandHandler(string command, string arguments)
+        {
+            var saveDir = Path.Combine(External.ClientState.ClientLanguage == ClientLanguage.ChineseSimplified ? Process.GetCurrentProcess().MainModule.FileName.Replace("ffxiv_dx11.exe","").Replace("ffxiv.exe", "") : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "FINAL FANTASY XIV - A Realm Reborn", $"FFXIV_CHR{External.ClientState.LocalContentId:X16}");
             if (arguments == "open") {
                 Process.Start("explorer.exe", saveDir);
                 return;

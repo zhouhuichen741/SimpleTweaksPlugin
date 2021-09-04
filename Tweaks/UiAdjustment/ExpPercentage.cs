@@ -30,6 +30,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             regexPattern = External.ClientState.ClientLanguage switch {
                 ClientLanguage.French => new Regex(@"Exp:(\d+)/(\d+)"),
                 ClientLanguage.German => new Regex(@"(\d+)/(\d+)"),
+                ClientLanguage.ChineseSimplified => new Regex(@"经验值(\d+)/(\d+)"),
                 _ => new Regex(@"EXP(\d+)/(\d+)")
             };
 

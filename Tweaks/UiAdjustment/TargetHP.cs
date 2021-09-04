@@ -30,30 +30,32 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             
             public bool NoFocus;
             public Vector2 FocusPosition = new Vector2(0);
+            public bool EnableDistance = false;
+            public bool EnableEffectiveDistance = false;
             public bool FocusUseCustomColor = false;
             public Vector4 FocusCustomColor = new Vector4(1);
             public byte FocusFontSize = 14;
         }
-
+        
         public enum DisplayFormat {
-            [Description("Full Number")]
+            [Description("完整数值")] 
             FullNumber,
-            [Description("Full Number, with Separators")]
+            [Description("带分隔符的完整值 (5,555,555)")]
             FullNumberSeparators,
-            [Description("Short Number")]
+            [Description("简写 (5K, 5M)")]
             ZeroDecimalPrecision,
-            [Description("1 Decimal")]
+            [Description("一位小数 (5.5K, 5.5M)")]
             OneDecimalPrecision,
-            [Description("2 Decimal")]
+            [Description("两位小数 (5.55K, 5.55M)")]
             TwoDecimalPrecision,
         }
-
+        
         public Configs Config { get; private set; }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            if (ImGui.BeginCombo("Display Format###targetHpFormat", $"{Config.DisplayFormat.GetDescription()} ({FormatNumber(5555555, Config.DisplayFormat)})")) {
+            if (ImGui.BeginCombo("显示格式###targetHpFormat", Config.DisplayFormat.GetDescription())) {
                 foreach (var v in (DisplayFormat[])Enum.GetValues(typeof(DisplayFormat))) {
-                    if (!ImGui.Selectable($"{v.GetDescription()} ({FormatNumber(5555555, v)})##targetHpFormatSelect", Config.DisplayFormat == v)) continue;
+                    if (!ImGui.Selectable($"{v.GetDescription()}##targetHpFormatSelect", Config.DisplayFormat == v)) continue;
                     Config.DisplayFormat = v;
                     hasChanged = true;
                 }
@@ -61,35 +63,38 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
 
             ImGui.SetNextItemWidth(150);
-            hasChanged |= ImGui.InputFloat("X Offset##AdjustTargetHPPositionX", ref Config.Position.X, 1, 5, "%.0f");
+            hasChanged |= ImGui.InputFloat("水平偏移##AdjustTargetHPPositionX", ref Config.Position.X, 1, 5, "%.0f");
             ImGui.SetNextItemWidth(150);
-            hasChanged |= ImGui.InputFloat("Y Offset##AdjustTargetHPPositionY", ref Config.Position.Y, 1, 5, "%0.f");
-            hasChanged |= ImGuiExt.InputByte("Font Size##TargetHPFontSize", ref Config.FontSize);
-            hasChanged |= ImGui.Checkbox("Custom Color?##TargetHPUseCustomColor", ref Config.UseCustomColor);
+            hasChanged |= ImGui.InputFloat("垂直偏移##AdjustTargetHPPositionY", ref Config.Position.Y, 1, 5, "%0.f");
+            hasChanged |= ImGuiExt.InputByte("字体大小##TargetHPFontSize", ref Config.FontSize);
+            hasChanged |= ImGui.Checkbox("自定义颜色##TargetHPUseCustomColor", ref Config.UseCustomColor);
             if (Config.UseCustomColor) {
                 ImGui.SameLine();
                 hasChanged |= ImGui.ColorEdit4("##TargetHPCustomColor", ref Config.CustomColor);
             }
             
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
-            hasChanged |= ImGui.Checkbox("Disable Focus Target HP", ref Config.NoFocus);
+            hasChanged |= ImGui.Checkbox("不显示焦点目标HP", ref Config.NoFocus);
 
             if (!Config.NoFocus) {
                 ImGui.SetNextItemWidth(150);
-                hasChanged |= ImGui.InputFloat("Focus Target X Offset##AdjustTargetHPFocusPositionX", ref Config.FocusPosition.X, 1, 5, "%.0f");
+                hasChanged |= ImGui.InputFloat("焦点目标水平偏移##AdjustTargetHPFocusPositionX", ref Config.FocusPosition.X, 1, 5, "%.0f");
                 ImGui.SetNextItemWidth(150);
-                hasChanged |= ImGui.InputFloat("Focus Target Y Offset##AdjustTargetHPFocusPositionY", ref Config.FocusPosition.Y, 1, 5, "%0.f");
-                hasChanged |= ImGuiExt.InputByte("Font Size##TargetHPFocusFontSize", ref Config.FocusFontSize);
-                hasChanged |= ImGui.Checkbox("Custom Color?##TargetHPFocusUseCustomColor", ref Config.FocusUseCustomColor);
+                hasChanged |= ImGui.InputFloat("焦点目标垂直偏移##AdjustTargetHPFocusPositionY", ref Config.FocusPosition.Y, 1, 5, "%0.f");
+                hasChanged |= ImGuiExt.InputByte("字体大小##TargetHPFocusFontSize", ref Config.FocusFontSize);
+                hasChanged |= ImGui.Checkbox("自定义颜色##TargetHPFocusUseCustomColor", ref Config.FocusUseCustomColor);
                 if (Config.FocusUseCustomColor) {
                     ImGui.SameLine();
                     hasChanged |= ImGui.ColorEdit4("##TargetHPFocusCustomColor", ref Config.FocusCustomColor);
                 }
             }
+            hasChanged |= ImGui.Checkbox("显示与目标和的距离", ref Config.EnableDistance);
+            hasChanged |= ImGui.Checkbox("显示与目标的有效距离", ref Config.EnableEffectiveDistance);
+
         };
         
-        public override string Name => "Target HP";
-        public override string Description => "Displays the exact (or optionally rounded) value of target's hitpoints.";
+        public override string Name => "目标HP";
+        public override string Description => "显示目标的精确HP(或简化后的数值)";
 
         public override void Enable() {
             Config = LoadConfig<Configs>() ?? PluginConfig.UiAdjustments.TargetHP ?? new Configs();
@@ -131,6 +136,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 var ui = Common.GetUnitBase("_FocusTargetInfo", 1);
                 if (ui != null && (ui->IsVisible || reset)) {
                     UpdateFocusTarget(ui, External.Targets.FocusTarget, reset);
+
                 }
             }
         }
@@ -158,7 +164,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
         
         private void UpdateGaugeBar(AtkComponentNode* gauge, AtkTextNode* cloneTextNode, GameObject target, Vector2 positionOffset, Vector4? customColor, byte fontSize, bool reset = false) {
-            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000) return;
+            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000 || External.ClientState.LocalPlayer == null) return;
             
             AtkTextNode* textNode = null;
 
@@ -216,8 +222,18 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             textNode->FontSize = fontSize;
             
             
-            if (target is Character chara) {
-                textNode->SetText( $"{FormatNumber(chara.CurrentHp)}/{FormatNumber(chara.MaxHp)}");
+            if (target is Character chara)
+            {
+                var y = "";
+                if (Config.EnableDistance){
+                    Vector3 me = External.ClientState.LocalPlayer.Position;
+                    Vector3 tar = chara.Position;
+                    y += "  " + Vector3.Distance(me, tar).ToString("00.0");
+                }
+                if (Config.EnableEffectiveDistance){
+                    y += "  " + target.YalmDistanceX.ToString();
+                }
+                textNode->SetText($"{FormatNumber(chara.CurrentHp)}/{FormatNumber(chara.MaxHp)}"+y);
             } else {
                 textNode->SetText("");
             }
@@ -227,13 +243,11 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             displayFormat ??= Config.DisplayFormat;
             if (displayFormat == DisplayFormat.FullNumber) return num.ToString(Culture);
             if (displayFormat == DisplayFormat.FullNumberSeparators) return num.ToString("N0", Culture);
-
             var fStr = displayFormat switch {
                 DisplayFormat.OneDecimalPrecision => "F1",
                 DisplayFormat.TwoDecimalPrecision => "F2",
                 _ => "F0"
             };
-
             return num switch {
                 >= 1000000 => $"{(num / 1000000f).ToString(fStr, Culture)}M",
                 >= 1000 => $"{(num / 1000f).ToString(fStr, Culture)}K",

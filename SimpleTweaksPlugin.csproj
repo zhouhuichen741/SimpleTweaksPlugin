@@ -56,7 +56,8 @@
 		</Reference>
 		<Reference Include="FFXIVClientStructs">
 			<Private>true</Private>
-			<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>
+			<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\FFXIVClientStructs.dll</HintPath>
+			<!--<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>-->
 		</Reference>
 		<Reference Include="Microsoft.CSharp" />
         <Reference Include="Newtonsoft.Json">
