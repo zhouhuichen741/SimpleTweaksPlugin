@@ -21,6 +21,6 @@ namespace SimpleTweaksPlugin.Tweaks {
             public override string Key => $"{nameof(ChatTweaks)}@{base.Key}";
         }
 
-        public override string Name => "Chat Tweaks";
+        public override string Name => "聊天优化";
     }
 }

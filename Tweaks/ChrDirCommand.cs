@@ -13,8 +13,8 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public class ChrDirCommand : Tweak {
-        public override string Name => "Character Directory Command";
-        public override string Description => "Adds a command to open the directory when client side character data is stored.";
+        public override string Name => "角色文件夹命令";
+        public override string Description => "添加命令以显示或打开本地角色文件夹";
 
         public override void Setup() {
             Ready = true;

@@ -41,18 +41,18 @@ namespace SimpleTweaksPlugin.Tweaks {
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
 
             if (!Config.UseNameFilter) {
-                hasChanged |= ImGui.Checkbox("Disable Right Click Targeting", ref Config.DisableRightClick);
-                hasChanged |= ImGui.Checkbox("Disable Left Click Targeting", ref Config.DisableLeftClick);
+                hasChanged |= ImGui.Checkbox("禁用右键选中", ref Config.DisableRightClick);
+                hasChanged |= ImGui.Checkbox("禁用左键选中", ref Config.DisableLeftClick);
 
                 ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
-                hasChanged |= ImGui.Checkbox("Only disable in combat", ref Config.OnlyDisableInCombat);
+                hasChanged |= ImGui.Checkbox("仅在战斗中禁用", ref Config.OnlyDisableInCombat);
                 ImGui.Dummy(new Vector2(10) * ImGui.GetIO().FontGlobalScale);
             }
            
-            hasChanged |= ImGui.Checkbox("Enable Name Filtering", ref Config.UseNameFilter);
+            hasChanged |= ImGui.Checkbox("启用姓名过滤", ref Config.UseNameFilter);
 
             if (!(Config.DisableLeftClick || Config.DisableRightClick || Config.UseNameFilter)) {
-                ImGui.Text("It is doing nothing if everything is disabled...");
+                ImGui.Text("不用请随手关闭...");
             }
 
             if (Config.UseNameFilter) {
@@ -137,8 +137,8 @@ namespace SimpleTweaksPlugin.Tweaks {
             }
         };
 
-        public override string Name => "Disable Click Targeting";
-        public override string Description => "Allows disabling of the target function on left and right mouse clicks.";
+        public override string Name => "禁用目标选中";
+        public override string Description => "可以禁用鼠标点击选中目标的功能";
 
         private delegate void* ClickTarget(void** a1, byte* a2, bool a3);
         private Hook<ClickTarget> rightClickTargetHook;

@@ -41,12 +41,12 @@ namespace SimpleTweaksPlugin.Tweaks {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool change) => {
-            ImGui.Text("Add list of command alias. Do not start command with the '/'");
-            ImGui.Text("These aliases, by design, do not work with macros.");
+            ImGui.Text("添加命令同义词,不要输入起始的'/'");
+            ImGui.Text("这些同义词在设计上不会在宏中生效");
             if (ImGui.IsItemHovered()) {
                 ImGui.SetNextWindowSize(new Vector2(280, -1));
                 ImGui.BeginTooltip();
-                ImGui.TextWrapped("Aliases are not supported in macros to prevent them from being sent to the server in the event you back them up on server.\nPlease use the original command in your macros.");
+                ImGui.TextWrapped("不在宏中支持是为了防止你在上传角色数据时将同义词一并上传\n请在宏中使用原始命令");
                 ImGui.EndTooltip();
             }
             ImGui.Separator();
@@ -55,11 +55,11 @@ namespace SimpleTweaksPlugin.Tweaks {
             ImGui.SetColumnWidth(0, 60 * s );
             ImGui.SetColumnWidth(1, 150 * s );
             ImGui.SetColumnWidth(2, 150 * s );
-            ImGui.Text("Enabled");
+            ImGui.Text("已启用");
             ImGui.NextColumn();
-            ImGui.Text("Input Command");
+            ImGui.Text("输入命令");
             ImGui.NextColumn();
-            ImGui.Text("Output Command");
+            ImGui.Text("输出命令");
             ImGui.NextColumn();
             ImGui.NextColumn();
             ImGui.Separator();
@@ -75,7 +75,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                 if (aliasEntry.IsValid()) {
                     change = ImGui.Checkbox($"###aliasToggle{aliasEntry.UniqueId}", ref aliasEntry.Enabled) || change;
                 } else {
-                    ImGui.Text("Invalid");
+                    ImGui.Text("非法");
                 }
                 ImGui.NextColumn();
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
@@ -97,13 +97,13 @@ namespace SimpleTweaksPlugin.Tweaks {
                 
                 if (AliasEntry.NoOverwrite.Contains(aliasEntry.Input)) {
 
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), $"'/{aliasEntry.Input}' is a protected command.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), $"'/{aliasEntry.Input}'是一个被保护的命令");
                 } else if (string.IsNullOrEmpty(aliasEntry.Input)) {
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "Input must not be empty.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "输入不可为空");
                 } else if (string.IsNullOrEmpty(aliasEntry.Output)) {
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "Output must not be empty.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "输出不可为空");
                 } else if (aliasEntry.Input.StartsWith("/")) {
-                    ImGui.TextColored(new Vector4(1, 1, 0, 1), "Don't include the '/'");
+                    ImGui.TextColored(new Vector4(1, 1, 0, 1), "不要输入'/'");
                 }
 
                 ImGui.NextColumn();
@@ -138,8 +138,8 @@ namespace SimpleTweaksPlugin.Tweaks {
         };
         #endregion
 
-        public override string Name => "Command Alias";
-        public override string Description => "Allows replacing commands typed into chat box with other commands.";
+        public override string Name => "自定义同义命令";
+        public override string Description => "创建聊天栏命令的别称以方便输入";
 
         private IntPtr processChatInputAddress;
         private unsafe delegate byte ProcessChatInputDelegate(IntPtr uiModule, byte** a2, IntPtr a3);
@@ -206,7 +206,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                                 return r;
                             }
                             SimpleLog.Log($"String longer than 500");
-                            External.Chat.PrintError("[Simple Tweaks] Command alias result is longer than the maximum of 500 characters. The command could not be executed.");
+                            External.Chat.PrintError("[Simple Tweaks] 长度超过500字符，该命令不会被执行");
                             return 0;
                         }
                     }

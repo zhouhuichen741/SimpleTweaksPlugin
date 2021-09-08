@@ -15,8 +15,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks {
     public unsafe class FixedShadowDistance : Tweak {
-        public override string Name => "Fixed Shadow Distance";
-        public override string Description => "Sets a fixed value for the shadow rendering, preventing it from changing when flying.";
+        public override string Name => "固定影子距离";
+        public override string Description => "设定影子距离的值以防止其在飞行中变化";
 
         public class Configs : TweakConfig {
             public float ShadowDistance = 1800;
@@ -34,7 +34,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         public Configs Config { get; private set; }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.SliderFloat("Shadow Distance", ref Config.ShadowDistance, 1, 1800, "%.0f");
+            hasChanged |= ImGui.SliderFloat("影子距离", ref Config.ShadowDistance, 1, 1800, "%.0f");
         };
 
         public override void Setup() {
