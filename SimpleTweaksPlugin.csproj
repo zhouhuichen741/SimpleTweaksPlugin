@@ -34,7 +34,7 @@
       <None Remove="FFXIVClientInterface\**" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="System.Numerics.Vectors" Version="4.1.3.0" />
+      <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
       <PackageReference Include="DalamudPackager" Version="2.1.2" />
       <PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" />
     </ItemGroup>
@@ -56,10 +56,9 @@
 		</Reference>
 		<Reference Include="FFXIVClientStructs">
 			<Private>true</Private>
-			<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\FFXIVClientStructs.dll</HintPath>
-			<!--<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>-->
+			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\FFXIVClientStructs.dll</HintPath>-->
+			<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>
 		</Reference>
-		<Reference Include="Microsoft.CSharp" />
         <Reference Include="Newtonsoft.Json">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
