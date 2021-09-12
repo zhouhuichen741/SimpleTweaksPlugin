@@ -52,7 +52,7 @@ namespace SimpleTweaksPlugin.Tweaks {
             hasChanged |= ImGui.Checkbox("启用姓名过滤", ref Config.UseNameFilter);
 
             if (!(Config.DisableLeftClick || Config.DisableRightClick || Config.UseNameFilter)) {
-                ImGui.Text("不用请随手关闭...");
+                ImGui.Text("都不开的话你为啥要开着这个功能不关...");
             }
 
             if (Config.UseNameFilter) {
