@@ -12,8 +12,8 @@ using SimpleTweaksPlugin.TweakSystem;
 namespace SimpleTweaksPlugin.Tweaks {
     public unsafe class SetOptionCommand : Tweak {
 
-        public override string Name => "Set Option Command";
-        public override string Description => "Adds commands to change various settings.";
+        public override string Name => "聊天框快捷指令";
+        public override string Description => "添加数个聊天栏指令以快速修改游戏设置";
 
         private IntPtr setOptionAddress = IntPtr.Zero;
 
@@ -86,11 +86,11 @@ namespace SimpleTweaksPlugin.Tweaks {
             if (ImGui.TreeNode("Available Options##optionListTree")) {
                     
                 ImGui.Columns(3);
-                ImGui.Text("option");
+                ImGui.Text("选项");
                 ImGui.NextColumn();
-                ImGui.Text("values");
+                ImGui.Text("可用值");
                 ImGui.NextColumn();
-                ImGui.Text("alias");
+                ImGui.Text("简写");
                 ImGui.Separator();
 
                 foreach (var o in optionKinds) {
@@ -153,7 +153,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                 var fromAlias = optionKinds.Values.Where(ok => ok.alias.Contains(optionKind)).ToArray();
 
                 if (fromAlias.Length == 0) {
-                    External.Chat.PrintError("Unknown Option");
+                    External.Chat.PrintError("未知选项");
                     External.Chat.PrintError("/setoption list for a list of options");
                     return;
                 } 
@@ -221,7 +221,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                     break;
                 }
                 default:
-                    External.Chat.PrintError("Unsupported Option");
+                    External.Chat.PrintError("不支持的选项");
                     return;
             }
 

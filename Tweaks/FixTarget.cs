@@ -10,8 +10,8 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public class FixTarget : Tweak {
-        public override string Name => "Fix '/target' command";
-        public override string Description => "Allows using the default '/target' command for targeting players or NPCs by their names.";
+        public override string Name => "修复'/target'命令";
+        public override string Description => "允许使用'/target'命令选中玩家角色或NPC";
 
         private Regex regex;
         
