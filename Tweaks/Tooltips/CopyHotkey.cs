@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Dalamud;
 using Dalamud.Game;
-using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Game.Internal;
 using ImGuiNET;
@@ -19,21 +18,51 @@ using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Sheets;
 using SimpleTweaksPlugin.TweakSystem;
 
+namespace SimpleTweaksPlugin {
+    public partial class TooltipTweakConfig {
+        public bool ShouldSerializeCopyHotkey() => false;
+        public bool ShouldSerializeCopyHotkeyEnabled() => false;
+        public bool ShouldSerializeTeamcraftLinkHotkey() => false;
+        public bool ShouldSerializeTeamcraftLinkHotkeyEnabled() => false;
+        public bool ShouldSerializeTeamcraftLinkHotkeyForceBrowser() => false;
+        public bool ShouldSerializeGardlandToolsLinkHotkey() => false;
+        public bool ShouldSerializeGardlandToolsLinkHotkeyEnabled() => false;
+        public bool ShouldSerializeGamerEscapeLinkHotkey() => false;
+        public bool ShouldSerializeGamerEscapeLinkHotkeyEnabled() => false;
+        public bool ShouldSerializeHideHotkeysOnTooltip() => false;
+
+        public VK[] CopyHotkey = { VK.Ctrl, VK.C };
+        public bool CopyHotkeyEnabled = false;
+
+        public VK[] TeamcraftLinkHotkey = {VK.Ctrl, VK.T};
+        public bool TeamcraftLinkHotkeyEnabled = false;
+        public bool TeamcraftLinkHotkeyForceBrowser = false;
+
+        public VK[] GardlandToolsLinkHotkey = {VK.Ctrl, VK.G};
+        public bool GardlandToolsLinkHotkeyEnabled = false;
+
+        public VK[] GamerEscapeLinkHotkey = {VK.Ctrl, VK.E};
+        public bool GamerEscapeLinkHotkeyEnabled = false;
+
+        public bool HideHotkeysOnTooltip = false;
+    }
+}
+
 namespace SimpleTweaksPlugin.Tweaks.Tooltips {
     public class CopyHotkey : TooltipTweaks.SubTweak {
 
         public class Configs : TweakConfig {
-            public VirtualKey[] CopyHotkey = { VirtualKey.CONTROL, VirtualKey.C };
+            public VK[] CopyHotkey = { VK.Ctrl, VK.C };
             public bool CopyHotkeyEnabled = false;
 
-            public VirtualKey[] TeamcraftLinkHotkey = {VirtualKey.CONTROL, VirtualKey.T};
+            public VK[] TeamcraftLinkHotkey = {VK.Ctrl, VK.T};
             public bool TeamcraftLinkHotkeyEnabled = false;
             public bool TeamcraftLinkHotkeyForceBrowser = false;
 
-            public VirtualKey[] GardlandToolsLinkHotkey = {VirtualKey.CONTROL, VirtualKey.G};
+            public VK[] GardlandToolsLinkHotkey = {VK.Ctrl, VK.G};
             public bool GardlandToolsLinkHotkeyEnabled = false;
 
-            public VirtualKey[] GamerEscapeLinkHotkey = {VirtualKey.CONTROL, VirtualKey.E};
+            public VK[] GamerEscapeLinkHotkey = {VK.Ctrl, VK.E};
             public bool GamerEscapeLinkHotkeyEnabled = false;
 
             public bool HideHotkeysOnTooltip = false;
@@ -68,9 +97,9 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
         private string settingKey = null;
         private string focused = null;
         
-        private readonly List<VirtualKey> newKeys = new List<VirtualKey>();
+        private readonly List<VK> newKeys = new List<VK>();
 
-        public void DrawHotkeyConfig(string name, ref VirtualKey[] keys, ref bool enabled, ref bool hasChanged) {
+        public void DrawHotkeyConfig(string name, ref VK[] keys, ref bool enabled, ref bool hasChanged) {
             while (ImGui.GetColumnIndex() != 0) ImGui.NextColumn();
             hasChanged |= ImGui.Checkbox(name, ref enabled);
             ImGui.NextColumn();
@@ -81,16 +110,16 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             if (settingKey == name) {
                 for (var k = 0; k < ImGui.GetIO().KeysDown.Count && k < 160; k++) {
                     if (ImGui.GetIO().KeysDown[k]) {
-                        if (!newKeys.Contains((VirtualKey)k)) {
+                        if (!newKeys.Contains((VK)k)) {
 
-                            if ((VirtualKey)k == VirtualKey.ESCAPE) {
+                            if ((VK)k == VK.ESCAPE) {
                                 settingKey = null;
                                 newKeys.Clear();
                                 focused = null;
                                 break;
                             }
 
-                            newKeys.Add((VirtualKey)k);
+                            newKeys.Add((VK)k);
                             newKeys.Sort();
                         }
                     }
@@ -162,7 +191,19 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
         public override void Enable() {
             this.itemSheet = External.Data.Excel.GetSheet<ExtendedItem>();
             if (itemSheet == null) return;
-            Config = LoadConfig<Configs>() ?? new Configs();
+            Config = LoadConfig<Configs>() ?? new Configs() {
+                CopyHotkey = PluginConfig.TooltipTweaks.CopyHotkey,
+                CopyHotkeyEnabled = PluginConfig.TooltipTweaks.CopyHotkeyEnabled,
+                GamerEscapeLinkHotkey = PluginConfig.TooltipTweaks.GamerEscapeLinkHotkey,
+                GamerEscapeLinkHotkeyEnabled = PluginConfig.TooltipTweaks.GamerEscapeLinkHotkeyEnabled,
+                GardlandToolsLinkHotkey = PluginConfig.TooltipTweaks.GardlandToolsLinkHotkey,
+                GardlandToolsLinkHotkeyEnabled = PluginConfig.TooltipTweaks.GardlandToolsLinkHotkeyEnabled,
+                HideHotkeysOnTooltip = PluginConfig.TooltipTweaks.HideHotkeysOnTooltip,
+                TeamcraftLinkHotkey = PluginConfig.TooltipTweaks.TeamcraftLinkHotkey,
+                TeamcraftLinkHotkeyEnabled = PluginConfig.TooltipTweaks.TeamcraftLinkHotkeyEnabled,
+                TeamcraftLinkHotkeyForceBrowser = PluginConfig.TooltipTweaks.TeamcraftLinkHotkeyForceBrowser
+            };
+            
             External.Framework.Update += FrameworkOnOnUpdateEvent;
             base.Enable();
         }
@@ -215,12 +256,12 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             Common.OpenBrowser($"https://ffxiv.gamerescape.com/w/index.php?search={name}");
         }
 
-        private bool isHotkeyPress(VirtualKey[] keys) {
-            foreach (var vk in External.KeyState.GetValidVirtualKeys()) {
-                if (keys.Contains(vk)) {
-                    if (!External.KeyState[vk]) return false;
+        private bool isHotkeyPress(VK[] keys) {
+            for (var i = 0; i < 0xA0; i++) {
+                if (keys.Contains((VK) i)) {
+                    if (!External.KeyState[i]) return false;
                 } else {
-                    if (External.KeyState[vk]) return false;
+                    if (External.KeyState[i]) return false;
                 }
             }
             return true;
@@ -231,7 +272,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 if (External.GameGui.HoveredItem == 0) return;
 
                 Action<ExtendedItem> action = null;
-                VirtualKey[] keys = null;
+                VK[] keys = null;
 
                 var language = External.ClientState.ClientLanguage;
                 if (action == null && Config.CopyHotkeyEnabled && isHotkeyPress(Config.CopyHotkey)) {
