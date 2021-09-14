@@ -15,7 +15,7 @@
     </PropertyGroup>
     <PropertyGroup Label="Feature">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Version>1.6.0.2</Version>
+        <Version>1.6.0.3</Version>
     </PropertyGroup>
 	<PropertyGroup>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -32,6 +32,10 @@
       <Compile Remove="FFXIVClientInterface\**" />
       <EmbeddedResource Remove="FFXIVClientInterface\**" />
       <None Remove="FFXIVClientInterface\**" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+        <Compile Remove="Tweaks\Secret\**" />
+        <Compile Remove="Tweaks\SecretTweaks.cs" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
