@@ -61,7 +61,7 @@
 		<Reference Include="FFXIVClientStructs">
 			<Private>true</Private>
 			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\FFXIVClientStructs.dll</HintPath>-->
-			<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>
+			<HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
 		</Reference>
         <Reference Include="Newtonsoft.Json">
             <Private>false</Private>

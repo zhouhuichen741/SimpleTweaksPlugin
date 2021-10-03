@@ -281,10 +281,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         private string GetJobName(int id)
         {
             if (id < 0 || id > 38) return "打开方式不对";
-            return External.ClientState.ClientLanguage == ClientLanguage.English
-                ? External.Data.Excel.GetSheet<Lumina.Excel.GeneratedSheets.ClassJob>().GetRow((uint) id)
+            return Service.ClientState.ClientLanguage == ClientLanguage.English
+                ? Service.Data.Excel.GetSheet<Lumina.Excel.GeneratedSheets.ClassJob>().GetRow((uint) id)
                     .NameEnglish
-                : External.Data.Excel.GetSheet<Lumina.Excel.GeneratedSheets.ClassJob>().GetRow((uint) id).Name;
+                : Service.Data.Excel.GetSheet<Lumina.Excel.GeneratedSheets.ClassJob>().GetRow((uint) id).Name;
         }
 
         private static AtkResNode* GetNodeById(AtkComponentBase* compBase, int id)

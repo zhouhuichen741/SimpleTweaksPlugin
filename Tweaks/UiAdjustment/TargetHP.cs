@@ -164,7 +164,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
         
         private void UpdateGaugeBar(AtkComponentNode* gauge, AtkTextNode* cloneTextNode, GameObject target, Vector2 positionOffset, Vector4? customColor, byte fontSize, bool reset = false) {
-            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000 || External.ClientState.LocalPlayer == null) return;
+            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000 || Service.ClientState.LocalPlayer == null) return;
             
             AtkTextNode* textNode = null;
 
@@ -226,7 +226,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             {
                 var y = "";
                 if (Config.EnableDistance){
-                    Vector3 me = External.ClientState.LocalPlayer.Position;
+                    Vector3 me = Service.ClientState.LocalPlayer.Position;
                     Vector3 tar = chara.Position;
                     y += "  " + Vector3.Distance(me, tar).ToString("00.0");
                 }

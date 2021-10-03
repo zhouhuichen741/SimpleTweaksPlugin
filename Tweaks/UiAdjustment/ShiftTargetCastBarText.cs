@@ -105,7 +105,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private void HandleBars(bool reset = false)
         {
 
-            if (External.ClientState.LocalPlayer == null) return;
+            if (Service.ClientState.LocalPlayer == null) return;
             var focusTargetInfo = Common.GetUnitBase("_FocusTargetInfo");
             if (focusTargetInfo != null && focusTargetInfo->UldManager.NodeList != null && focusTargetInfo->UldManager.NodeListCount > 16 && (focusTargetInfo->IsVisible || reset)) {
                 DoShift(focusTargetInfo->UldManager.NodeList[16]);
@@ -207,10 +207,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private float GetTargetCastTime()
         {
-            if (External.ClientState.LocalPlayer == null ||
-                External.Targets.Target == null)
+            if (Service.ClientState.LocalPlayer == null ||
+                Service.Targets.Target == null)
                 return 0;
-            var target = External.Targets.Target;
+            var target = Service.Targets.Target;
             if (target is BattleChara)
             {
                 var castTime = ((BattleChara)target).CurrentCastTime;
