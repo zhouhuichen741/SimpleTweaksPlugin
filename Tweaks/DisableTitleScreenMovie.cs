@@ -9,19 +9,19 @@ namespace SimpleTweaksPlugin.Tweaks {
         public override string Description => "禁用在主界面闲置过久时会播放的开场动画";
         
         public override void Enable() {
-            External.Framework.Update += FrameworkUpdate;
+            Service.Framework.Update += FrameworkUpdate;
             base.Enable();
         }
         
         public override void Disable() {
-            External.Framework.Update -= FrameworkUpdate;
+            Service.Framework.Update -= FrameworkUpdate;
             base.Disable();
         }
 
         private void FrameworkUpdate(Framework framework) {
             try {
-                if (External.Condition == null) return;
-                if (External.Condition.Any()) return;
+                if (Service.Condition == null) return;
+                if (Service.Condition.Any()) return;
                 SimpleTweaksPlugin.Client.UiModule.AgentModule.GetAgent<AgentLobby>().Data->IdleTime = 0;
             } catch {
                 // Ignored

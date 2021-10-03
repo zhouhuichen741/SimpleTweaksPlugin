@@ -149,7 +149,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         public override void Setup() {
             if (Ready) return;
             try {
-                processChatInputAddress = External.SigScanner.ScanText("E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??");
+                processChatInputAddress = Service.SigScanner.ScanText("E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??");
                 Ready = true;
             } catch {
                 SimpleLog.Log("Failed to find address for ProcessChatInput");
@@ -206,7 +206,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                                 return r;
                             }
                             SimpleLog.Log($"String longer than 500");
-                            External.Chat.PrintError("[Simple Tweaks] 长度超过500字符，该命令不会被执行");
+                            Service.Chat.PrintError("[Simple Tweaks] 长度超过500字符，该命令不会被执行");
                             return 0;
                         }
                     }

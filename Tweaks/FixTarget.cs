@@ -17,7 +17,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         
         public override void Enable() {
             
-            regex = External.ClientState.ClientLanguage switch {
+            regex = Service.ClientState.ClientLanguage switch {
                 ClientLanguage.Japanese => new Regex(@"^\d+?番目のターゲット名の指定が正しくありません。： (.+)$"),
                 ClientLanguage.German => new Regex(@"^Der Unterbefehl \[Name des Ziels\] an der \d+\. Stelle des Textkommandos \((.+)\) ist fehlerhaft\.$"),
                 ClientLanguage.French => new Regex(@"^Le \d+er? argument “nom de la cible” est incorrect (.*?)\.$"), 
@@ -26,18 +26,19 @@ namespace SimpleTweaksPlugin.Tweaks {
                 _ => null
             };
             
-            External.Chat.ChatMessage += OnChatMessage;
+            Service.Chat.ChatMessage += OnChatMessage;
             
             base.Enable();
         }
 
         public override void Disable() {
-            External.Chat.ChatMessage -= OnChatMessage;
+            Service.Chat.ChatMessage -= OnChatMessage;
             base.Disable();
         }
         
         private unsafe void OnChatMessage(XivChatType type, uint senderid, ref SeString sender, ref SeString message, ref bool isHandled) {
             if (type != XivChatType.ErrorMessage) return;
+            if (Common.LastCommand == null || Common.LastCommand->StringPtr == null) return;
             var lastCommandStr = Encoding.UTF8.GetString(Common.LastCommand->StringPtr, (int) Common.LastCommand->BufUsed);
             if (!(lastCommandStr.StartsWith("/target ") || lastCommandStr.StartsWith("/ziel ") || lastCommandStr.StartsWith("/cibler ") || lastCommandStr.StartsWith("/选中 "))) {
                 return;
@@ -49,8 +50,8 @@ namespace SimpleTweaksPlugin.Tweaks {
 
             GameObject closestMatch = null;
             var closestDistance = float.MaxValue;
-            var player = External.ClientState.LocalPlayer;
-            foreach (var actor in External.Objects) {
+            var player = Service.ClientState.LocalPlayer;
+            foreach (var actor in Service.Objects) {
                 
                 if (actor == null) continue;
                 if (actor.Name.TextValue.ToLowerInvariant().Contains(searchName)) {
@@ -70,7 +71,7 @@ namespace SimpleTweaksPlugin.Tweaks {
 
             if (closestMatch != null) {
                 isHandled = true;
-                External.Targets.SetTarget(closestMatch);
+                Service.Targets.SetTarget(closestMatch);
             }
         }
     }

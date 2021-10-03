@@ -19,8 +19,6 @@ using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
 namespace SimpleTweaksPlugin.Helper {
     internal unsafe class Common {
-        public static DalamudPluginInterface PluginInterface { get; private set; }
-
         private delegate IntPtr GameAlloc(ulong size, IntPtr unk, IntPtr allocator, IntPtr alignment);
 
         private delegate IntPtr GetGameAllocator();
@@ -42,10 +40,9 @@ namespace SimpleTweaksPlugin.Helper {
         
         public static Utf8String* LastCommand { get; private set; }
 
-        public static SigScanner Scanner => External.SigScanner;
+        public static SigScanner Scanner => Service.SigScanner;
 
-        public Common(DalamudPluginInterface pluginInterface) {
-            PluginInterface = pluginInterface;
+        public Common() {
             var gameAllocPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 45 8D 67 23");
             var getGameAllocatorPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 8B 75 08");
 
@@ -67,7 +64,7 @@ namespace SimpleTweaksPlugin.Helper {
         public static UIModule* UIModule => Framework.Instance()->GetUiModule();
 
         public static AtkUnitBase* GetUnitBase(string name, int index = 1) {
-            return (AtkUnitBase*) External.GameGui.GetAddonByName(name, index);
+            return (AtkUnitBase*) Service.GameGui.GetAddonByName(name, index);
         }
 
         public static T* GetUnitBase<T>(string name = null, int index = 1) where T : unmanaged {
@@ -80,7 +77,7 @@ namespace SimpleTweaksPlugin.Helper {
 
             if (string.IsNullOrEmpty(name)) return null;
             
-            return (T*) External.GameGui.GetAddonByName(name, index);
+            return (T*) Service.GameGui.GetAddonByName(name, index);
         }
 
         public static InventoryContainer* GetContainer(InventoryType inventoryType) {
@@ -174,7 +171,7 @@ namespace SimpleTweaksPlugin.Helper {
 
 
         public T GetGameOption<T>(GameOptionKind opt) {
-            var optionBase = (byte**)(External.Framework.Address.BaseAddress + 0x2B28);
+            var optionBase = (byte**)(Service.Framework.Address.BaseAddress + 0x2B28);
             return Marshal.PtrToStructure<T>(new IntPtr(*optionBase + 0xAAE0 + (16 * (uint)opt)));
         }
 
