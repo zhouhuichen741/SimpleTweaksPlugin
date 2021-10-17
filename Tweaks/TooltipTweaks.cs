@@ -37,9 +37,6 @@ namespace SimpleTweaksPlugin.Tweaks {
         }
 
         public override string Name => "提示优化";
-        private IntPtr tooltipAddress;
-        private unsafe delegate IntPtr TooltipDelegate(IntPtr a1, uint** a2, byte*** a3);
-        private Hook<TooltipDelegate> tooltipHook;
 
         private unsafe delegate IntPtr ActionTooltipDelegate(AddonActionDetail* a1, void* a2, ulong a3);
         private HookWrapper<ActionTooltipDelegate> actionTooltipHook;

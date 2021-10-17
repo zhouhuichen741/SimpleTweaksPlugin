@@ -38,7 +38,7 @@
         <Compile Remove="Tweaks\SecretTweaks.cs" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+      <PackageReference Include="System.Numerics.Vectors" Version="4.1.3.0" />
       <PackageReference Include="DalamudPackager" Version="2.1.2" />
       <PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" />
     </ItemGroup>
@@ -47,7 +47,7 @@
             <InputAssemblies Include="$(TargetPath)" />
             <InputAssemblies Include="$(TargetDir)*.dll" Exclude="$(TargetPath)" />
         </ItemGroup>
-        <Exec Command="$(PkgILRepack)\tools\ILRepack.exe /lib:$(APPDATA)\XIVLauncher\addon\Hooks\dev /out:$(TargetDir)..\$(Configuration).ILMerge\$(TargetFileName) @(InputAssemblies, ' ')" />
+        <Exec Command="$(PkgILRepack)\tools\ILRepack.exe /lib:$(AppData)\XIVLauncher\addon\Hooks\dev /out:$(TargetDir)..\$(Configuration).ILMerge\$(TargetFileName) @(InputAssemblies, ' ')" />
     </Target>
     <ItemGroup>
       <ProjectReference Include="FFXIVClientInterface\FFXIVClientInterface.csproj" />
@@ -56,37 +56,31 @@
 		<Reference Include="Dalamud">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Dalamud.dll</HintPath>
-			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\Dalamud.dll</HintPath>-->
 		</Reference>
 		<Reference Include="FFXIVClientStructs">
 			<Private>true</Private>
-			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\FFXIVClientStructs.dll</HintPath>-->
-			<HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
+			<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>
 		</Reference>
+		<Reference Include="Microsoft.CSharp" />
         <Reference Include="Newtonsoft.Json">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
-	        <!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\Newtonsoft.Json.dll</HintPath>-->
 		</Reference>
 		<Reference Include="ImGui.NET">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\ImGui.NET.dll</HintPath>
-			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\ImGui.NET.dll</HintPath>-->
 		</Reference>
 		<Reference Include="ImGuiScene">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\ImGuiScene.dll</HintPath>
-			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\ImGuiScene.dll</HintPath>-->
 		</Reference>
 		<Reference Include="Lumina">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Lumina.dll</HintPath>
-			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\Lumina.dll</HintPath>-->
 		</Reference>
 		<Reference Include="Lumina.Excel">
             <Private>false</Private>
             <HintPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\Lumina.Excel.dll</HintPath>
-			<!--<HintPath>D:\OG\FF14\Dalamud5\6.0.0.0\Lumina.Excel.dll</HintPath>-->
 		</Reference>
     </ItemGroup>
 </Project>
