@@ -5,15 +5,12 @@ VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleTweaksPlugin", "SimpleTweaksPlugin.csproj", "{FAF7F5F2-708A-4FEA-BAE7-F73A3438A0D5}"
 	ProjectSection(ProjectDependencies) = postProject
-		{19A35A4C-BB27-4509-8871-4758FAD51CDA} = {19A35A4C-BB27-4509-8871-4758FAD51CDA}
 		{3DBAEE68-9D94-4807-BCB1-E42EDD52B489} = {3DBAEE68-9D94-4807-BCB1-E42EDD52B489}
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFXIVClientStructs", "lib\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj", "{3DBAEE68-9D94-4807-BCB1-E42EDD52B489}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFXIVClientInterface", "FFXIVClientInterface\FFXIVClientInterface.csproj", "{D6FD765C-566C-4110-B422-3D87B43A7BFA}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFXIVClientStructs.Common", "lib\FFXIVClientStructs\FFXIVClientStructs.Common\FFXIVClientStructs.Common.csproj", "{19A35A4C-BB27-4509-8871-4758FAD51CDA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFXIVClientStructs.Generators", "lib\FFXIVClientStructs\FFXIVClientStructs.Generators\FFXIVClientStructs.Generators.csproj", "{B3AAEACB-E6D2-43C6-9E29-C35021F0AE98}"
 EndProject
@@ -31,14 +28,6 @@ Global
 		{3DBAEE68-9D94-4807-BCB1-E42EDD52B489}.Debug|x64.Build.0 = Debug|Any CPU
 		{3DBAEE68-9D94-4807-BCB1-E42EDD52B489}.Release|x64.ActiveCfg = Release|Any CPU
 		{3DBAEE68-9D94-4807-BCB1-E42EDD52B489}.Release|x64.Build.0 = Release|Any CPU
-		{D6FD765C-566C-4110-B422-3D87B43A7BFA}.Debug|x64.ActiveCfg = Debug|x64
-		{D6FD765C-566C-4110-B422-3D87B43A7BFA}.Debug|x64.Build.0 = Debug|x64
-		{D6FD765C-566C-4110-B422-3D87B43A7BFA}.Release|x64.ActiveCfg = Release|x64
-		{D6FD765C-566C-4110-B422-3D87B43A7BFA}.Release|x64.Build.0 = Release|x64
-		{19A35A4C-BB27-4509-8871-4758FAD51CDA}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{19A35A4C-BB27-4509-8871-4758FAD51CDA}.Debug|x64.Build.0 = Debug|Any CPU
-		{19A35A4C-BB27-4509-8871-4758FAD51CDA}.Release|x64.ActiveCfg = Release|Any CPU
-		{19A35A4C-BB27-4509-8871-4758FAD51CDA}.Release|x64.Build.0 = Release|Any CPU
 		{B3AAEACB-E6D2-43C6-9E29-C35021F0AE98}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{B3AAEACB-E6D2-43C6-9E29-C35021F0AE98}.Debug|x64.Build.0 = Debug|Any CPU
 		{B3AAEACB-E6D2-43C6-9E29-C35021F0AE98}.Release|x64.ActiveCfg = Release|Any CPU
