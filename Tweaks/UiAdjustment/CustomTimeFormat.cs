@@ -101,7 +101,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 ImGui.SetNextItemWidth(120);
                 ImGui.InputText($"###preview{name}", ref preview, 50, ImGuiInputTextFlags.ReadOnly);
             } catch {
-                ImGui.Text("Format Invalid");
+                ImGui.Text("格式错误");
             }
         }
 
@@ -180,8 +180,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
         };
 
-        public override string Name => "Custom Time Formats";
-        public override string Description => "Allows setting custom time formats for the in game clock. Uses C# formatting strings.";
+        public override string Name => "修改时间格式";
+        public override string Description => "修改游戏中时钟的时间显示格式，使用C#的时间显示格式";
 
         public unsafe delegate void SetText(AtkTextNode* self, byte* strPtr);
         private Hook<SetText> setTextHook;
@@ -254,7 +254,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     }
                 }
             } catch {
-                timeSeString.Payloads.Add(new TextPayload("Invalid Time Format"));
+                timeSeString.Payloads.Add(new TextPayload("错误的时间格式"));
             }
 
             if (timeSeString.Payloads.Count > 0) {

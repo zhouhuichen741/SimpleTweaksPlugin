@@ -44,8 +44,8 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
         private readonly string weirdTabChar = Encoding.UTF8.GetString(new byte[] {0xE3, 0x80, 0x80});
 
-        public override string Name => "Item Hotkeys";
-        public override string Description => "Adds hotkeys for various actions when the item detail window is visible.";
+        public override string Name => "物品快捷键";
+        public override string Description => "当显示物品详情时可以使用快捷键进行一系列操作";
 
         public override void OnGenerateItemTooltip(NumberArrayData* numberArrayData, StringArrayData* stringArrayData) {
             if (Config.HideHotkeysOnTooltip) return;
@@ -144,15 +144,15 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             ImGui.Columns(2);
             ImGui.SetColumnWidth(0, 180 * ImGui.GetIO().FontGlobalScale);
             var c = Config;
-            DrawHotkeyConfig("Copy Item Name", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("复制物品名", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Teamcraft", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("在Teamcraft查看", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
             ImGui.SameLine();
-            ImGui.Checkbox($"Browser Only###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
+            ImGui.Checkbox($"使用浏览器###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Garland Tools", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("在Garland Tools查看", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Gamer Escape", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("在Gamer Escape查看", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
             DrawHotkeyConfig("View on Eriones (JP)", ref c.ErionesLinkHotkey, ref c.ErionesLinkHotkeyEnabled, ref hasChanged);
             ImGui.Columns();

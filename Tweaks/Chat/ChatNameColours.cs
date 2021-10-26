@@ -16,8 +16,8 @@ using static Dalamud.Game.Text.XivChatType;
 
 namespace SimpleTweaksPlugin.Tweaks.Chat {
     public unsafe class ChatNameColours : ChatTweaks.SubTweak {
-        public override string Name => "Chat Name Colours";
-        public override string Description => "Gives players a random colour in chat, or set the name manually.";
+        public override string Name => "多彩玩家聊天名";
+        public override string Description => "在聊天栏中，每个玩家的名字会随机分配一种颜色，也可以手动设置";
         public delegate void* PrintMessage(RaptureLogModule* chatManager, XivChatType xivChatType, IntPtr senderName, IntPtr message, uint senderId, byte param);
         private HookWrapper<PrintMessage> printChatHook;
 

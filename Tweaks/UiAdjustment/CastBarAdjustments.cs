@@ -11,9 +11,9 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
-        public override string Name => "Cast Bar Adjustments";
-        public override string Description => "Allows hiding or moving specific parts of the castbar.";
-        public override IEnumerable<string> Tags => new[] {"SlideCast", "Slide Cast"};
+        public override string Name => "咏唱栏修改";
+        public override string Description => "隐藏或移动咏唱栏的特定部分";
+        public override IEnumerable<string> Tags => new[] { "滑步", "咏唱", "咏唱栏", "SlideCast", "Slide Cast"};
 
         public class Configs : TweakConfig {
             public bool RemoveCastingText;
@@ -41,44 +41,44 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private float configAlignmentX;
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("Hide 'Casting' Text", ref Config.RemoveCastingText);
-            hasChanged |= ImGui.Checkbox("Hide Icon", ref Config.RemoveIcon);
-            hasChanged |= ImGui.Checkbox("Hide Interrupted Text", ref Config.RemoveInterruptedText);
-            hasChanged |= ImGui.Checkbox("Hide Countdown Text", ref Config.RemoveCounter);
+            hasChanged |= ImGui.Checkbox("隐藏'发动中'文字", ref Config.RemoveCastingText);
+            hasChanged |= ImGui.Checkbox("隐藏图标", ref Config.RemoveIcon);
+            hasChanged |= ImGui.Checkbox("隐藏'打断成功'文字", ref Config.RemoveInterruptedText);
+            hasChanged |= ImGui.Checkbox("隐藏剩余时间", ref Config.RemoveCounter);
             if (Config.RemoveCastingText && !Config.RemoveCounter) {
                 ImGui.SameLine();
                 if (ImGui.GetCursorPosX() > configAlignmentX) configAlignmentX = ImGui.GetCursorPosX();
                 ImGui.SetCursorPosX(configAlignmentX);
-                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("Align Countdown Text", ref Config.AlignCounter);
+                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("剩余时间对齐", ref Config.AlignCounter);
 
                 ImGui.SetCursorPosX(configAlignmentX);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                hasChanged |= ImGui.InputInt("Offset##offsetCounterPosition", ref Config.OffsetCounterPosition);
+                hasChanged |= ImGui.InputInt("偏移##offsetCounterPosition", ref Config.OffsetCounterPosition);
                 if (Config.OffsetCounterPosition < -100) Config.OffsetCounterPosition = -100;
                 if (Config.OffsetCounterPosition > 100) Config.OffsetCounterPosition = 100;
 
             }
-            hasChanged |= ImGui.Checkbox("Hide Ability Name", ref Config.RemoveName);
+            hasChanged |= ImGui.Checkbox("隐藏技能名", ref Config.RemoveName);
             if (!Config.RemoveName) {
                 ImGui.SameLine();
                 if (ImGui.GetCursorPosX() > configAlignmentX) configAlignmentX = ImGui.GetCursorPosX();
                 ImGui.SetCursorPosX(configAlignmentX);
-                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("Align Ability Name", ref Config.AlignName);
+                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("技能名对齐", ref Config.AlignName);
                 ImGui.SetCursorPosX(configAlignmentX);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                hasChanged |= ImGui.InputInt("Offset##offsetNamePosition", ref Config.OffsetNamePosition);
+                hasChanged |= ImGui.InputInt("偏移##offsetNamePosition", ref Config.OffsetNamePosition);
 
                 if (Config.OffsetNamePosition < -100) Config.OffsetNamePosition = -100;
                 if (Config.OffsetNamePosition > 100) Config.OffsetNamePosition = 100;
             }
 
-            hasChanged |= ImGui.Checkbox("Show SlideCast Marker", ref Config.SlideCast);
+            hasChanged |= ImGui.Checkbox("显示滑步点", ref Config.SlideCast);
             if (Config.SlideCast) {
                 ImGui.Indent();
                 ImGui.Indent();
-                hasChanged |= ImGui.SliderInt("SlideCast Offset Time", ref Config.SlideCastAdjust, 0, 1000);
-                hasChanged |= ImGui.ColorEdit4("SlideCast Marker Colour", ref Config.SlideCastColor);
-                hasChanged |= ImGui.ColorEdit4("SlideCast Ready Colour", ref Config.SlideCastReadyColor);
+                hasChanged |= ImGui.SliderInt("滑步偏移时间", ref Config.SlideCastAdjust, 0, 1000);
+                hasChanged |= ImGui.ColorEdit4("滑步点颜色", ref Config.SlideCastColor);
+                hasChanged |= ImGui.ColorEdit4("滑步就绪颜色", ref Config.SlideCastReadyColor);
                 ImGui.Unindent();
                 ImGui.Unindent();
             }

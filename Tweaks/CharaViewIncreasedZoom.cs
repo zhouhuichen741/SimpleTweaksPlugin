@@ -4,8 +4,8 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public unsafe class CharaViewIncreasedZoom : Tweak {
-        public override string Name => "Increased zoom on character previews.";
-        public override string Description => "Allows zooming in near infinitely on character preview views, such as Try On and Examine.";
+        public override string Name => "增加角色预览缩放距离";
+        public override string Description => "增加角色预览的缩放距离，比如“试穿”和“调查”";
 
         private delegate void CharaViewZoom(CharaView* charaView, float delta);
         private HookWrapper<CharaViewZoom> charaViewZoomHook;

@@ -8,9 +8,9 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public unsafe class AutoOpenLootWindow : Tweak {
-        public override string Name => "Open loot window when items are added.";
+        public override string Name => "获得新物品时打开战利品窗口";
 
-        public override string Description => "Open the loot rolling window when new items are added to be rolled on.";
+        public override string Description => "当在副本内，有获得新物品时，自动打开战利品分配窗口。";
 
         public override void Enable() {
             Service.Chat.CheckMessageHandled += HandleChat;
@@ -24,6 +24,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                     ClientLanguage.German => "Bitte um das Beutegut würfeln.",
                     ClientLanguage.French => "Veuillez lancer les dés pour le butin.",
                     ClientLanguage.Japanese => "ロットを行ってください。",
+                    ClientLanguage.ChineseSimplified => "请掷骰。",
                     _ => "Cast your lot."
                 }) TryOpenWindow();
             } catch (Exception ex) {

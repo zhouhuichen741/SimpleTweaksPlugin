@@ -13,15 +13,15 @@ using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class ExpPercentage : UiAdjustments.SubTweak {
-        public override string Name => "Show Experience Percentage";
+        public override string Name => "显示经验值百分比";
 
-        public override string Description => "Calculate and display the current EXP percentage on the EXP bar.";
+        public override string Description => "计算当前经验值，并以百分比形式显示在经验值旁边";
 
         public class Configs : TweakConfig {
             [TweakConfigOption("Decimals", EditorSize = 140, IntMin = 0, IntMax = 3, IntType = TweakConfigOptionAttribute.IntEditType.Slider)]
             public int Decimals = 1;
 
-            [TweakConfigOption("Only show percentage")]
+            [TweakConfigOption("只显示百分比")]
             public bool PercentageOnly;
         }
 

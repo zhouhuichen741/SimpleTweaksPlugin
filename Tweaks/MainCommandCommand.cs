@@ -7,9 +7,9 @@ using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
 namespace SimpleTweaksPlugin.Tweaks {
     public unsafe class MainCommandCommand : Tweak {
-        public override string Name => "Main Command Command";
+        public override string Name => "快捷指令命令";
 
-        public override string Description => "Adds the command '/maincommand [name]' to allow using any Main Command from chat or macro.";
+        public override string Description => "在宏和聊天频道中，使用 '/maincommand [name]' 来启动任意的快捷指令";
 
         public override void Enable() {
             Service.Commands.AddHandler("/maincommand", new CommandInfo(HandleCommand) { ShowInHelp = true, HelpMessage = "Execute a Main Command" });

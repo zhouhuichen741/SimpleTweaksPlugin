@@ -21,8 +21,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class NotificationToastAdjustments : UiAdjustments.SubTweak {
-        public override string Name => "Notification Toast Adjustments";
-        public override string Description => "Allows moving or hiding of the notifications that appears in the middle of the screen at various times.";
+        public override string Name => "弹出通知修改";
+        public override string Description => "允许移动或隐藏在不同时间出现在屏幕中间的通知";
         protected override string Author => "Aireil";
 
         public class Configs : TweakConfig {
@@ -48,23 +48,23 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             if (!Config.Hide || Config.ShowInCombat) {
                 var offsetChanged = false;
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.InputInt("Horizontal Offset##offsetPosition", ref Config.OffsetXPosition, 1);
+                offsetChanged |= ImGui.InputInt("水平偏移##offsetPosition", ref Config.OffsetXPosition, 1);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.InputInt("Vertical Offset##offsetPosition", ref Config.OffsetYPosition, 1);
+                offsetChanged |= ImGui.InputInt("垂直偏移##offsetPosition", ref Config.OffsetYPosition, 1);
                 ImGui.SetNextItemWidth(200 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.SliderFloat("##toastScale", ref Config.Scale, 0.1f, 5f, "Toast Scale: %.1fx");
+                offsetChanged |= ImGui.SliderFloat("##toastScale", ref Config.Scale, 0.1f, 5f, "通知大小: %.1fx");
                 if (offsetChanged)
                 {
                     var toastNode = GetToastNode(2);
                     if (toastNode != null && !toastNode->IsVisible)
-                        Service.Toasts.ShowNormal("This is a preview of a toast message.");
+                        Service.Toasts.ShowNormal("这是一个通知的预览");
                     hasChanged = true;
                 }
             }
 
             if (Config.Hide) return;
 
-            ImGui.Text("Hide toast if text contains:");
+            ImGui.Text("如果通知含有以下内容则隐藏:");
             for (var  i = 0; i < Config.Exceptions.Count; i++) {
                 ImGui.PushID($"Exception_{i.ToString()}");
                 var exception = Config.Exceptions[i];

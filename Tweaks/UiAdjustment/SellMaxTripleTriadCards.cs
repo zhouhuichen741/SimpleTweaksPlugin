@@ -3,8 +3,8 @@ using SimpleTweaksPlugin.Helper;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class SellMaxTripleTriadCards : UiAdjustments.SubTweak {
-        public override string Name => "Default to max when selling Triple Triad Cards";
-        public override string Description => "Set the default number of cards to sell at the Triple Triad Trader to the number of cards you have.";
+        public override string Name => "默认卖出全部的九宫幻卡";
+        public override string Description => "在卖出幻卡时，一次性出售当前幻卡的全部持有部分";
 
         private delegate void* AddonCardShopDialogOnSetup(AddonShopCardDialog* addonShopCardDialog, uint a2, void* a3);
         private HookWrapper<AddonCardShopDialogOnSetup> setupHook;

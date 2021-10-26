@@ -12,31 +12,31 @@ using Action = Lumina.Excel.GeneratedSheets.Action;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class ComboTimer : UiAdjustments.SubTweak {
-        public override string Name => "Combo Timer";
-        public override string Description => "Shows a countdown for combo actions.";
+        public override string Name => "联机倒计时";
+        public override string Description => "显示当前连击结束时间";
 
         private readonly Dictionary<uint, byte> comboActions = new();
         
         public class Configs : TweakConfig {
-            [TweakConfigOption("Always Visible")]
+            [TweakConfigOption("始终可见")]
             public bool AlwaysVisible = false;
 
-            [TweakConfigOption("Hide 'COMBO' Text")]
+            [TweakConfigOption("隐藏'COMBO'文本")]
             public bool NoComboText = false;
 
-            [TweakConfigOption("Font Size", 1, IntMin = 6, IntMax = 255, IntType = TweakConfigOptionAttribute.IntEditType.Slider, EditorSize = 150)]
+            [TweakConfigOption("字体尺寸", 1, IntMin = 6, IntMax = 255, IntType = TweakConfigOptionAttribute.IntEditType.Slider, EditorSize = 150)]
             public int FontSize = 12;
             
-            [TweakConfigOption("X Position Offset", 2, IntMin = -2000, IntMax = 2000, IntType = TweakConfigOptionAttribute.IntEditType.Drag, EditorSize = 150)]
+            [TweakConfigOption("X坐标偏移", 2, IntMin = -2000, IntMax = 2000, IntType = TweakConfigOptionAttribute.IntEditType.Drag, EditorSize = 150)]
             public int OffsetX;
             
-            [TweakConfigOption("Y Position Offset", 2, IntMin = -2000, IntMax = 2000, IntType = TweakConfigOptionAttribute.IntEditType.Drag, EditorSize = 150)]
+            [TweakConfigOption("Y坐标偏移", 2, IntMin = -2000, IntMax = 2000, IntType = TweakConfigOptionAttribute.IntEditType.Drag, EditorSize = 150)]
             public int OffsetY;
             
-            [TweakConfigOption("Text Color", "Color", 3)]
+            [TweakConfigOption("文本颜色", "Color", 3)]
             public Vector4 Color = new Vector4(1, 1, 1, 1);
             
-            [TweakConfigOption("Text Outline Color", "Color", 4)]
+            [TweakConfigOption("文本轮廓颜色", "Color", 4)]
             public Vector4 EdgeColor = new Vector4(0xF0, 0x8E, 0x37, 0xFF) / 0xFF;
             
         }
