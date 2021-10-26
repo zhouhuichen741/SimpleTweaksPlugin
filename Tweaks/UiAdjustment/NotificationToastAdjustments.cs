@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Game.Internal;
-using Dalamud.Game.Internal.Gui.Toast;
+using Dalamud.Game;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Gui.Toast;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -20,8 +21,8 @@ namespace SimpleTweaksPlugin {
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class NotificationToastAdjustments : UiAdjustments.SubTweak {
-        public override string Name => "弹出通知修改";
-        public override string Description => "允许移动或隐藏在不同时间出现在屏幕中间的通知";
+        public override string Name => "Notification Toast Adjustments";
+        public override string Description => "Allows moving or hiding of the notifications that appears in the middle of the screen at various times.";
         protected override string Author => "Aireil";
 
         public class Configs : TweakConfig {
@@ -38,32 +39,32 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private string newException = string.Empty;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("隐藏", ref Config.Hide);
+            hasChanged |= ImGui.Checkbox("Hide", ref Config.Hide);
             if (Config.Hide) {
                 ImGui.SameLine();
-                hasChanged |= ImGui.Checkbox("战斗中显示", ref Config.ShowInCombat);
+                hasChanged |= ImGui.Checkbox("Show in combat", ref Config.ShowInCombat);
             }
 
             if (!Config.Hide || Config.ShowInCombat) {
                 var offsetChanged = false;
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.InputInt("水平偏移##offsetPosition", ref Config.OffsetXPosition, 1);
+                offsetChanged |= ImGui.InputInt("Horizontal Offset##offsetPosition", ref Config.OffsetXPosition, 1);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.InputInt("垂直偏移##offsetPosition", ref Config.OffsetYPosition, 1);
+                offsetChanged |= ImGui.InputInt("Vertical Offset##offsetPosition", ref Config.OffsetYPosition, 1);
                 ImGui.SetNextItemWidth(200 * ImGui.GetIO().FontGlobalScale);
-                offsetChanged |= ImGui.SliderFloat("##toastScale", ref Config.Scale, 0.1f, 5f, "通知大小: %.1fx");
+                offsetChanged |= ImGui.SliderFloat("##toastScale", ref Config.Scale, 0.1f, 5f, "Toast Scale: %.1fx");
                 if (offsetChanged)
                 {
                     var toastNode = GetToastNode(2);
                     if (toastNode != null && !toastNode->IsVisible)
-                        this.PluginInterface.Framework.Gui.Toast.ShowNormal("这是一个通知的预览");
+                        Service.Toasts.ShowNormal("This is a preview of a toast message.");
                     hasChanged = true;
                 }
             }
 
             if (Config.Hide) return;
 
-            ImGui.Text("如果通知含有以下内容则隐藏:");
+            ImGui.Text("Hide toast if text contains:");
             for (var  i = 0; i < Config.Exceptions.Count; i++) {
                 ImGui.PushID($"Exception_{i.ToString()}");
                 var exception = Config.Exceptions[i];
@@ -94,16 +95,16 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         public override void Enable() {
             Config = LoadConfig<Configs>() ?? PluginConfig.UiAdjustments.NotificationToastAdjustments ?? new Configs();
-            PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
-            PluginInterface.Framework.Gui.Toast.OnToast += OnToast;
+            Service.Framework.Update += FrameworkOnUpdate;
+            Service.Toasts.Toast += OnToast;
             base.Enable();
         }
 
         public override void Disable() {
             SaveConfig(Config);
             PluginConfig.UiAdjustments.NotificationToastAdjustments = null;
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
-            PluginInterface.Framework.Gui.Toast.OnToast -= OnToast;
+            Service.Framework.Update -= FrameworkOnUpdate;
+            Service.Toasts.Toast -= OnToast;
             UpdateNotificationToast(true);
             base.Disable();
         }
@@ -127,51 +128,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             
             if (reset) {
                 SetOffsetPosition(toastNode, 0.0f, 0.0f, 1);
-                UiHelper.SetScale(toastNode, 1);
+                toastNode->SetScale(1, 1);
                 return;
             }
 
-/*
-            if (!isPreviewing && !toastUnitBase->IsVisible) return; // no point continuing
-
-            var hide = Config.Hide;
-
-            if (Config.Exceptions.Any() && !Config.Hide && !isPreviewing) {
-                // var text = Marshal.PtrToStringAnsi(new IntPtr(toastTextNode->NodeText.StringPtr));
-                // fix text tranfer problem
-                byte[] buffer1 = System.Text.Encoding.Default.GetBytes(Marshal.PtrToStringAnsi(new IntPtr(toastTextNode->NodeText.StringPtr)));
-                byte[] buffer2 = System.Text.Encoding.Convert(System.Text.Encoding.UTF8, System.Text.Encoding.Default, buffer1, 0, buffer1.Length);
-                string text = System.Text.Encoding.Default.GetString(buffer2, 0, buffer2.Length);
-                hide = Config.Exceptions.Any(x => text.Contains(x));
-            }
-
-            if (Config.Hide && Config.ShowInCombat && !isPreviewing) {
-                var inCombat = PluginInterface.ClientState.Condition[Dalamud.Game.ClientState.ConditionFlag.InCombat];
-                if (inCombat) {
-                    hide = false;
-                }
-            }
-
-            if (hide && !isPreviewing) {
-                UiHelper.Hide(toastBackgroundNode);
-                UiHelper.Hide(toastTextNode);
-            }
-            else {
-                UiHelper.Show(toastBackgroundNode);
-                UiHelper.Show(toastTextNode);
-
-                SetOffsetPosition(toastNode1, Config.OffsetXPosition, Config.OffsetYPosition);
-
-                if (isPreviewing) {
-                    var text = Marshal.PtrToStringAnsi(new IntPtr(toastTextNode->NodeText.StringPtr));
-                    if (text == String.Empty) {
-                        UiHelper.SetText(toastTextNode, "这只是一个预览，不是游戏通知");
-                    }
-*/
             if (!toastNode->IsVisible) return;
 
             SetOffsetPosition(toastNode, Config.OffsetXPosition, Config.OffsetYPosition, Config.Scale);
-            UiHelper.SetScale(toastNode, Config.Scale);
+            toastNode->SetScale(Config.Scale, Config.Scale);
         }
 
         // index: 1 - special toast, e.g. BLU active actions set load/save
@@ -202,7 +166,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 if (isHandled) return;
 
                 if (Config.Hide) {
-                    if (Config.ShowInCombat && PluginInterface.ClientState.Condition[Dalamud.Game.ClientState.ConditionFlag.InCombat])
+                    if (Config.ShowInCombat && Service.Condition[ConditionFlag.InCombat])
                         return;
                 } else {
                     var messageStr = message.ToString();

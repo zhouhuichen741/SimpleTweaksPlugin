@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Numerics;
+using Dalamud.Game;
 using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState.Actors.Types;
-using Dalamud.Game.Internal;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
-using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Enums;
@@ -106,7 +105,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private void HandleBars(bool reset = false)
         {
 
-            if (PluginInterface.ClientState.LocalPlayer == null) return;
+            if (Service.ClientState.LocalPlayer == null) return;
             var focusTargetInfo = Common.GetUnitBase("_FocusTargetInfo");
             if (focusTargetInfo != null && focusTargetInfo->UldManager.NodeList != null && focusTargetInfo->UldManager.NodeListCount > 16 && (focusTargetInfo->IsVisible || reset)) {
                 DoShift(focusTargetInfo->UldManager.NodeList[16]);
@@ -172,7 +171,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 var newStrPtr = Common.Alloc(512);
                 textNode->NodeText.StringPtr = (byte*) newStrPtr;
                 textNode->NodeText.BufSize = 512;
-                UiHelper.SetText(textNode, "");
+                textNode->SetText("");
                 UiHelper.ExpandNodeList(unit, 1);
                 unit->UldManager.NodeList[unit->UldManager.NodeListCount++] = (AtkResNode*) textNode;
 
@@ -199,7 +198,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 //    PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeOffsetY);
                 //UiHelper.SetSize(textNode, cloneTextNode->AtkResNode.Width, cloneTextNode->AtkResNode.Height);
                 textNode->FontSize = 15;//(byte) PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeFontSize;
-                UiHelper.SetText(textNode, GetTargetCastTime().ToString("00.00"));
+                textNode->SetText(GetTargetCastTime().ToString("00.00"));
                 UiHelper.Show(textNode);
             }
 
@@ -208,18 +207,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private float GetTargetCastTime()
         {
-            if (PluginInterface.ClientState.LocalPlayer == null ||
-                PluginInterface.ClientState.Targets.CurrentTarget == null)
+            if (Service.ClientState.LocalPlayer == null ||
+                Service.Targets.Target == null)
                 return 0;
-            var target = PluginInterface.ClientState.Targets.CurrentTarget;
-            if (target is Chara)
+            var target = Service.Targets.Target;
+            if (target is BattleChara)
             {
-                var castTime =
-                    Marshal.PtrToStructure<float>(target.Address +
-                                                  Dalamud.Game.ClientState.Structs.ActorOffsets.CurrentCastTime);
-                var totalCastTime =
-                    Marshal.PtrToStructure<float>(target.Address +
-                                                  Dalamud.Game.ClientState.Structs.ActorOffsets.TotalCastTime);
+                var castTime = ((BattleChara)target).CurrentCastTime;
+                var totalCastTime =((BattleChara)target).TotalCastTime;
                 return totalCastTime - castTime;
             }
 
@@ -245,7 +240,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override void Enable() {
             if (Enabled) return;
             LoadedConfig = LoadConfig<Config>() ?? PluginConfig.UiAdjustments.ShiftTargetCastBarText ?? new Config();
-            PluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdate;
+            Service.Framework.Update += OnFrameworkUpdate;
             Enabled = true;
         }
 
@@ -253,14 +248,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             if (!Enabled) return;
             SaveConfig(LoadedConfig);
             PluginConfig.UiAdjustments.ShiftTargetCastBarText = null;
-            PluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdate;
+            Service.Framework.Update -= OnFrameworkUpdate;
             SimpleLog.Debug($"[{GetType().Name}] Reset");
             HandleBars(true);
             Enabled = false;
         }
 
         public override void Dispose() {
-            PluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdate;
+            Service.Framework.Update -= OnFrameworkUpdate;
             Enabled = false;
             Ready = false;
         }

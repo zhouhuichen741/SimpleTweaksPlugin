@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Dalamud.Game.Internal;
+using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.GameStructs;
 using SimpleTweaksPlugin.Helper;
-using SimpleTweaksPlugin.Tweaks.UiAdjustment;
-
-namespace SimpleTweaksPlugin {
-    public partial class UiAdjustmentsConfig {
-        public CastBarAdjustments.Configs CastBarAdjustments = new();
-    }
-}
+using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
-        public override string Name => "咏唱栏修改";
-        public override string Description => "隐藏或移动咏唱栏的特定部分";
-        public override IEnumerable<string> Tags => new[] {"滑步", "咏唱", "咏唱栏"};
+        public override string Name => "Cast Bar Adjustments";
+        public override string Description => "Allows hiding or moving specific parts of the castbar.";
+        public override IEnumerable<string> Tags => new[] {"SlideCast", "Slide Cast"};
 
-        public class Configs {
+        public class Configs : TweakConfig {
             public bool RemoveCastingText;
             public bool RemoveIcon;
             public bool RemoveCounter;
@@ -40,51 +34,51 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             public int OffsetCounterPosition = 0;
         }
 
-        public Configs Config => PluginConfig.UiAdjustments.CastBarAdjustments;
+        public Configs Config { get; private set; }
 
 
         
         private float configAlignmentX;
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("隐藏'发动中'文字", ref Config.RemoveCastingText);
-            hasChanged |= ImGui.Checkbox("隐藏图标", ref Config.RemoveIcon);
-            hasChanged |= ImGui.Checkbox("隐藏'打断成功'文字", ref Config.RemoveInterruptedText);
-            hasChanged |= ImGui.Checkbox("隐藏剩余时间", ref Config.RemoveCounter);
+            hasChanged |= ImGui.Checkbox("Hide 'Casting' Text", ref Config.RemoveCastingText);
+            hasChanged |= ImGui.Checkbox("Hide Icon", ref Config.RemoveIcon);
+            hasChanged |= ImGui.Checkbox("Hide Interrupted Text", ref Config.RemoveInterruptedText);
+            hasChanged |= ImGui.Checkbox("Hide Countdown Text", ref Config.RemoveCounter);
             if (Config.RemoveCastingText && !Config.RemoveCounter) {
                 ImGui.SameLine();
                 if (ImGui.GetCursorPosX() > configAlignmentX) configAlignmentX = ImGui.GetCursorPosX();
                 ImGui.SetCursorPosX(configAlignmentX);
-                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("剩余时间对齐", ref Config.AlignCounter);
+                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("Align Countdown Text", ref Config.AlignCounter);
 
                 ImGui.SetCursorPosX(configAlignmentX);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                hasChanged |= ImGui.InputInt("偏移##offsetCounterPosition", ref Config.OffsetCounterPosition);
+                hasChanged |= ImGui.InputInt("Offset##offsetCounterPosition", ref Config.OffsetCounterPosition);
                 if (Config.OffsetCounterPosition < -100) Config.OffsetCounterPosition = -100;
                 if (Config.OffsetCounterPosition > 100) Config.OffsetCounterPosition = 100;
 
             }
-            hasChanged |= ImGui.Checkbox("隐藏技能名", ref Config.RemoveName);
+            hasChanged |= ImGui.Checkbox("Hide Ability Name", ref Config.RemoveName);
             if (!Config.RemoveName) {
                 ImGui.SameLine();
                 if (ImGui.GetCursorPosX() > configAlignmentX) configAlignmentX = ImGui.GetCursorPosX();
                 ImGui.SetCursorPosX(configAlignmentX);
-                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("技能名对齐", ref Config.AlignName);
+                hasChanged |= ImGuiExt.HorizontalAlignmentSelector("Align Ability Name", ref Config.AlignName);
                 ImGui.SetCursorPosX(configAlignmentX);
                 ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-                hasChanged |= ImGui.InputInt("偏移##offsetNamePosition", ref Config.OffsetNamePosition);
+                hasChanged |= ImGui.InputInt("Offset##offsetNamePosition", ref Config.OffsetNamePosition);
 
                 if (Config.OffsetNamePosition < -100) Config.OffsetNamePosition = -100;
                 if (Config.OffsetNamePosition > 100) Config.OffsetNamePosition = 100;
             }
 
-            hasChanged |= ImGui.Checkbox("显示滑步点", ref Config.SlideCast);
+            hasChanged |= ImGui.Checkbox("Show SlideCast Marker", ref Config.SlideCast);
             if (Config.SlideCast) {
                 ImGui.Indent();
                 ImGui.Indent();
-                hasChanged |= ImGui.SliderInt("滑步偏移时间", ref Config.SlideCastAdjust, 0, 1000);
-                hasChanged |= ImGui.ColorEdit4("滑步点颜色", ref Config.SlideCastColor);
-                hasChanged |= ImGui.ColorEdit4("滑步就绪颜色", ref Config.SlideCastReadyColor);
+                hasChanged |= ImGui.SliderInt("SlideCast Offset Time", ref Config.SlideCastAdjust, 0, 1000);
+                hasChanged |= ImGui.ColorEdit4("SlideCast Marker Colour", ref Config.SlideCastColor);
+                hasChanged |= ImGui.ColorEdit4("SlideCast Ready Colour", ref Config.SlideCastReadyColor);
                 ImGui.Unindent();
                 ImGui.Unindent();
             }
@@ -98,13 +92,15 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         };
 
         public override void Enable() {
-            PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
+            Config = LoadConfig<Configs>() ?? new Configs();
+            Service.Framework.Update += FrameworkOnUpdate;
             base.Enable();
         }
 
         public override void Disable() {
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
+            Service.Framework.Update -= FrameworkOnUpdate;
             UpdateCastBar(true);
+            SaveConfig(Config);
             base.Disable();
         }
 
@@ -115,8 +111,6 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 SimpleLog.Error(ex);
             }
         }
-
-        private const uint NodeSlideCastMarker = 999001; 
         
         public void UpdateCastBar(bool reset = false) {
             var castBar = Common.GetUnitBase<AddonCastBar>();
@@ -134,7 +128,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             var slideMarker = (AtkNineGridNode*) null;
 
             for (var i = 13; i < castBar->AtkUnitBase.UldManager.NodeListCount; i++) {
-                if (castBar->AtkUnitBase.UldManager.NodeList[i]->NodeID == NodeSlideCastMarker) {
+                if (castBar->AtkUnitBase.UldManager.NodeList[i]->NodeID == CustomNodes.SlideCastMarker) {
                     slideMarker = (AtkNineGridNode*) castBar->AtkUnitBase.UldManager.NodeList[i];
                     break;
                 }
@@ -151,8 +145,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
                 UiHelper.SetSize(countdownText, 42, null);
                 UiHelper.SetPosition(countdownText, 170, null);
-                UiHelper.SetScale(interruptedText, 1);
-
+                interruptedText->AtkResNode.SetScale(1, 1);
 
                 if (slideMarker != null) {
                     UiHelper.Hide(slideMarker);
@@ -186,7 +179,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
 
             if (Config.RemoveInterruptedText) {
-                UiHelper.SetScale(interruptedText, 0);
+                interruptedText->AtkResNode.SetScale(0, 0);
             }
 
             if (Config.SlideCast) {
@@ -194,7 +187,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     // Create Node
                     UiHelper.ExpandNodeList((AtkUnitBase*)castBar, 1);
                     slideMarker = UiHelper.CloneNode(progressBar);
-                    slideMarker->AtkResNode.NodeID = NodeSlideCastMarker;
+                    slideMarker->AtkResNode.NodeID = CustomNodes.SlideCastMarker;
                     castBar->AtkUnitBase.UldManager.NodeList[6]->PrevSiblingNode = (AtkResNode*) slideMarker;
                     slideMarker->AtkResNode.NextSiblingNode = castBar->AtkUnitBase.UldManager.NodeList[6];
                     slideMarker->AtkResNode.ParentNode = castBar->AtkUnitBase.UldManager.NodeList[3];

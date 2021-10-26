@@ -40,8 +40,8 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
             if (Enabled) return;
             TweakConfig = LoadConfig<Config>() ?? Plugin.PluginConfig.ChatTweaks.RenameChatTabs ?? new Config();
 
-            PluginInterface.ClientState.OnLogin += OnLogin;
-            if (PluginInterface.ClientState.LocalPlayer != null) {
+            Service.ClientState.Login += OnLogin;
+            if (Service.ClientState.LocalPlayer != null) {
                 OnLogin(null, null);
             }
             base.Enable();
@@ -50,7 +50,7 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
         public override void Disable() {
             SaveConfig(TweakConfig);
             PluginConfig.ChatTweaks.RenameChatTabs = null;
-            PluginInterface.ClientState.OnLogin -= OnLogin;
+            Service.ClientState.Login -= OnLogin;
             cancellationToken?.Cancel();
             if (renameTask != null) {
                 var c = 0;
@@ -91,11 +91,11 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
                 while (true) {
                     try {
                         if (cancellationToken.IsCancellationRequested) break;
-                        var chatLog = (AtkUnitBase*) PluginInterface.Framework.Gui.GetUiObjectByName("ChatLog", 1);
+                        var chatLog = (AtkUnitBase*) Service.GameGui.GetAddonByName("ChatLog", 1);
                         if (chatLog != null) {
                             DoRename(chatLog);
 
-                            var chatLogPanel2 = (AtkUnitBase*) PluginInterface.Framework.Gui.GetUiObjectByName("ChatLogPanel_1", 1);
+                            var chatLogPanel2 = (AtkUnitBase*) Service.GameGui.GetAddonByName("ChatLogPanel_1", 1);
                             if (chatLogPanel2 != null) {
                                 DoRenamePanel(chatLogPanel2);
                             }
@@ -110,19 +110,19 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
         }
 
         public unsafe void ResetName() {
-            var chatLog = (AtkUnitBase*) PluginInterface.Framework.Gui.GetUiObjectByName("ChatLog", 1);
+            var chatLog = (AtkUnitBase*) Service.GameGui.GetAddonByName("ChatLog", 1);
             if (chatLog != null) DoRename(chatLog, true);
-            var chatLogPanel = (AtkUnitBase*) PluginInterface.Framework.Gui.GetUiObjectByName("ChatLogPanel_1", 1);
+            var chatLogPanel = (AtkUnitBase*) Service.GameGui.GetAddonByName("ChatLogPanel_1", 1);
             if (chatLogPanel != null) DoRenamePanel(chatLogPanel, true);
         }
 
-        public string DefaultName0 => PluginInterface.ClientState.ClientLanguage switch {
+        public string DefaultName0 => Service.ClientState.ClientLanguage switch {
             ClientLanguage.French => "Général",
             ClientLanguage.German => "Allgemein",
             ClientLanguage.ChineseSimplified => "通用",
             _ => "General"
         };
-        public string DefaultName1 => PluginInterface.ClientState.ClientLanguage switch {
+        public string DefaultName1 => Service.ClientState.ClientLanguage switch {
             ClientLanguage.French => "Combat",
             ClientLanguage.German => "Kampf",
             ClientLanguage.ChineseSimplified => "战斗",
@@ -162,7 +162,7 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
             
             textNode->AtkResNode.Width = 0; // Auto resizing only grows the box. Set to zero to guarantee it.
             textNode->AlignmentFontType = (byte) AlignmentType.Left; // Auto resizing doesn't work on Center aligned text.
-            UiHelper.SetText(textNode, $"{name}");
+            textNode->SetText(name);
             textNode->AtkResNode.Width += 5;
             textNode->AtkResNode.Flags_2 |= 0x1;
 
@@ -189,7 +189,7 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
             if (str.TextValue == name && textNode->AtkResNode.Width < 1000) return;
             SimpleLog.Log($"Rename Tab: '{str.TextValue}' -> '{name}' [{textNode->AtkResNode.Width}]");
             textNode->AtkResNode.Width = 0;
-            UiHelper.SetText(textNode, name);
+            textNode->SetText(name);
             textNode->AtkResNode.Width += 10;
             if (textNode->AtkResNode.Width > 1000) textNode->AtkResNode.Width = 180;
             textNode->AtkResNode.Flags_2 |= 0x1;

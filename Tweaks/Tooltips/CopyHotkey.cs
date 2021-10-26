@@ -5,98 +5,73 @@ using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using Dalamud;
+using Dalamud.Game;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Game.Internal;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using SimpleTweaksPlugin.Enums;
-using SimpleTweaksPlugin.GameStructs;
+using Lumina.Data;
+using Lumina.Excel;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Sheets;
 using SimpleTweaksPlugin.TweakSystem;
-
-namespace SimpleTweaksPlugin {
-    public partial class TooltipTweakConfig {
-        public bool ShouldSerializeCopyHotkey() => false;
-        public bool ShouldSerializeCopyHotkeyEnabled() => false;
-        public bool ShouldSerializeTeamcraftLinkHotkey() => false;
-        public bool ShouldSerializeTeamcraftLinkHotkeyEnabled() => false;
-        public bool ShouldSerializeTeamcraftLinkHotkeyForceBrowser() => false;
-        public bool ShouldSerializeGardlandToolsLinkHotkey() => false;
-        public bool ShouldSerializeGardlandToolsLinkHotkeyEnabled() => false;
-        public bool ShouldSerializeGamerEscapeLinkHotkey() => false;
-        public bool ShouldSerializeGamerEscapeLinkHotkeyEnabled() => false;
-        public bool ShouldSerializeHideHotkeysOnTooltip() => false;
-
-        public VK[] CopyHotkey = { VK.Ctrl, VK.C };
-        public bool CopyHotkeyEnabled = false;
-
-        public VK[] TeamcraftLinkHotkey = {VK.Ctrl, VK.T};
-        public bool TeamcraftLinkHotkeyEnabled = false;
-        public bool TeamcraftLinkHotkeyForceBrowser = false;
-
-        public VK[] GardlandToolsLinkHotkey = {VK.Ctrl, VK.G};
-        public bool GardlandToolsLinkHotkeyEnabled = false;
-
-        public VK[] GamerEscapeLinkHotkey = {VK.Ctrl, VK.E};
-        public bool GamerEscapeLinkHotkeyEnabled = false;
-
-        public bool HideHotkeysOnTooltip = false;
-    }
-}
+using static SimpleTweaksPlugin.Tweaks.TooltipTweaks.ItemTooltipField;
 
 namespace SimpleTweaksPlugin.Tweaks.Tooltips {
-    public class CopyHotkey : TooltipTweaks.SubTweak {
+    public unsafe class CopyHotkey : TooltipTweaks.SubTweak {
 
         public class Configs : TweakConfig {
-            public VK[] CopyHotkey = { VK.Ctrl, VK.C };
-            public bool CopyHotkeyEnabled = false;
+            public VirtualKey[] CopyHotkey = { VirtualKey.CONTROL, VirtualKey.C };
+            public bool CopyHotkeyEnabled;
 
-            public VK[] TeamcraftLinkHotkey = {VK.Ctrl, VK.T};
-            public bool TeamcraftLinkHotkeyEnabled = false;
-            public bool TeamcraftLinkHotkeyForceBrowser = false;
+            public VirtualKey[] TeamcraftLinkHotkey = {VirtualKey.CONTROL, VirtualKey.T};
+            public bool TeamcraftLinkHotkeyEnabled;
+            public bool TeamcraftLinkHotkeyForceBrowser;
 
-            public VK[] GardlandToolsLinkHotkey = {VK.Ctrl, VK.G};
-            public bool GardlandToolsLinkHotkeyEnabled = false;
+            public VirtualKey[] GardlandToolsLinkHotkey = {VirtualKey.CONTROL, VirtualKey.G};
+            public bool GardlandToolsLinkHotkeyEnabled;
 
-            public VK[] GamerEscapeLinkHotkey = {VK.Ctrl, VK.E};
-            public bool GamerEscapeLinkHotkeyEnabled = false;
+            public VirtualKey[] GamerEscapeLinkHotkey = {VirtualKey.CONTROL, VirtualKey.E};
+            public bool GamerEscapeLinkHotkeyEnabled;
+            
+            public VirtualKey[] ErionesLinkHotkey = {VirtualKey.SHIFT, VirtualKey.E};
+            public bool ErionesLinkHotkeyEnabled;
 
-            public bool HideHotkeysOnTooltip = false;
+            public bool HideHotkeysOnTooltip;
         }
         
         public Configs Config { get; private set; }
 
         private readonly string weirdTabChar = Encoding.UTF8.GetString(new byte[] {0xE3, 0x80, 0x80});
 
-        public override string Name => "物品快捷键";
-        public override string Description => "当显示物品详情时可以使用快捷键进行一系列操作";
-        public override void OnItemTooltip(TooltipTweaks.ItemTooltip tooltip, InventoryItem itemInfo) {
-            if (Config.HideHotkeysOnTooltip) return;
-            var seStr = tooltip[TooltipTweaks.ItemTooltip.TooltipField.ControlsDisplay];
-            if (seStr == null) return;
+        public override string Name => "Item Hotkeys";
+        public override string Description => "Adds hotkeys for various actions when the item detail window is visible.";
 
-            var split = seStr.TextValue.Split(new string[] { weirdTabChar }, StringSplitOptions.None);
+        public override void OnGenerateItemTooltip(NumberArrayData* numberArrayData, StringArrayData* stringArrayData) {
+            if (Config.HideHotkeysOnTooltip) return;
+            var seStr = GetTooltipString(stringArrayData, ControlsDisplay);
+            if (seStr == null) return;
+            var split = seStr.TextValue.Split(new[] { weirdTabChar }, StringSplitOptions.None);
             if (split.Length > 0) {
                 seStr.Payloads.Clear();
                 seStr.Payloads.Add(new TextPayload(string.Join("\n", split)));
             }
 
-            if (Config.CopyHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.CopyHotkey.Select(k => k.GetKeyName()))}  复制物品名"));
-            if (Config.TeamcraftLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.TeamcraftLinkHotkey.Select(k => k.GetKeyName()))}  在Teamcraft查看"));
-            if (Config.GardlandToolsLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GardlandToolsLinkHotkey.Select(k => k.GetKeyName()))}  在Garland Tools查看"));
-            if (Config.GamerEscapeLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GamerEscapeLinkHotkey.Select(k => k.GetKeyName()))}  在Gamer Escape查看"));
+            if (Config.CopyHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.CopyHotkey.Select(k => k.GetKeyName()))}  Copy item name"));
+            if (Config.TeamcraftLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.TeamcraftLinkHotkey.Select(k => k.GetKeyName()))}  View on Teamcraft"));
+            if (Config.GardlandToolsLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GardlandToolsLinkHotkey.Select(k => k.GetKeyName()))}  View on Garland Tools"));
+            if (Config.GamerEscapeLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GamerEscapeLinkHotkey.Select(k => k.GetKeyName()))}  View on Gamer Escape"));
+            if (Config.ErionesLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.ErionesLinkHotkey.Select(k => k.GetKeyName()))}  View on Eriones (JP)"));
 
-            SimpleLog.Verbose(seStr.Payloads);
-            tooltip[TooltipTweaks.ItemTooltip.TooltipField.ControlsDisplay] = seStr;
+            stringArrayData->SetValue((int) ControlsDisplay, seStr.Encode(), false);
         }
 
-        private string settingKey = null;
-        private string focused = null;
+        private string settingKey;
+        private string focused;
         
-        private readonly List<VK> newKeys = new List<VK>();
+        private readonly List<VirtualKey> newKeys = new();
 
-        public void DrawHotkeyConfig(string name, ref VK[] keys, ref bool enabled, ref bool hasChanged) {
+        public void DrawHotkeyConfig(string name, ref VirtualKey[] keys, ref bool enabled, ref bool hasChanged) {
             while (ImGui.GetColumnIndex() != 0) ImGui.NextColumn();
             hasChanged |= ImGui.Checkbox(name, ref enabled);
             ImGui.NextColumn();
@@ -107,16 +82,16 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             if (settingKey == name) {
                 for (var k = 0; k < ImGui.GetIO().KeysDown.Count && k < 160; k++) {
                     if (ImGui.GetIO().KeysDown[k]) {
-                        if (!newKeys.Contains((VK)k)) {
+                        if (!newKeys.Contains((VirtualKey)k)) {
 
-                            if ((VK)k == VK.ESCAPE) {
+                            if ((VirtualKey)k == VirtualKey.ESCAPE) {
                                 settingKey = null;
                                 newKeys.Clear();
                                 focused = null;
                                 break;
                             }
 
-                            newKeys.Add((VK)k);
+                            newKeys.Add((VirtualKey)k);
                             newKeys.Sort();
                         }
                     }
@@ -142,7 +117,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                     focused = name;
                 } else {
                     ImGui.SameLine();
-                    if (ImGui.Button(newKeys.Count > 0 ? $"确认##{name}" : $"取消##{name}")) {
+                    if (ImGui.Button(newKeys.Count > 0 ? $"Confirm##{name}" : $"Cancel##{name}")) {
                         settingKey = null;
                         if (newKeys.Count > 0) keys = newKeys.ToArray();
                         newKeys.Clear();
@@ -159,7 +134,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 }
             } else {
                 ImGui.SameLine();
-                if (ImGui.Button($"设置快捷键###setHotkeyButton{name}")) {
+                if (ImGui.Button($"Set Keybind###setHotkeyButton{name}")) {
                     settingKey = name;
                 }
             }
@@ -169,49 +144,72 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             ImGui.Columns(2);
             ImGui.SetColumnWidth(0, 180 * ImGui.GetIO().FontGlobalScale);
             var c = Config;
-            DrawHotkeyConfig("复制物品名", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("Copy Item Name", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("在Teamcraft查看", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("View on Teamcraft", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
             ImGui.SameLine();
-            ImGui.Checkbox($"使用浏览器###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
+            ImGui.Checkbox($"Browser Only###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
             ImGui.Separator();
-            DrawHotkeyConfig("在Garland Tools查看", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("View on Garland Tools", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("在Gamer Escape查看", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig("View on Gamer Escape", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
+            ImGui.Separator();
+            DrawHotkeyConfig("View on Eriones (JP)", ref c.ErionesLinkHotkey, ref c.ErionesLinkHotkeyEnabled, ref hasChanged);
             ImGui.Columns();
             ImGui.Dummy(new Vector2(5 * ImGui.GetIO().FontGlobalScale));
             hasChanged |= ImGui.Checkbox("Don't show hotkey help on Tooltip", ref c.HideHotkeysOnTooltip);
         };
 
+        private ExcelSheet<ExtendedItem> itemSheet;
+
+        private HookWrapper<Common.AddonOnUpdate> itemDetailOnUpdateHook;
+
         public override void Enable() {
-            Config = LoadConfig<Configs>() ?? new Configs() {
-                CopyHotkey = PluginConfig.TooltipTweaks.CopyHotkey,
-                CopyHotkeyEnabled = PluginConfig.TooltipTweaks.CopyHotkeyEnabled,
-                GamerEscapeLinkHotkey = PluginConfig.TooltipTweaks.GamerEscapeLinkHotkey,
-                GamerEscapeLinkHotkeyEnabled = PluginConfig.TooltipTweaks.GamerEscapeLinkHotkeyEnabled,
-                GardlandToolsLinkHotkey = PluginConfig.TooltipTweaks.GardlandToolsLinkHotkey,
-                GardlandToolsLinkHotkeyEnabled = PluginConfig.TooltipTweaks.GardlandToolsLinkHotkeyEnabled,
-                HideHotkeysOnTooltip = PluginConfig.TooltipTweaks.HideHotkeysOnTooltip,
-                TeamcraftLinkHotkey = PluginConfig.TooltipTweaks.TeamcraftLinkHotkey,
-                TeamcraftLinkHotkeyEnabled = PluginConfig.TooltipTweaks.TeamcraftLinkHotkeyEnabled,
-                TeamcraftLinkHotkeyForceBrowser = PluginConfig.TooltipTweaks.TeamcraftLinkHotkeyForceBrowser
-            };
-            
-            PluginInterface.Framework.OnUpdateEvent += FrameworkOnOnUpdateEvent;
+            this.itemSheet = Service.Data.Excel.GetSheet<ExtendedItem>();
+            if (itemSheet == null) return;
+            Config = LoadConfig<Configs>() ?? new Configs();
+            Service.Framework.Update += FrameworkOnOnUpdateEvent;
+
+            itemDetailOnUpdateHook ??= Common.Hook<Common.AddonOnUpdate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC 20 4C 8B AA", AddonItemDetailOnUpdate);
+            itemDetailOnUpdateHook?.Enable();
+
             base.Enable();
+        }
+
+        private void* AddonItemDetailOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** nums, StringArrayData** strings) {
+            var ret = itemDetailOnUpdateHook.Original(atkUnitBase, nums, strings);
+            if (Config.HideHotkeysOnTooltip) return ret;
+            var textNineGridComponentNode = (AtkComponentNode*) atkUnitBase->GetNodeById(3);
+            if (textNineGridComponentNode == null) return ret;
+            var textNode = (AtkTextNode*) textNineGridComponentNode->Component->UldManager.SearchNodeById(2);
+            var nineGrid = (AtkNineGridNode*) textNineGridComponentNode->Component->UldManager.SearchNodeById(3);
+            if (textNode == null || nineGrid == null) return ret;
+            ushort textWidth = 0;
+            ushort textHeight = 0;
+            textNode->GetTextDrawSize(&textWidth, &textHeight);
+            if (textHeight is 0 or > 1000) return ret;
+            textHeight += (ushort)(textNode->AtkResNode.Y * 2);
+            nineGrid->AtkResNode.SetHeight(textHeight);
+            return ret;
         }
 
         public override void Disable() {
             SaveConfig(Config);
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnOnUpdateEvent;
+            itemDetailOnUpdateHook?.Disable();
+            Service.Framework.Update -= FrameworkOnOnUpdateEvent;
             base.Disable();
+        }
+
+        public override void Dispose() {
+            itemDetailOnUpdateHook?.Dispose();
+            base.Dispose();
         }
 
         private void CopyItemName(ExtendedItem extendedItem) {
             ImGui.SetClipboardText(extendedItem.Name);
         }
 
-        private bool teamcraftLocalFailed = false;
+        private bool teamcraftLocalFailed;
 
         private void OpenTeamcraft(ExtendedItem extendedItem) {
             if (teamcraftLocalFailed || Config.TeamcraftLinkHotkeyForceBrowser) {
@@ -245,16 +243,25 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
         }
         
         private void OpenGamerEscape(ExtendedItem extendedItem) {
-            var name = Uri.EscapeUriString(extendedItem.Name);
+            var enItem = Service.Data.Excel.GetSheet<ExtendedItem>(Language.English)?.GetRow(extendedItem.RowId);
+            if (enItem == null) return;
+            var name = Uri.EscapeUriString(enItem.Name);
             Common.OpenBrowser($"https://ffxiv.gamerescape.com/w/index.php?search={name}");
         }
 
-        private bool isHotkeyPress(VK[] keys) {
-            for (var i = 0; i < 0xA0; i++) {
-                if (keys.Contains((VK) i)) {
-                    if (!PluginInterface.ClientState.KeyState[i]) return false;
+        private void OpenEriones(ExtendedItem extendedItem) {
+            var jpItem = Service.Data.Excel.GetSheet<ExtendedItem>(Language.Japanese)?.GetRow(extendedItem.RowId);
+            if (jpItem == null) return;
+            var name = Uri.EscapeUriString(jpItem.Name);
+            Common.OpenBrowser($"https://eriones.com/search?i={name}");
+        }
+
+        private bool isHotkeyPress(VirtualKey[] keys) {
+            foreach (var vk in Service.KeyState.GetValidVirtualKeys()) {
+                if (keys.Contains(vk)) {
+                    if (!Service.KeyState[vk]) return false;
                 } else {
-                    if (PluginInterface.ClientState.KeyState[i]) return false;
+                    if (Service.KeyState[vk]) return false;
                 }
             }
             return true;
@@ -262,13 +269,12 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
         private void FrameworkOnOnUpdateEvent(Framework framework) {
             try {
-                if (PluginInterface.Framework.Gui.HoveredItem == 0) return;
+                if (Service.GameGui.HoveredItem == 0) return;
 
                 Action<ExtendedItem> action = null;
-                VK[] keys = null;
+                VirtualKey[] keys = null;
 
-                var language = PluginInterface.ClientState.ClientLanguage;
-                if (action == null && Config.CopyHotkeyEnabled && isHotkeyPress(Config.CopyHotkey)) {
+                if (Config.CopyHotkeyEnabled && isHotkeyPress(Config.CopyHotkey)) {
                     action = CopyItemName;
                     keys = Config.CopyHotkey;
                 }
@@ -286,18 +292,21 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 if (action == null && Config.GamerEscapeLinkHotkeyEnabled && isHotkeyPress(Config.GamerEscapeLinkHotkey)) {
                     action = OpenGamerEscape;
                     keys = Config.GamerEscapeLinkHotkey;
-                    language = ClientLanguage.English;
+                }
+                if (action == null && Config.ErionesLinkHotkeyEnabled && isHotkeyPress(Config.ErionesLinkHotkey)) {
+                    action = OpenEriones;
+                    keys = Config.ErionesLinkHotkey;
                 }
 
                 if (action != null) {
-                    var id = PluginInterface.Framework.Gui.HoveredItem;
+                    var id = Service.GameGui.HoveredItem;
                     if (id >= 2000000) return;
                     id %= 500000;
-                    var item = PluginInterface.Data.GetExcelSheet<ExtendedItem>(language).GetRow((uint) id);
+                    var item = itemSheet.GetRow((uint) id);
                     if (item == null) return;
                     action(item);
                     foreach (var k in keys) {
-                        PluginInterface.ClientState.KeyState[(int) k] = false;
+                        Service.KeyState[(int) k] = false;
                     }
                 }
             } catch (Exception ex) {

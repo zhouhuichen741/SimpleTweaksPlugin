@@ -1,16 +1,17 @@
 ﻿using System;
-using Dalamud.Game.ClientState.Actors;
-using Dalamud.Game.ClientState.Structs;
+using System.Runtime.InteropServices;
 using Dalamud.Hooking;
-using Dalamud.Plugin;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using ImGuiNET;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
-    public class SmartNameplates : UiAdjustments.SubTweak {
-        public override string Name => "智能隐藏姓名版";
-        public override string Description => "提供在战斗中隐藏特定目标姓名版的选项.";
+    public unsafe class SmartNameplates : UiAdjustments.SubTweak {
+        public override string Name => "Smart Nameplates";
+        public override string Description => "Provides options to hide other player's nameplates in combat under certain conditions.";
         protected override string Author => "UnknownX";
 
         public class Configs : TweakConfig {
@@ -24,53 +25,60 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private Configs config;
 
-        private const int statusFlagsOffset = 0x1980;//0x19A0; 5.5
         private IntPtr targetManager = IntPtr.Zero;
-        private delegate byte ShouldDisplayNameplateDelegate(IntPtr raptureAtkModule, IntPtr actor, IntPtr localPlayer, float distance);
+        private delegate byte ShouldDisplayNameplateDelegate(IntPtr raptureAtkModule, GameObject* actor, GameObject* localPlayer, float distance);
         private Hook<ShouldDisplayNameplateDelegate> shouldDisplayNameplateHook;
+        private delegate byte GetTargetTypeDelegate(GameObject* actor);
+        private GetTargetTypeDelegate GetTargetType;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("在战斗中不隐藏以下目标姓名版##SmartNameplatesShowHP", ref config.ShowHP);
+            ImGui.Checkbox("Show HP##SmartNameplatesShowHP", ref config.ShowHP);
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("总是显示特定目标的HP条.");
+                ImGui.SetTooltip("Will not hide HP bars for affected players.");
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("不隐藏以下目标的的HP条:");
-            ImGui.Checkbox("队友##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
-            ImGui.Checkbox("团队成员##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
-            ImGui.Checkbox("好友##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
-            ImGui.Checkbox("已死亡角色##SmartNameplatesIgnoreDead", ref config.IgnoreDead);
-            ImGui.Checkbox("目标角色##SmartNameplatesIgnoreTargets", ref config.IgnoreTargets);
+            ImGui.TextUnformatted("The following options will disable the tweak for certain players.");
+            ImGui.Checkbox("Ignore Party Members##SmartNameplatesIgnoreParty", ref config.IgnoreParty);
+            ImGui.Checkbox("Ignore Alliance Members##SmartNameplatesIgnoreAlliance", ref config.IgnoreAlliance);
+            ImGui.Checkbox("Ignore Friends##SmartNameplatesIgnoreFriends", ref config.IgnoreFriends);
+            ImGui.Checkbox("Ignore Dead Players##SmartNameplatesIgnoreDead", ref config.IgnoreDead);
+            ImGui.Checkbox("Ignore Targeted Players##SmartNameplatesIgnoreTargets", ref config.IgnoreTargets);
         };
 
-        // Crashes the game if ANY Dalamud Actor is created from within it, which is why everything is using offsets
         // returns 2 bits (b01 == display name, b10 == display hp)
-        private unsafe byte ShouldDisplayNameplateDetour(IntPtr raptureAtkModule, IntPtr actor, IntPtr localPlayer, float distance) {
-            var actorStatusFlags = *(byte*)(actor + statusFlagsOffset);
-            // true is a placeholder for config
-            if (actor == localPlayer // Ignore localplayer
-                || (*(byte*)(localPlayer + statusFlagsOffset) & 2) == 0 // Alternate in combat flag
-                || *(ObjectKind*)(actor + ActorOffsets.ObjectKind) != ObjectKind.Player // Ignore nonplayers
+        private byte ShouldDisplayNameplateDetour(IntPtr raptureAtkModule, GameObject* actor, GameObject* localPlayer, float distance) {
+            if (actor->ObjectKind != (byte) ObjectKind.Pc) goto ReturnOriginal;
+            var pc = (BattleChara*) actor;
 
-                || (config.IgnoreParty && (actorStatusFlags & 16) > 0) // Ignore party members
-                || (config.IgnoreAlliance && (actorStatusFlags & 32) > 0) // Ignore alliance members
-                || (config.IgnoreFriends && (actorStatusFlags & 64) > 0) // Ignore friends
-                || (config.IgnoreDead && *(int*)(actor + ActorOffsets.CurrentHp) == 0) // Ignore dead players
+            var targets = TargetSystem.Instance();
+
+            if (actor == localPlayer // Ignore localplayer
+                || (((BattleChara*) localPlayer)->Character.StatusFlags & 2) == 0 // Alternate in combat flag
+                || GetTargetType(actor) == 3
+
+                || (config.IgnoreParty && (pc->Character.StatusFlags & 16) > 0) // Ignore party members
+                || (config.IgnoreAlliance && (pc->Character.StatusFlags & 32) > 0) // Ignore alliance members
+                || (config.IgnoreFriends && (pc->Character.StatusFlags & 64) > 0) // Ignore friends
+                || (config.IgnoreDead && pc->Character.Health == 0) // Ignore dead players
 
                 // Ignore targets
-                || (config.IgnoreTargets && (*(IntPtr*)(targetManager + TargetOffsets.CurrentTarget) == actor
-                    || *(IntPtr*)(targetManager + TargetOffsets.SoftTarget) == actor
-                    || *(IntPtr*)(targetManager + TargetOffsets.FocusTarget) == actor)))
-                return shouldDisplayNameplateHook.Original(raptureAtkModule, actor, localPlayer, distance);
+                || (config.IgnoreTargets && targets->Target == actor
+                    || targets->SoftTarget == actor
+                    || targets->FocusTarget == actor)) goto ReturnOriginal;
+
             return (byte)(config.ShowHP ? (shouldDisplayNameplateHook.Original(raptureAtkModule, actor, localPlayer, distance) & ~1) : 0); // Ignore HP
+
+
+            ReturnOriginal:
+            return shouldDisplayNameplateHook.Original(raptureAtkModule, actor, localPlayer, distance);
         }
-        
+
         public override void Enable() {
             config = LoadConfig<Configs>() ?? new Configs();
             targetManager = targetManager != IntPtr.Zero ? targetManager : Common.Scanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? FF 50 ?? 48 85 DB", 3); // Taken from Dalamud
-            shouldDisplayNameplateHook ??= new Hook<ShouldDisplayNameplateDelegate>(Common.Scanner.ScanText("E8 ?? ?? ?? ?? 89 44 24 40 48 C7 85 ?? ?? ?? ?? ?? ?? ?? ??"), new ShouldDisplayNameplateDelegate(ShouldDisplayNameplateDetour));
-            //shouldDisplayNameplateHook ??= new Hook<ShouldDisplayNameplateDelegate>(Common.Scanner.ScanText("E8 ?? ?? ?? ?? 89 44 24 40 48 C7 85 88 15 02 00 00 00 00 00"), new ShouldDisplayNameplateDelegate(ShouldDisplayNameplateDetour));
+            GetTargetType ??= Marshal.GetDelegateForFunctionPointer<GetTargetTypeDelegate>(Common.Scanner.ScanText("E8 ?? ?? ?? ?? 83 F8 06 0F 87 ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 8B C0"));
+            shouldDisplayNameplateHook ??= new Hook<ShouldDisplayNameplateDelegate>(Common.Scanner.ScanText("E8 ?? ?? ?? ?? 89 44 24 40 48 C7 85 ?? ?? ?? ?? ?? ?? ?? ??"), ShouldDisplayNameplateDetour);
             shouldDisplayNameplateHook?.Enable();
             base.Enable();
         }

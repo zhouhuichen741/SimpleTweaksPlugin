@@ -52,9 +52,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         };
 
         public override void Setup() {
-            examineIsValidPtr = PluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 C7 43 ?? ?? ?? ?? ??");
+            examineIsValidPtr = Service.SigScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 C7 43 ?? ?? ?? ?? ??");
 
-            examineUpdatedAddress = PluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 41 89 04 9F");
+            examineUpdatedAddress = Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 41 89 04 9F");
 
             SimpleLog.Debug($"ExamineIsValidPtr: {examineIsValidPtr.ToInt64():X}");
             Ready = true;
@@ -86,7 +86,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 if (container == null) return;
                 var examineWindow = (AddonCharacterInspect*) Common.GetUnitBase("CharacterInspect");
                 if (examineWindow == null) return;
-                var compInfo = (ULDComponentInfo*) examineWindow->PreviewComponent->UldManager.Objects;
+                var compInfo = (AtkUldComponentInfo*) examineWindow->PreviewComponent->UldManager.Objects;
                 if (compInfo == null || compInfo->ComponentType != ComponentType.Preview) return;
                 if (examineWindow->PreviewComponent->UldManager.NodeListCount < 4) return;
                 if (reset) {
@@ -105,7 +105,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     var slot = Common.GetContainerItem(container, i);
                     if (slot == null) continue;
                     var id = slot->ItemId;
-                    var item = PluginInterface.Data.Excel.GetSheet<Sheets.ExtendedItem>().GetRow(id);
+                    var item = Service.Data.Excel.GetSheet<Sheets.ExtendedItem>().GetRow(id);
                     if (ignoreCategory.Contains(item.ItemUICategory.Row)) {
                         if (i == 0) c -= 1;
                         c -= 1;

@@ -36,15 +36,15 @@ namespace SimpleTweaksPlugin.Tweaks {
         }
 
         private readonly Dictionary<string, (OptionType type, ulong key, string[] alias)> optionKinds = new() {
-            { "itemtooltips", (OptionType.Bool, 0x130, new [] {"itt"} )},
-            { "actiontooltips", (OptionType.Bool, 0x136, new [] {"att"}) },
-            { "gamepadmode", (OptionType.ToggleGamepadMode, 0x89, new [] { "gp" })},
-            { "legacymovement", (OptionType.Bool, 0x8A, new [] { "lm"})},
-            { "owndisplayname", (OptionType.NameDisplayModeBattle, 0x170, new [] { "odn" })},
-            { "partydisplayname", (OptionType.NameDisplayModeBattle, 0x17C, new [] { "pdn" })},
-            { "alliancedisplayname", (OptionType.NameDisplayModeBattle, 0x185, new [] {"adn"})},
-            { "otherpcdisplayname", (OptionType.NameDisplayModeBattle, 0x18C, new [] {"opcdn"})},
-            { "frienddisplayname", (OptionType.NameDisplayModeBattle, 0x1C9, new [] {"fdn"})},
+            { "itemtooltips", (OptionType.Bool, 0x132, new [] {"itt"} )},
+            { "actiontooltips", (OptionType.Bool, 0x138, new [] {"att"}) },
+            { "gamepadmode", (OptionType.ToggleGamepadMode, 0x8B, new [] { "gp" })},
+            { "legacymovement", (OptionType.Bool, 0x8C, new [] { "lm"})},
+            { "owndisplayname", (OptionType.NameDisplayModeBattle, 0x172, new [] { "odn" })},
+            { "partydisplayname", (OptionType.NameDisplayModeBattle, 0x17E, new [] { "pdn" })},
+            { "alliancedisplayname", (OptionType.NameDisplayModeBattle, 0x187, new [] {"adn"})},
+            { "otherpcdisplayname", (OptionType.NameDisplayModeBattle, 0x18E, new [] {"opcdn"})},
+            { "frienddisplayname", (OptionType.NameDisplayModeBattle, 0x1CB, new [] {"fdn"})},
         };
 
         private readonly Dictionary<OptionType, string> optionTypeValueHints = new Dictionary<OptionType, string> {
@@ -58,12 +58,12 @@ namespace SimpleTweaksPlugin.Tweaks {
 
             try {
                 if (setOptionAddress == IntPtr.Zero) {
-                    setOptionAddress = PluginInterface.TargetModuleScanner.ScanText("89 54 24 10 53 55 57 41 54 41 55 41 56 48 83 EC 48 8B C2 45 8B E0 44 8B D2 45 32 F6 44 8B C2 45 32 ED");
+                    setOptionAddress = Service.SigScanner.ScanText("89 54 24 10 53 55 57 41 54 41 55 41 56 48 83 EC 48 8B C2 45 8B E0 44 8B D2 45 32 F6 44 8B C2 45 32 ED");
                     SimpleLog.Verbose($"SetOptionAddress: {setOptionAddress.ToInt64():X}");
                     setOption = Marshal.GetDelegateForFunctionPointer<SetOptionDelegate>(setOptionAddress);
                 }
 
-                var toggleGamepadModeAddress = PluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 40 0F B6 DF 49 8B CC");
+                var toggleGamepadModeAddress = Service.SigScanner.ScanText("E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 40 0F B6 DF 49 8B CC");
                 SimpleLog.Verbose($"ToggleGamePadModeAddress: {toggleGamepadModeAddress.ToInt64():X}");
                 setGamepadMode = Marshal.GetDelegateForFunctionPointer<SetGamepadMode>(toggleGamepadModeAddress);
                 
@@ -83,7 +83,7 @@ namespace SimpleTweaksPlugin.Tweaks {
             ImGui.TextDisabled("/setopt list");
             ImGui.TextDisabled("/setopt [option] [value]");
 
-            if (ImGui.TreeNode("可用选项##optionListTree")) {
+            if (ImGui.TreeNode("Available Options##optionListTree")) {
                     
                 ImGui.Columns(3);
                 ImGui.Text("选项");
@@ -119,8 +119,8 @@ namespace SimpleTweaksPlugin.Tweaks {
             setOptionHook ??= new Hook<SetOptionDelegate>(setOptionAddress, new SetOptionDelegate(SetOptionDetour));
             setOptionHook?.Enable();
 
-            PluginInterface.CommandManager.AddHandler("/setoption", new CommandInfo(OptionCommand) {HelpMessage = "打开或关闭技能帮助", ShowInHelp = true});
-            PluginInterface.CommandManager.AddHandler("/setopt", new CommandInfo(OptionCommand) {HelpMessage = "打开或关闭技能帮助", ShowInHelp = false});
+            Service.Commands.AddHandler("/setoption", new CommandInfo(OptionCommand) {HelpMessage = "Set the skill tooltips on or off.", ShowInHelp = true});
+            Service.Commands.AddHandler("/setopt", new CommandInfo(OptionCommand) {HelpMessage = "Set the skill tooltips on or off.", ShowInHelp = false});
 
             Enabled = true;
         }
@@ -139,7 +139,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                     if (optionKinds[o].type == OptionType.ToggleGamepadMode) continue;
                     sb.Append(o + " ");
                 }
-                PluginInterface.Framework.Gui.Chat.Print($"选项:\n{sb}");
+                Service.Chat.Print($"Options:\n{sb}");
 
                 return;
             }
@@ -153,8 +153,8 @@ namespace SimpleTweaksPlugin.Tweaks {
                 var fromAlias = optionKinds.Values.Where(ok => ok.alias.Contains(optionKind)).ToArray();
 
                 if (fromAlias.Length == 0) {
-                    PluginInterface.Framework.Gui.Chat.PrintError("未知选项");
-                    PluginInterface.Framework.Gui.Chat.PrintError("/setoption list 以显示可用选项");
+                    Service.Chat.PrintError("未知选项");
+                    Service.Chat.PrintError("/setoption list for a list of options");
                     return;
                 } 
                 optionDefinition = fromAlias[0];
@@ -187,21 +187,12 @@ namespace SimpleTweaksPlugin.Tweaks {
                         case "":
                         case "t":
                         case "toggle":
-/*
-                            if (optionDefinition.offset > 0) {
-                                var cVal = Marshal.ReadByte(baseAddress, optionDefinition.offset);
-                                setOption(baseAddress, optionDefinition.key, cVal == 1 ? 0UL : 1UL, 2);
-                                setValue = cVal == 1 ? 1 : 0UL;
-                            } else {
-                                PluginInterface.Framework.Gui.Chat.PrintError($"该值对{optionKind}无效");
-                            }
-*/
                             var cVal = configModule.GetOptionBoolean(optionDefinition.key);
                             setOption(configModule, optionDefinition.key, cVal ? 0UL : 1UL, 2);
                             setValue = cVal ? 1 : 0UL;
                             break;
                         default:
-                            PluginInterface.Framework.Gui.Chat.PrintError($"/setoption {optionKind} ({optionTypeValueHints[optionDefinition.type]})");
+                            Service.Chat.PrintError($"/setoption {optionKind} ({optionTypeValueHints[optionDefinition.type]})");
                             break;
                         }
 
@@ -230,7 +221,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                     break;
                 }
                 default:
-                    PluginInterface.Framework.Gui.Chat.PrintError("不支持的选项");
+                    Service.Chat.PrintError("不支持的选项");
                     return;
             }
 
@@ -250,8 +241,8 @@ namespace SimpleTweaksPlugin.Tweaks {
 
         public override void Disable() {
             setOptionHook?.Disable();
-            PluginInterface.CommandManager.RemoveHandler("/setoption");
-            PluginInterface.CommandManager.RemoveHandler("/setopt");
+            Service.Commands.RemoveHandler("/setoption");
+            Service.Commands.RemoveHandler("/setopt");
             Enabled = false;
         }
 

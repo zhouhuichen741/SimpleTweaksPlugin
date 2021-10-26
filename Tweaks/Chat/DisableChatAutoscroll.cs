@@ -44,13 +44,14 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
         public override void Enable() {
             Config = LoadConfig<Configs>() ?? PluginConfig.ChatTweaks.DisableChatAutoscroll ?? new Configs();
             scrollToBottomHook = Common.Hook<ScrollToBottomDelegate>("E8 ?? ?? ?? ?? 48 85 FF 75 0D", ScrollToBottomDetour);
+            scrollToBottomHook?.Enable();
             base.Enable();
         }
 
         private void* ScrollToBottomDetour(void* a1) {
             try {
                 var panel = (AddonChatLogPanel*) ((ulong) a1 - 0x268);
-                var name = Marshal.PtrToStringAnsi(new IntPtr(panel->AtkUnitBase.Name));
+                var name = Helper.Common.PtrToUTF8(new IntPtr(panel->AtkUnitBase.Name));
                 if (!string.IsNullOrEmpty(name)) {
                     var isEnabled = name switch {
                         "ChatLogPanel_0" => !Config.DisablePanel0,

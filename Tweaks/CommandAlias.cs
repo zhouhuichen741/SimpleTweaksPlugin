@@ -149,7 +149,7 @@ namespace SimpleTweaksPlugin.Tweaks {
         public override void Setup() {
             if (Ready) return;
             try {
-                processChatInputAddress = PluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??");
+                processChatInputAddress = Service.SigScanner.ScanText("E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??");
                 Ready = true;
             } catch {
                 SimpleLog.Log("Failed to find address for ProcessChatInput");
@@ -190,7 +190,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                             // https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs#L44
                             var newStr = $"/{alias.Output}{inputString.Substring(alias.Input.Length + 1)}";
                             if (newStr.Length <= 500) {
-                                SimpleLog.Log($"Aliasing Command: {inputString} -> {newStr}");
+                                SimpleLog.Verbose($"Aliasing Command: {inputString} -> {newStr}");
                                 var bytes = Encoding.UTF8.GetBytes(newStr);
                                 var mem1 = Marshal.AllocHGlobal(400);
                                 var mem2 = Marshal.AllocHGlobal(bytes.Length + 30);
@@ -205,8 +205,7 @@ namespace SimpleTweaksPlugin.Tweaks {
                                 Marshal.FreeHGlobal(mem2);
                                 return r;
                             }
-                            SimpleLog.Log($"String longer than 500");
-                            PluginInterface.Framework.Gui.Chat.PrintError("[Simple Tweaks] 长度超过500字符，该命令不会被执行");
+                            Service.Chat.PrintError("[Simple Tweaks] 长度超过500字符，该命令不会被执行");
                             return 0;
                         }
                     }

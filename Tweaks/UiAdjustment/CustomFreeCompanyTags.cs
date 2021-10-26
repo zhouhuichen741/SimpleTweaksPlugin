@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -39,7 +40,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override void Enable() {
             if (Enabled) return;
             config = LoadConfig<Configs>() ?? new Configs();
-            updateNameplateHook ??= Common.Hook<UpdateNameplateDelegate>("40 53 55 56 41 56 48 81 EC ?? ?? ?? ?? 48 8B 84 24", UpdateNameplatesDetour, false);
+            updateNameplateHook ??= Common.Hook<UpdateNameplateDelegate>("40 53 55 56 41 56 48 81 EC ?? ?? ?? ?? 48 8B 84 24", UpdateNameplatesDetour);
             updateNameplateHook?.Enable();
             base.Enable();
         }
@@ -65,7 +66,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     // Wanderer
                     customization = config.WandererCustomization;
                 } else {
-                    companyTag = Plugin.Common.ReadSeString(battleChara->Character.CompanyTag).TextValue.Trim();
+                    companyTag = Encoding.UTF8.GetString(battleChara->Character.FreeCompanyTag, 6).Trim('\0', ' ');
 
                     customization = companyTag.Length switch {
                         <= 0 => null,
@@ -109,7 +110,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                                             break;
                                         }
                                         case "<homeworld>": {
-                                            var world = PluginInterface.Data.Excel.GetSheet<World>().GetRow(battleChara->Character.HomeWorld);
+                                            var world = Service.Data.Excel.GetSheet<World>().GetRow(battleChara->Character.HomeWorld);
                                             payloads.Add(new TextPayload(world.Name));
                                             break;
                                         }
@@ -126,7 +127,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                                         case { } s when s.StartsWith("<color:"): {
                                             var k = s.Substring(7, s.Length - 8);
                                             if (ushort.TryParse(k, out var colorKey)) {
-                                                payloads.Add(new UIForegroundPayload(PluginInterface.Data, colorKey));
+                                                payloads.Add(new UIForegroundPayload(colorKey));
                                                 resetForeground = colorKey != 0;
                                             } else {
                                                 payloads.Add(new TextPayload(cText));
@@ -136,7 +137,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                                         case { } s when s.StartsWith("<colour:"): {
                                             var k = s.Substring(8, s.Length - 9);
                                             if (ushort.TryParse(k, out var colorKey)) {
-                                                payloads.Add(new UIForegroundPayload(PluginInterface.Data, colorKey));
+                                                payloads.Add(new UIForegroundPayload(colorKey));
                                                 resetForeground = colorKey != 0;
                                             } else {
                                                 payloads.Add(new TextPayload(cText));
@@ -146,7 +147,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                                         case { } s when s.StartsWith("<glow:"): {
                                             var k = s.Substring(6, s.Length - 7);
                                             if (ushort.TryParse(k, out var colorKey)) {
-                                                payloads.Add(new UIGlowPayload(PluginInterface.Data, colorKey));
+                                                payloads.Add(new UIGlowPayload(colorKey));
                                                 resetGlow = colorKey != 0;
                                             } else {
                                                 payloads.Add(new TextPayload(cText));
@@ -174,8 +175,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                             payloads.Add(new TextPayload(cText));
                         }
 
-                        if (resetForeground) payloads.Add(new UIForegroundPayload(PluginInterface.Data, 0));
-                        if (resetGlow) payloads.Add(new UIGlowPayload(PluginInterface.Data, 0));
+                        if (resetForeground) payloads.Add(new UIForegroundPayload(0));
+                        if (resetGlow) payloads.Add(new UIGlowPayload(0));
                         
                         payloads.Add(new TextPayload("»"));
                         namePlateInfo->FcName.SetSeString(new SeString(payloads));

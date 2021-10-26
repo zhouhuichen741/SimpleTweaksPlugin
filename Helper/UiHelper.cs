@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -24,22 +25,6 @@ namespace SimpleTweaksPlugin.Helper {
             }
         }
 
-        public static void SetText(AtkTextNode* textNode, SeString str) {
-            if (!Ready) return;
-            var bytes = str.Encode();
-            var ptr = Marshal.AllocHGlobal(bytes.Length + 1);
-            Marshal.Copy(bytes, 0, ptr, bytes.Length);
-            Marshal.WriteByte(ptr, bytes.Length, 0);
-            _atkTextNodeSetText(textNode, (byte*) ptr);
-            Marshal.FreeHGlobal(ptr);
-        }
-
-        public static void SetText(AtkTextNode* textNode, string str) {
-            if (!Ready) return;
-            var seStr = new SeString(new Payload[] { new TextPayload(str) });
-            SetText(textNode, seStr);
-        }
-
         public static void SetSize(AtkResNode* node, int? width, int? height) {
             if (width != null && width >= ushort.MinValue && width <= ushort.MaxValue) node->Width = (ushort) width.Value;
             if (height != null && height >= ushort.MinValue && height <= ushort.MaxValue) node->Height = (ushort) height.Value;
@@ -57,16 +42,8 @@ namespace SimpleTweaksPlugin.Helper {
             if (y >= short.MinValue && x <= short.MaxValue) atkUnitBase->Y = (short) y.Value;
         }
 
-        public static void SetScale(AtkResNode* atkResNode, float scale) {
-            _atkResNodeSetScale(atkResNode, scale, scale);
-        }
-
-        public static void SetScale(AtkResNode* atkResNode, float scaleX, float scaleY) {
-            _atkResNodeSetScale(atkResNode, scaleX, scaleY);
-        }
-
         public static void SetWindowSize(AtkComponentNode* windowNode, ushort? width, ushort? height) {
-            if (((ULDComponentInfo*) windowNode->Component->UldManager.Objects)->ComponentType != ComponentType.Window) return;
+            if (((AtkUldComponentInfo*) windowNode->Component->UldManager.Objects)->ComponentType != ComponentType.Window) return;
 
             width ??= windowNode->AtkResNode.Width;
             height ??= windowNode->AtkResNode.Height;

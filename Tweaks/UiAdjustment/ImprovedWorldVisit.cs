@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using Dalamud.Game.Internal;
+using Dalamud.Game;
 using FFXIVClientStructs;
 using FFXIVClientStructs.FFXIV.Client.Graphics;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -16,12 +16,12 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override string Description => "简化跨界传送界面并显示原服务器";
 
         public override void Enable() {
-            PluginInterface.Framework.OnUpdateEvent += FrameworkOnOnUpdateEvent;
+            Service.Framework.Update += FrameworkOnOnUpdateEvent;
             base.Enable();
         }
 
         public override void Disable() {
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnOnUpdateEvent;
+            Service.Framework.Update -= FrameworkOnOnUpdateEvent;
             base.Disable();
         }
         
@@ -114,7 +114,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     var n = nodeList[i + 3];
                     if (n->AtkResNode.Y == 0) continue;
                     var nameNode = (AtkTextNode*) n->Component->UldManager.NodeList[4];
-                    var name = Marshal.PtrToStringAnsi(new IntPtr(nameNode->NodeText.StringPtr));
+                    var name = Helper.Common.PtrToUTF8(new IntPtr(nameNode->NodeText.StringPtr));
                     names[c] = name;
                     nodes[c++] = n;
                     
@@ -124,7 +124,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
 
                 var inserted = false;
-                var currentServerName = Marshal.PtrToStringAnsi(new IntPtr(CurrentWorldName->NodeText.StringPtr));
+                var currentServerName = Helper.Common.PtrToUTF8(new IntPtr(CurrentWorldName->NodeText.StringPtr));
                 for (var i = 0; i < c; i++) {
                     if (!inserted) {
                         var s = string.Compare(names[i], currentServerName, StringComparison.InvariantCultureIgnoreCase);
@@ -154,7 +154,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
 
         public void CheckWindow() {
-            var ui = (AtkUnitBase*)PluginInterface.Framework.Gui.GetUiObjectByName("WorldTravelSelect", 1);
+            var ui = (AtkUnitBase*)Service.GameGui.GetAddonByName("WorldTravelSelect", 1);
             if (ui == null) return;
             var window = new WorldTravelSelect(ui);
             if (!window.IsValid) return;

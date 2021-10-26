@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using Dalamud.Game.Internal;
+using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 using SimpleTweaksPlugin.Helper;
@@ -11,8 +11,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override string Description => "在任务准备确认阶段显示45秒倒计时.";
 
         public override void Enable() {
-            PluginInterface.Framework.OnUpdateEvent += UpdateFramework;
-            prefix = PluginInterface.Data.Excel.GetSheet<Addon>().GetRow(2780).Text.RawString;
+            Service.Framework.Update += UpdateFramework;
+            prefix = Service.Data.Excel.GetSheet<Addon>().GetRow(2780).Text.RawString;
             base.Enable();
         }
 
@@ -59,7 +59,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         public override void Disable() {
-            PluginInterface.Framework.OnUpdateEvent -= UpdateFramework;
+            Service.Framework.Update -= UpdateFramework;
             sw.Stop();
             base.Disable();
         }

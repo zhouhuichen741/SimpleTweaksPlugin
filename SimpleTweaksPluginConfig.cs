@@ -3,7 +3,7 @@ using Dalamud.Plugin;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using SimpleTweaksPlugin.Helper;
@@ -28,6 +28,8 @@ namespace SimpleTweaksPlugin {
 
         public bool ShowTweakDescriptions = true;
         public bool ShowTweakIDs;
+
+        public string CustomCulture = string.Empty;
 
         public void Init(SimpleTweaksPlugin plugin, DalamudPluginInterface pluginInterface) {
             this.plugin = plugin;
@@ -94,10 +96,10 @@ namespace SimpleTweaksPlugin {
             var scale = ImGui.GetIO().FontGlobalScale;
             var windowFlags = ImGuiWindowFlags.NoCollapse;
             ImGui.SetNextWindowSizeConstraints(new Vector2(600 * scale, 200 * scale), new Vector2(800 * scale, 800 * scale));
-            ImGui.Begin($"{plugin.Name}设置", ref drawConfig, windowFlags);
+            ImGui.Begin($"{plugin.Name} Config", ref drawConfig, windowFlags);
             
             var showbutton = plugin.ErrorList.Count != 0 || !HideKofi;
-            var buttonText = plugin.ErrorList.Count > 0 ? $"{plugin.ErrorList.Count} 个错误已发生" : "赞助Ko-fi";
+            var buttonText = plugin.ErrorList.Count > 0 ? $"{plugin.ErrorList.Count} Errors Detected" : "Support on Ko-fi";
             var buttonColor = (uint) (plugin.ErrorList.Count > 0 ? 0x000000FF : 0x005E5BFF);
             
             if (showbutton) {
@@ -106,7 +108,7 @@ namespace SimpleTweaksPlugin {
                 ImGui.SetNextItemWidth(-1);
             }
             
-            ImGui.InputTextWithHint("###tweakSearchInput", "查找...", ref searchInput, 100);
+            ImGui.InputTextWithHint("###tweakSearchInput", "Search...", ref searchInput, 100);
 
             if (showbutton) {
                 ImGui.SameLine();
@@ -134,6 +136,7 @@ namespace SimpleTweaksPlugin {
                     var searchValue = searchInput.ToLowerInvariant();
                     foreach (var t in plugin.Tweaks) {
                         if (t is SubTweakManager stm) {
+                            if (!stm.Enabled) continue;
                             foreach (var st in stm.GetTweakList()) {
                                 if (st.Name.ToLowerInvariant().Contains(searchValue) || st.Tags.Any(tag => tag.ToLowerInvariant().Contains(searchValue))) {
                                     searchResults.Add(st);
@@ -162,42 +165,9 @@ namespace SimpleTweaksPlugin {
                     if (settingTab && setTab == null) {
                         settingTab = false;
                     } else {
-                        if (ImGui.BeginTabItem("常规优化")) {
+                        if (ImGui.BeginTabItem("General Tweaks")) {
                             ImGui.BeginChild("generalTweaks", new Vector2(-1, -1), false);
-                            foreach (var t in plugin.Tweaks.Where(t => t is SubTweakManager).Cast<SubTweakManager>()) {
-                                if (t.AlwaysEnabled) continue;
-                                var enabled = t.Enabled;
-                                if (t.Experimental && !ShowExperimentalTweaks && !enabled) continue;
-                                if (ImGui.Checkbox($"###{t.GetType().Name}enabledCheckbox", ref enabled)) {
-                                    if (enabled) {
-                                        SimpleLog.Debug($"Enable: {t.Name}");
-                                        try {
-                                            t.Enable();
-                                            if (t.Enabled) {
-                                                EnabledTweaks.Add(t.GetType().Name);
-                                            }
-                                        } catch (Exception ex) {
-                                            plugin.Error(t, ex, false, $"Error in Enable for '{t.Name}'");
-                                        }
-                                    } else {
-                                        SimpleLog.Debug($"Disable: {t.Name}");
-                                        try {
-                                            t.Disable();
-                                        } catch (Exception ex) {
-                                            plugin.Error(t, ex, true, $"Error in Disable for '{t.Name}'");
-                                        }
-                                        EnabledTweaks.RemoveAll(a => a == t.GetType().Name);
-                                    }
-                                    Save();
-                                }
-                                ImGui.SameLine();
-                                ImGui.TreeNodeEx($"Category: {t.Name}", ImGuiTreeNodeFlags.Bullet | ImGuiTreeNodeFlags.NoTreePushOnOpen);
-                                if (ImGui.IsItemClicked() && t.Enabled) {
-                                    setTab = t;
-                                    settingTab = false;
-                                }
-                                ImGui.Separator();
-                            }
+
                             // ImGui.Separator();
                             foreach (var t in plugin.Tweaks) {
                                 if (t is SubTweakManager) continue;
@@ -230,16 +200,72 @@ namespace SimpleTweaksPlugin {
                         }
                     }
 
-                    if (ImGui.BeginTabItem("常规选项")) {
+                    if (ImGui.BeginTabItem("General Options")) {
                         ImGui.BeginChild($"generalOptions-scroll", new Vector2(-1, -1));
-                        if (ImGui.Checkbox("显示试验性功能", ref ShowExperimentalTweaks)) Save();
+                        if (ImGui.Checkbox("Show Experimental Tweaks.", ref ShowExperimentalTweaks)) Save();
                         ImGui.Separator();
-                        if (ImGui.Checkbox("显示优化描述", ref ShowTweakDescriptions)) Save();
+                        if (ImGui.Checkbox("Show tweak descriptions.", ref ShowTweakDescriptions)) Save();
                         ImGui.Separator();
-                        if (ImGui.Checkbox("显示优化IDs.", ref ShowTweakIDs)) Save();
+                        if (ImGui.Checkbox("Show tweak IDs.", ref ShowTweakIDs)) Save();
                         ImGui.Separator();
-                        if (ImGui.Checkbox("隐藏Ko-fi链接.", ref HideKofi)) Save();
+
+                        ImGui.SetNextItemWidth(130);
+                        if (ImGui.BeginCombo("Formatting Culture", plugin.Culture.Name)) {
+
+                            var cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+                            for (var i = 0; i < cultures.Length; i++) {
+                                var c = cultures[i];
+                                if (ImGui.Selectable($"{c.Name}", Equals(c, plugin.Culture))) {
+                                    CustomCulture = c.Name;
+                                    plugin.Culture = c;
+                                    Save();
+                                }
+                            }
+
+                            ImGui.EndCombo();
+                        }
+                        ImGui.SameLine();
+                        ImGui.TextDisabled("Changes number formatting, not all tweaks support this.");
+
                         ImGui.Separator();
+                        if (ImGui.Checkbox("Hide Ko-fi link.", ref HideKofi)) Save();
+                        ImGui.Separator();
+
+                        foreach (var t in plugin.Tweaks.Where(t => t is SubTweakManager).Cast<SubTweakManager>()) {
+                            if (t.AlwaysEnabled) continue;
+                            var enabled = t.Enabled;
+                            if (t.Experimental && !ShowExperimentalTweaks && !enabled) continue;
+                            if (ImGui.Checkbox($"###{t.GetType().Name}enabledCheckbox", ref enabled)) {
+                                if (enabled) {
+                                    SimpleLog.Debug($"Enable: {t.Name}");
+                                    try {
+                                        t.Enable();
+                                        if (t.Enabled) {
+                                            EnabledTweaks.Add(t.GetType().Name);
+                                        }
+                                    } catch (Exception ex) {
+                                        plugin.Error(t, ex, false, $"Error in Enable for '{t.Name}'");
+                                    }
+                                } else {
+                                    SimpleLog.Debug($"Disable: {t.Name}");
+                                    try {
+                                        t.Disable();
+                                    } catch (Exception ex) {
+                                        plugin.Error(t, ex, true, $"Error in Disable for '{t.Name}'");
+                                    }
+                                    EnabledTweaks.RemoveAll(a => a == t.GetType().Name);
+                                }
+                                Save();
+                            }
+                            ImGui.SameLine();
+                            ImGui.TreeNodeEx($"Enable Category: {t.Name}", ImGuiTreeNodeFlags.Bullet | ImGuiTreeNodeFlags.NoTreePushOnOpen);
+                            if (ImGui.IsItemClicked() && t.Enabled) {
+                                setTab = t;
+                                settingTab = false;
+                            }
+                            ImGui.Separator();
+                        }
+
                         ImGui.EndChild();
                         ImGui.EndTabItem();
                     }

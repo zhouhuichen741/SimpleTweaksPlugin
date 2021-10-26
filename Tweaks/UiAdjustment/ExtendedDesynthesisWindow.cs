@@ -34,12 +34,12 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public Configs Config { get; private set; }
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("禁止点击套装内装备.", ref Config.BlockClickOnGearset);
-            ImGui.Checkbox("显示预期可获得的分解经验值", ref Config.YellowForSkillGain);
+            ImGui.Checkbox("Block clicking on gearset items.", ref Config.BlockClickOnGearset);
+            ImGui.Checkbox("Highlight potential skill gains (Yellow)", ref Config.YellowForSkillGain);
         };
 
-        public override string Name => "分解窗口增强";
-        public override string Description => "在分解窗口显示你的当前分解等级及物品的推荐分解等级\n显示装备是否在套装中，可禁止点击套装内装备以防误操作";
+        public override string Name => "Extended Desynthesis Window";
+        public override string Description => "Shows your current desynthesis level and the item's optimal level on the desynthesis item selection window.\nAlso indicates if an item is part of a gear set, optionally preventing selection of gearset items.";
 
         private const ushort OriginalWidth = 600;
         private const ushort AddedWidth = 110;
@@ -51,11 +51,25 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private Hook<UpdateItemDelegate> updateItemHook;
         private Hook<UpdateListDelegate> updateListHook;
         
+        private static readonly ByteColor Red = new() { A = 0xFF, R = 0xCC, G = 0x00, B = 0x00 };
+        private static readonly ByteColor Green = new() { A = 0xFF, R = 0x00, G = 0xCC, B = 0x00 };
+        private static readonly ByteColor Yellow = new() { A = 0xFF, R = 0xCC, G = 0xCC, B = 0x00 };
+
+        private uint maxDesynthLevel = 520;
+
+        public override void Setup() {
+            foreach (var i in Service.Data.Excel.GetSheet<Item>()) {
+                if (i.Desynth > 0 && i.LevelItem.Row > maxDesynthLevel) maxDesynthLevel = i.LevelItem.Row;
+            }
+            SimpleLog.Debug("");
+            base.Setup();
+        }
+
         public override void Enable() {
             Config = LoadConfig<Configs>() ?? PluginConfig.UiAdjustments.ExtendedDesynthesisWindow ?? new Configs();
-            updateItemHook ??= new Hook<UpdateItemDelegate>(PluginInterface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38"), new UpdateItemDelegate(UpdateItemDetour));
+            updateItemHook ??= new Hook<UpdateItemDelegate>(Service.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38"), new UpdateItemDelegate(UpdateItemDetour));
             updateItemHook?.Enable();
-            updateListHook ??= new Hook<UpdateListDelegate>(PluginInterface.TargetModuleScanner.ScanText("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0"), new UpdateListDelegate(UpdateListDetour));
+            updateListHook ??= new Hook<UpdateListDelegate>(Service.SigScanner.ScanText("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0"), new UpdateListDelegate(UpdateListDetour));
             updateListHook?.Enable();
             base.Enable();
         }
@@ -93,10 +107,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             var skillTextNode = desynthRow.SkillTextNode;
             
             if (skillTextNode == null) return;
-            var addon = (AddonSalvageItemSelector*) PluginInterface.Framework.Gui.GetUiObjectByName("SalvageItemSelector", 1);
+            var addon = (AddonSalvageItemSelector*) Service.GameGui.GetAddonByName("SalvageItemSelector", 1);
             if (addon != null) {
                 if (index > addon->ItemCount) {
-                    UiHelper.SetText(skillTextNode, "Error");
+                    skillTextNode->SetText("Error");
                     return;
                 }
 
@@ -105,19 +119,29 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
                 var item = Common.GetInventoryItem(salvageItem->Inventory, salvageItem->Slot);
 
-                var itemData = PluginInterface.Data.Excel.GetSheet<Item>().GetRow(item->ItemId);
+                var itemData = Service.Data.Excel.GetSheet<Item>().GetRow(item->ItemId);
 
                 var classJobOffset = 2 * (int)(itemData.ClassJobRepair.Row - 8);
-                // 5.5 0x6A6
-                var desynthLevel = *(ushort*)(Common.PlayerStaticAddress + (0x69A + classJobOffset)) / 100f;
+                var desynthLevel = *(ushort*)(Common.PlayerStaticAddress + (0x6A6 + classJobOffset)) / 100f;
+
+                ByteColor c;
+
+                if (desynthLevel >= maxDesynthLevel) {
+                    c = Green;
+                } else {
+                    if (desynthLevel > itemData.LevelItem.Row) {
+                        if (Config.YellowForSkillGain && desynthLevel < itemData.LevelItem.Row + 50) {
+                            c = Yellow;
+                        } else {
+                            c = Green;
+                        }
+                    } else {
+                        c = Red;
+                    }
+                }
                 
-                skillTextNode->TextColor = new ByteColor() {
-                    A = 0xFF,
-                    R = (byte)(desynthLevel > itemData.LevelItem.Row ? ( desynthLevel - 50 > itemData.LevelItem.Row || !Config.YellowForSkillGain ? 0x00 : 0xCC) : 0xCC),
-                    G = (byte)(desynthLevel <= itemData.LevelItem.Row ? 0x00 : 0xCC),
-                    B = 0x00
-                };
-                UiHelper.SetText(skillTextNode, $"{desynthLevel:F0}/{itemData.LevelItem.Row}");
+                skillTextNode->TextColor = c;
+                skillTextNode->SetText($"{desynthLevel:F0}/{itemData.LevelItem.Row}");
 
                 var itemIdWithHQ = item->ItemId;
                 if ((item->Flags & ItemFlags.HQ) > 0) itemIdWithHQ += 1000000;
@@ -146,9 +170,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     if (Config.BlockClickOnGearset) {
                         UiHelper.Hide(desynthRow.CollisionNode);
                     }
-                    UiHelper.SetText(desynthRow.GearsetWarningNode, $"{(char) SeIconChar.BoxedStar}");
+                    desynthRow.GearsetWarningNode->SetText($"{(char) SeIconChar.BoxedStar}");
                 } else {
-                    UiHelper.SetText(desynthRow.GearsetWarningNode, "");
+                    desynthRow.GearsetWarningNode->SetText("");
                     
                 }
                 
@@ -165,7 +189,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private void Update() {
 
-            var atkUnitBase = (AtkUnitBase*)PluginInterface.Framework.Gui.GetUiObjectByName("SalvageItemSelector", 1);
+            var atkUnitBase = (AtkUnitBase*)Service.GameGui.GetAddonByName("SalvageItemSelector", 1);
 
             if (atkUnitBase == null) return;
             if ((atkUnitBase->Flags & 0x20) != 0x20) return;
@@ -190,7 +214,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 UiHelper.ExpandNodeList(atkUnitBase, 2);
                 var newHeaderItem = (AtkTextNode*)UiHelper.CloneNode(nodeList[6]);
                 newHeaderItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)newHeaderItem->NodeText.BufSize);
-                UiHelper.SetText(newHeaderItem, "技能");
+                newHeaderItem->SetText("Skill");
                 
                 newHeaderItem->AtkResNode.X = NewWidth - (AddedWidth + 60);
                 newHeaderItem->AtkResNode.Width = AddedWidth;
@@ -201,7 +225,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 
                 var gsHeaderItem = (AtkTextNode*)UiHelper.CloneNode(nodeList[6]);
                 gsHeaderItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)gsHeaderItem->NodeText.BufSize);
-                UiHelper.SetText(gsHeaderItem, "套装");
+                gsHeaderItem->SetText("Gear\nSet");
                 gsHeaderItem->TextFlags |= (byte) TextFlags.MultiLine;
                 gsHeaderItem->AtkResNode.X = NewWidth - 80;
                 gsHeaderItem->AlignmentFontType = (byte) AlignmentType.Bottom;
@@ -224,7 +248,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                      
                     var newRowItem = (AtkTextNode*)UiHelper.CloneNode(listItemNodes[3]);
                     newRowItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)newRowItem->NodeText.BufSize);
-                    UiHelper.SetText(newRowItem, "Error");
+                    newRowItem->SetText("Error");
                     newRowItem->AtkResNode.X = NewWidth - (AddedWidth + 60);
                     newRowItem->AtkResNode.Width = AddedWidth;
                     newRowItem->AtkResNode.ParentNode = (AtkResNode*)listItem;
@@ -235,7 +259,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                     
                     var gearsetWarning = (AtkTextNode*)UiHelper.CloneNode(listItemNodes[3]);
                     gearsetWarning->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)gearsetWarning->NodeText.BufSize);
-                    UiHelper.SetText(gearsetWarning, "?");
+                    gearsetWarning->SetText("?");
                     gearsetWarning->AtkResNode.X = NewWidth - 80;
                     gearsetWarning->AtkResNode.Width = 30;
                     gearsetWarning->AtkResNode.ParentNode = (AtkResNode*)listItem;
@@ -254,7 +278,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         public void Reset() {
-            var atkUnitBase = (AtkUnitBase*)PluginInterface.Framework.Gui.GetUiObjectByName("SalvageItemSelector", 1);
+            var atkUnitBase = (AtkUnitBase*)Service.GameGui.GetAddonByName("SalvageItemSelector", 1);
             if (atkUnitBase == null) return;
             UiHelper.Close(atkUnitBase, true);
         }

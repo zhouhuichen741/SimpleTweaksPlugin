@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Numerics;
-using Dalamud.Game.Internal;
+using Dalamud.Game;
 using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -54,21 +54,21 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.Text("新的战斗对话框位置");
             ImGui.End();
             if (!changed) return;
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
-            PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
+            Service.Framework.Update -= FrameworkOnUpdate;
+            Service.Framework.Update += FrameworkOnUpdate;
         };
 
         public override void Enable() {
             Config = LoadConfig<Configuration>() ?? new Configuration();
-            PluginInterface.ClientState.OnLogin += OnLogin;
-            PluginInterface.ClientState.OnLogout += OnLogout;
-            if(PluginInterface.ClientState.LocalPlayer is not null) OnLogin(null!,null!);
+            Service.ClientState.Login += OnLogin;
+            Service.ClientState.Logout += OnLogout;
+            if(Service.ClientState.LocalPlayer is not null) OnLogin(null!,null!);
             base.Enable();
         }
         
         public override void Disable() {
-            PluginInterface.ClientState.OnLogin -= OnLogin;
-            PluginInterface.ClientState.OnLogout -= OnLogout;
+            Service.ClientState.Login -= OnLogin;
+            Service.ClientState.Logout -= OnLogout;
             OnLogout(null!,null!);
             SaveConfig(Config);
             base.Disable();
@@ -76,13 +76,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         private void OnLogin(object sender, EventArgs e)
         {
-            PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdateSetup;
+            Service.Framework.Update += FrameworkOnUpdateSetup;
         }
         
         private void OnLogout(object sender, EventArgs e)
         {
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdateSetup;
+            Service.Framework.Update -= FrameworkOnUpdate;
+            Service.Framework.Update -= FrameworkOnUpdateSetup;
             ResetBattleTalk();
         }
         
@@ -93,8 +93,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 if (battleTalkNode == null) return;
                 originalPositionX = battleTalkNode->X;
                 originalPositionY = battleTalkNode->Y;
-                PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdateSetup;
-                PluginInterface.Framework.OnUpdateEvent += FrameworkOnUpdate;
+                Service.Framework.Update -= FrameworkOnUpdateSetup;
+                Service.Framework.Update += FrameworkOnUpdate;
             } catch (Exception ex) {
                 SimpleLog.Error(ex);
             }
@@ -104,8 +104,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 var battleTalkNode = GetBattleTalkNode();
                 if (battleTalkNode == null) return;
                 UiHelper.SetPosition(battleTalkNode, originalPositionX + Config.OffsetX, originalPositionY + Config.OffsetY);
-                UiHelper.SetScale(battleTalkNode, Config.Scale);
-                PluginInterface.Framework.OnUpdateEvent -= FrameworkOnUpdate;
+                battleTalkNode->SetScale(Config.Scale, Config.Scale);
+                Service.Framework.Update -= FrameworkOnUpdate;
             } catch (Exception ex) {
                 SimpleLog.Error(ex);
             }
@@ -116,7 +116,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             var battleTalkNode = GetBattleTalkNode();
             if (battleTalkNode == null) return;
             UiHelper.SetPosition(battleTalkNode, originalPositionX, originalPositionY);
-            UiHelper.SetScale(battleTalkNode, 1);
+            battleTalkNode->SetScale(1, 1);
         }
         
         private static AtkResNode* GetBattleTalkNode() {

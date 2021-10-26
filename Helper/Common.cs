@@ -4,19 +4,26 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using Dalamud.Game;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Plugin;
 using FFXIVClientStructs.Attributes;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.GameStructs;
+using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
+using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace SimpleTweaksPlugin.Helper {
     internal unsafe class Common {
-        public static DalamudPluginInterface PluginInterface { get; private set; }
+
+        // Common Delegates
+        public delegate void* AddonOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** nums, StringArrayData** strings);
 
         private delegate IntPtr GameAlloc(ulong size, IntPtr unk, IntPtr allocator, IntPtr alignment);
 
@@ -39,19 +46,18 @@ namespace SimpleTweaksPlugin.Helper {
         
         public static Utf8String* LastCommand { get; private set; }
 
-        public static SigScanner Scanner => PluginInterface.TargetModuleScanner;
+        public static SigScanner Scanner => Service.SigScanner;
 
-        public Common(DalamudPluginInterface pluginInterface) {
-            PluginInterface = pluginInterface;
-            var gameAllocPtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 45 8D 67 23");
-            var getGameAllocatorPtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 8B 75 08");
+        public Common() {
+            var gameAllocPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 45 8D 67 23");
+            var getGameAllocatorPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 8B 75 08");
 
-            InventoryManagerAddress = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("BA ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B F8 48 85 C0");
-            var getInventoryContainerPtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 8B 55 BB");
-            var getContainerSlotPtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 8B 5B 0C");
+            InventoryManagerAddress = Scanner.GetStaticAddressFromSig("BA ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B F8 48 85 C0");
+            var getInventoryContainerPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 8B 55 BB");
+            var getContainerSlotPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 8B 5B 0C");
 
-            PlayerStaticAddress = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 E8");
-            LastCommandAddress = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("4C 8D 05 ?? ?? ?? ?? 41 B1 01 49 8B D4 E8 ?? ?? ?? ?? 83 EB 06");
+            PlayerStaticAddress = Scanner.GetStaticAddressFromSig("8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 E8");
+            LastCommandAddress = Scanner.GetStaticAddressFromSig("4C 8D 05 ?? ?? ?? ?? 41 B1 01 49 8B D4 E8 ?? ?? ?? ?? 83 EB 06");
             LastCommand = (Utf8String*) (LastCommandAddress);
 
             _gameAlloc = Marshal.GetDelegateForFunctionPointer<GameAlloc>(gameAllocPtr);
@@ -61,8 +67,10 @@ namespace SimpleTweaksPlugin.Helper {
             _getContainerSlot = Marshal.GetDelegateForFunctionPointer<GetContainerSlot>(getContainerSlotPtr);
         }
 
+        public static UIModule* UIModule => Framework.Instance()->GetUiModule();
+
         public static AtkUnitBase* GetUnitBase(string name, int index = 1) {
-            return (AtkUnitBase*) PluginInterface.Framework.Gui.GetUiObjectByName(name, index);
+            return (AtkUnitBase*) Service.GameGui.GetAddonByName(name, index);
         }
 
         public static T* GetUnitBase<T>(string name = null, int index = 1) where T : unmanaged {
@@ -75,7 +83,7 @@ namespace SimpleTweaksPlugin.Helper {
 
             if (string.IsNullOrEmpty(name)) return null;
             
-            return (T*) PluginInterface.Framework.Gui.GetUiObjectByName(name, index);
+            return (T*) Service.GameGui.GetAddonByName(name, index);
         }
 
         public static InventoryContainer* GetContainer(InventoryType inventoryType) {
@@ -126,7 +134,7 @@ namespace SimpleTweaksPlugin.Helper {
             }
             var bytes = new byte[offset];
             Marshal.Copy(new IntPtr(ptr), bytes, 0, offset);
-            return PluginInterface.SeStringManager.Parse(bytes);
+            return SeString.Parse(bytes);
         }
 
         public void WriteSeString(byte* dst, SeString s) {
@@ -141,7 +149,7 @@ namespace SimpleTweaksPlugin.Helper {
             var len = (int) (xivString.BufUsed > int.MaxValue ? int.MaxValue : xivString.BufUsed);
             var bytes = new byte[len];
             Marshal.Copy(new IntPtr(xivString.StringPtr), bytes, 0, len);
-            return PluginInterface.SeStringManager.Parse(bytes);
+            return SeString.Parse(bytes);
         }
 
         public void WriteSeString(Utf8String xivString, SeString s) {
@@ -169,15 +177,14 @@ namespace SimpleTweaksPlugin.Helper {
 
 
         public T GetGameOption<T>(GameOptionKind opt) {
-            var optionBase = (byte**)(PluginInterface.Framework.Address.BaseAddress + 0x2B28);
+            var optionBase = (byte**)(Service.Framework.Address.BaseAddress + 0x2B28);
             return Marshal.PtrToStructure<T>(new IntPtr(*optionBase + 0xAAE0 + (16 * (uint)opt)));
         }
 
-        public static HookWrapper<T> Hook<T>(string signature, T detour, bool enable = true, int addressOffset = 0) where T : Delegate {
-            var addr = Common.Scanner.ScanText(signature);
+        public static HookWrapper<T> Hook<T>(string signature, T detour, int addressOffset = 0) where T : Delegate {
+            var addr = Scanner.ScanText(signature);
             var h = new Hook<T>(addr + addressOffset, detour);
             var wh = new HookWrapper<T>(h);
-            if (enable) wh.Enable();
             HookList.Add(wh);
             return wh;
         }
@@ -186,6 +193,59 @@ namespace SimpleTweaksPlugin.Helper {
 
         public static void OpenBrowser(string url) {
             Process.Start(new ProcessStartInfo {FileName = url, UseShellExecute = true});
+        }
+
+        public static string PtrToUTF8(IntPtr ptr){
+            byte[] bytes = System.Text.Encoding.Unicode.GetBytes(Marshal.PtrToStringUni(ptr));//转成UNICODE编码
+            string dec = System.Text.Encoding.UTF8.GetString(bytes);//再转成UTF8
+            return dec;
+        }
+        public static void GenerateCallback(AtkUnitBase* unitBase, params object[] values) {
+            var atkValues = (AtkValue*) Marshal.AllocHGlobal(values.Length * sizeof(AtkValue));
+            if (atkValues == null) return;
+            try {
+                for (var i = 0; i < values.Length; i++) {
+                    var v = values[i];
+                    switch (v) {
+                        case uint uintValue:
+                            atkValues[i].Type = ValueType.UInt;
+                            atkValues[i].UInt = uintValue;
+                            break;
+                        case int intValue:
+                            atkValues[i].Type = ValueType.Int;
+                            atkValues[i].Int = intValue;
+                            break;
+                        case float floatValue:
+                            atkValues[i].Type = ValueType.Float;
+                            atkValues[i].Float = floatValue;
+                            break;
+                        case bool boolValue:
+                            atkValues[i].Type = ValueType.Bool;
+                            atkValues[i].Byte = (byte) (boolValue ? 1 : 0);
+                            break;
+                        case string stringValue: {
+                            atkValues[i].Type = ValueType.String;
+                            var stringBytes = Encoding.UTF8.GetBytes(stringValue);
+                            var stringAlloc = Marshal.AllocHGlobal(stringBytes.Length + 1);
+                            Marshal.Copy(stringBytes, 0, stringAlloc, stringBytes.Length);
+                            Marshal.WriteByte(stringAlloc, stringBytes.Length, 0);
+                            atkValues[i].String = (byte*)stringAlloc;
+                            break;
+                        }
+                        default:
+                            throw new ArgumentException($"Unable to convert type {v.GetType()} to AtkValue");
+                    }
+                }
+
+                unitBase->FireCallback(values.Length, atkValues);
+            } finally {
+                for (var i = 0; i < values.Length; i++) {
+                    if (atkValues[i].Type == ValueType.String) {
+                        Marshal.FreeHGlobal(new IntPtr(atkValues[i].String));
+                    }
+                }
+                Marshal.FreeHGlobal(new IntPtr(atkValues));
+            }
         }
 
     }

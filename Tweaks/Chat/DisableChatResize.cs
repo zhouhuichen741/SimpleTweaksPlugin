@@ -3,8 +3,8 @@ using Dalamud.Hooking;
 
 namespace SimpleTweaksPlugin.Tweaks.Chat {
     public class DisableChatResize : ChatTweaks.SubTweak {
-        public override string Name => "禁止更改聊天框大小";
-        public override string Description => "禁止更改聊天框大小";
+        public override string Name => "Disable Chat Resize";
+        public override string Description => "Prevents resizing of the chat window.";
 
         private unsafe delegate void MainChatWindowControlDelegate(IntPtr uiObject, ushort controlCode, IntPtr a3, IntPtr* a4, IntPtr a5);
         private unsafe delegate void SubChatWindowControlDelegate(IntPtr a1, ushort controlCode, uint a3, IntPtr a4, ushort* a5);
@@ -23,11 +23,11 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
             try {
 
                 if (mainChatWindowControlAddress == IntPtr.Zero) {
-                    mainChatWindowControlAddress = PluginInterface.TargetModuleScanner.ScanText("40 55 41 54 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 1F 80 B9 ?? ?? ?? ?? ??");
+                    mainChatWindowControlAddress = Service.SigScanner.ScanText("40 55 41 54 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 1F 80 B9 ?? ?? ?? ?? ??");
                 }
 
                 if (subChatWindowControlAddress == IntPtr.Zero) {
-                    subChatWindowControlAddress = PluginInterface.TargetModuleScanner.ScanText("40 53 55 56 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? F6 81 ?? ?? ?? ?? ??");
+                    subChatWindowControlAddress = Service.SigScanner.ScanText("40 55 53 56 41 54 41 56 41 57 48 8D AC 24");
                 }
 
                 if (mainChatWindowControlAddress == IntPtr.Zero || subChatWindowControlAddress == IntPtr.Zero) {

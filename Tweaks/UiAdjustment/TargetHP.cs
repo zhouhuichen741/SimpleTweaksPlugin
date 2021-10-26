@@ -1,15 +1,16 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Numerics;
-using Dalamud.Game.ClientState.Actors.Types;
-using Dalamud.Game.Internal;
+using Dalamud.Game;
+using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using FFXIVClientStructs.FFXIV.Component.GUI.ULD;
 using ImGuiNET;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
 using SimpleTweaksPlugin.TweakSystem;
 using AlignmentType = FFXIVClientStructs.FFXIV.Component.GUI.AlignmentType;
+using GameObject = Dalamud.Game.ClientState.Objects.Types.GameObject;
 
 namespace SimpleTweaksPlugin {
     public partial class UiAdjustmentsConfig {
@@ -97,14 +98,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
         public override void Enable() {
             Config = LoadConfig<Configs>() ?? PluginConfig.UiAdjustments.TargetHP ?? new Configs();
-            PluginInterface.Framework.OnUpdateEvent += FrameworkUpdate;
+            Service.Framework.Update += FrameworkUpdate;
             base.Enable();
         }
 
         public override void Disable() {
             SaveConfig(Config);
             PluginConfig.UiAdjustments.TargetHP = null;
-            PluginInterface.Framework.OnUpdateEvent -= FrameworkUpdate;
+            Service.Framework.Update -= FrameworkUpdate;
             Update(true);
             base.Disable();
         }
@@ -118,59 +119,58 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         private void Update(bool reset = false) {
-            var target = PluginInterface.ClientState.Targets.SoftTarget ?? PluginInterface.ClientState.Targets.CurrentTarget;
+            var target = Service.Targets.SoftTarget ?? Service.Targets.Target;
             if (target != null || reset) {
-                var ui = (AtkUnitBase*) PluginInterface?.Framework.Gui.GetUiObjectByName("_TargetInfo", 1);
+                var ui = Common.GetUnitBase("_TargetInfo", 1);
                 if (ui != null && (ui->IsVisible || reset)) {
                     UpdateMainTarget(ui, target, reset);
                 }
                 
-                var splitUi = (AtkUnitBase*) PluginInterface?.Framework.Gui.GetUiObjectByName("_TargetInfoMainTarget", 1);
+                var splitUi = Common.GetUnitBase("_TargetInfoMainTarget", 1);
                 if (splitUi != null && (splitUi->IsVisible || reset)) {
                     UpdateMainTargetSplit(splitUi, target, reset);
                 }
             }
             
-            if (PluginInterface?.ClientState?.Targets?.FocusTarget != null || reset) {
-                var ui = (AtkUnitBase*) PluginInterface?.Framework.Gui.GetUiObjectByName("_FocusTargetInfo", 1);
+            if (Service.Targets.FocusTarget != null || reset) {
+                var ui = Common.GetUnitBase("_FocusTargetInfo", 1);
                 if (ui != null && (ui->IsVisible || reset)) {
-                    UpdateFocusTarget(ui, PluginInterface?.ClientState?.Targets?.FocusTarget, reset);
+                    UpdateFocusTarget(ui, Service.Targets.FocusTarget, reset);
+
                 }
             }
         }
         
-        private void UpdateMainTarget(AtkUnitBase* unitBase, Actor target, bool reset = false) {
+        private void UpdateMainTarget(AtkUnitBase* unitBase, GameObject target, bool reset = false) {
             if (unitBase == null || unitBase->UldManager.NodeList == null || unitBase->UldManager.NodeListCount < 40) return;
             var gauge = (AtkComponentNode*) unitBase->UldManager.NodeList[36];
             var textNode = (AtkTextNode*) unitBase->UldManager.NodeList[39];
             UiHelper.SetSize(unitBase->UldManager.NodeList[37], reset ? 44 : 0, reset ? 20 : 0);
             UpdateGaugeBar(gauge, textNode, target, Config.Position, Config.UseCustomColor ? Config.CustomColor : null, Config.FontSize, reset);
         }
-        private void UpdateFocusTarget(AtkUnitBase* unitBase, Actor target, bool reset = false) {
+        private void UpdateFocusTarget(AtkUnitBase* unitBase, GameObject target, bool reset = false) {
             if (Config.NoFocus) reset = true;
             if (unitBase == null || unitBase->UldManager.NodeList == null || unitBase->UldManager.NodeListCount < 11) return;
             var gauge = (AtkComponentNode*) unitBase->UldManager.NodeList[2];
             var textNode = (AtkTextNode*) unitBase->UldManager.NodeList[10];
             UpdateGaugeBar(gauge, textNode, target, Config.FocusPosition, Config.FocusUseCustomColor ? Config.FocusCustomColor : null, Config.FocusFontSize, reset);
         }
-        private void UpdateMainTargetSplit(AtkUnitBase* unitBase, Actor target, bool reset = false) {
+        private void UpdateMainTargetSplit(AtkUnitBase* unitBase, GameObject target, bool reset = false) {
             if (unitBase == null || unitBase->UldManager.NodeList == null || unitBase->UldManager.NodeListCount < 9) return;
             var gauge = (AtkComponentNode*) unitBase->UldManager.NodeList[5];
             var textNode = (AtkTextNode*) unitBase->UldManager.NodeList[8];
             UiHelper.SetSize(unitBase->UldManager.NodeList[6], reset ? 44 : 0, reset ? 20 : 0);
             UpdateGaugeBar(gauge, textNode, target, Config.Position, Config.UseCustomColor ? Config.CustomColor : null, Config.FontSize, reset);
         }
-
-        private const int TargetHPNodeID = 99990001;
         
-        private void UpdateGaugeBar(AtkComponentNode* gauge, AtkTextNode* cloneTextNode, Actor target, Vector2 positionOffset, Vector4? customColor, byte fontSize, bool reset = false) {
-            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000 || PluginInterface.ClientState.LocalPlayer == null) return;
+        private void UpdateGaugeBar(AtkComponentNode* gauge, AtkTextNode* cloneTextNode, GameObject target, Vector2 positionOffset, Vector4? customColor, byte fontSize, bool reset = false) {
+            if (gauge == null || (ushort) gauge->AtkResNode.Type < 1000 || Service.ClientState.LocalPlayer == null) return;
             
             AtkTextNode* textNode = null;
 
             for (var i = 5; i < gauge->Component->UldManager.NodeListCount; i++) {
                 var node = gauge->Component->UldManager.NodeList[i];
-                if (node->Type == NodeType.Text && node->NodeID == TargetHPNodeID) {
+                if (node->Type == NodeType.Text && node->NodeID == CustomNodes.TargetHP) {
                     textNode = (AtkTextNode*) node;
                     break;
                 }
@@ -180,11 +180,11 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             
             if (textNode == null) {
                 textNode = UiHelper.CloneNode(cloneTextNode);
-                textNode->AtkResNode.NodeID = TargetHPNodeID;
+                textNode->AtkResNode.NodeID = CustomNodes.TargetHP;
                 var newStrPtr = Common.Alloc(512);
                 textNode->NodeText.StringPtr = (byte*) newStrPtr;
                 textNode->NodeText.BufSize = 512;
-                UiHelper.SetText(textNode, "");
+                textNode->SetText("");
                 UiHelper.ExpandNodeList(gauge, 1);
                 gauge->Component->UldManager.NodeList[gauge->Component->UldManager.NodeListCount++] = (AtkResNode*) textNode;
 
@@ -222,36 +222,35 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             textNode->FontSize = fontSize;
             
             
-            if (target is Chara chara)
+            if (target is Character chara)
             {
                 var y = "";
                 if (Config.EnableDistance){
-                    Vector3 me = PluginInterface.ClientState.LocalPlayer.Position;
+                    Vector3 me = Service.ClientState.LocalPlayer.Position;
                     Vector3 tar = chara.Position;
                     y += "  " + Vector3.Distance(me, tar).ToString("00.0");
                 }
                 if (Config.EnableEffectiveDistance){
                     y += "  " + target.YalmDistanceX.ToString();
                 }
-                UiHelper.SetText(textNode, $"{FormatNumber(chara.CurrentHp)}/{FormatNumber(chara.MaxHp)}"+y);
+                textNode->SetText($"{FormatNumber(chara.CurrentHp)}/{FormatNumber(chara.MaxHp)}"+y);
             } else {
-                UiHelper.SetText(textNode, "");
+                textNode->SetText("");
             }
         }
 
-        private string FormatNumber(int num) {
-            if (Config.DisplayFormat == DisplayFormat.FullNumber) return $"{num}";
-            if (Config.DisplayFormat == DisplayFormat.FullNumberSeparators) return $"{num:N0}";
-
-            var fStr = Config.DisplayFormat switch {
+        private string FormatNumber(uint num, DisplayFormat? displayFormat = null) {
+            displayFormat ??= Config.DisplayFormat;
+            if (displayFormat == DisplayFormat.FullNumber) return num.ToString(Culture);
+            if (displayFormat == DisplayFormat.FullNumberSeparators) return num.ToString("N0", Culture);
+            var fStr = displayFormat switch {
                 DisplayFormat.OneDecimalPrecision => "F1",
                 DisplayFormat.TwoDecimalPrecision => "F2",
                 _ => "F0"
             };
-
             return num switch {
-                >= 1000000 => $"{(num / 1000000f).ToString(fStr)}M",
-                >= 1000 => $"{(num / 1000f).ToString(fStr)}K",
+                >= 1000000 => $"{(num / 1000000f).ToString(fStr, Culture)}M",
+                >= 1000 => $"{(num / 1000f).ToString(fStr, Culture)}K",
                 _ => $"{num}"
             };
         }
