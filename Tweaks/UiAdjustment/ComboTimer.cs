@@ -12,7 +12,7 @@ using Action = Lumina.Excel.GeneratedSheets.Action;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
     public unsafe class ComboTimer : UiAdjustments.SubTweak {
-        public override string Name => "联机倒计时";
+        public override string Name => "连击倒计时";
         public override string Description => "显示当前连击结束时间";
 
         private readonly Dictionary<uint, byte> comboActions = new();
