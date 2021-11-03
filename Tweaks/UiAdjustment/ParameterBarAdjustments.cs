@@ -97,24 +97,24 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= VisibilityAndOffsetEditor("隐藏分类选择", ref Config.TargetCycling, DefaultConfig.TargetCycling);
+            hasChanged |= VisibilityAndOffsetEditor(LocString("Hide Target Cycling"), ref Config.TargetCycling, DefaultConfig.TargetCycling);
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
 
-            hasChanged |= VisibilityAndOffsetEditor("隐藏体力栏", ref Config.HpBar, DefaultConfig.HpBar);
-            hasChanged |= ImGui.Checkbox("隐藏“体力”文本", ref Config.HideHpTitle);
-            hasChanged |= VisibilityAndOffsetEditor("隐藏体力值", ref Config.HpValue, DefaultConfig.HpValue);
+            hasChanged |= VisibilityAndOffsetEditor(LocString("Hide HP Bar"), ref Config.HpBar, DefaultConfig.HpBar);
+            hasChanged |= ImGui.Checkbox(LocString("Hide 'HP' Text"), ref Config.HideHpTitle);
+            hasChanged |= VisibilityAndOffsetEditor(LocString("Hide HP Value"), ref Config.HpValue, DefaultConfig.HpValue);
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
 
-            hasChanged |= VisibilityAndOffsetEditor("隐藏魔力栏", ref Config.MpBar, DefaultConfig.MpBar);
-            hasChanged |= ImGui.Checkbox("隐藏“魔力”文本", ref Config.HideMpTitle);
-            hasChanged |= VisibilityAndOffsetEditor("隐藏魔力值", ref Config.MpValue, DefaultConfig.MpValue);
+            hasChanged |= VisibilityAndOffsetEditor(LocString("Hide MP Bar"), ref Config.MpBar, DefaultConfig.MpBar);
+            hasChanged |= ImGui.Checkbox(LocString("Hide 'MP' Text"), ref Config.HideMpTitle);
+            hasChanged |= VisibilityAndOffsetEditor(LocString("Hide MP Value"), ref Config.MpValue, DefaultConfig.MpValue);
 
-            hasChanged |= ImGui.Checkbox("对于不使用魔力的职业，隐藏魔力栏", ref Config.AutoHideMp);
+            hasChanged |= ImGui.Checkbox(LocString("AutoHideMp", "Hide MP Bar on jobs that don't use MP"), ref Config.AutoHideMp);
 
-            hasChanged |= ImGui.ColorEdit4("体力栏颜色", ref Config.HpColor);
-            hasChanged |= ImGui.ColorEdit4("魔力栏颜色", ref Config.MpColor);
-            hasChanged |= ImGui.ColorEdit4("采集力栏颜色", ref Config.GpColor);
-            hasChanged |= ImGui.ColorEdit4("制作力栏颜色", ref Config.CpColor);
+            hasChanged |= ImGui.ColorEdit4(LocString("HP Bar Color"), ref Config.HpColor);
+            hasChanged |= ImGui.ColorEdit4(LocString("MP Bar Color"), ref Config.MpColor);
+            hasChanged |= ImGui.ColorEdit4(LocString("GP Bar Color"), ref Config.GpColor);
+            hasChanged |= ImGui.ColorEdit4(LocString("CP Bar Color"), ref Config.CpColor);
 
             if (hasChanged) UpdateParameterBar(true);
         };

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -26,14 +27,14 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
             ImGui.BeginGroup();
-            if (ImGui.Checkbox("显示总值##materiaStatsTooltipTweak", ref Config.Total)) {
+            if (ImGui.Checkbox(LocString("Show Total") + "##materiaStatsTooltipTweak", ref Config.Total)) {
                 if (!Config.Total && !Config.Delta) {
                     Config.Delta = true;
                 }
 
                 hasChanged = true;
             }
-            if (ImGui.Checkbox("显示差值##materiaStatsTooltipTweak", ref Config.Delta)) {
+            if (ImGui.Checkbox(LocString("Show Delta") + "##materiaStatsTooltipTweak", ref Config.Delta)) {
                 if (!Config.Total && !Config.Delta) {
                     Config.Total = true;
                 }
@@ -47,14 +48,14 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 var groupSize = ImGui.GetItemRectSize();
                 ImGui.SameLine();
                     
-                var text = "简化显示";
+                var text = LocString("Simplified Combined Display");
                 var textSize = ImGui.CalcTextSize(text);
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (groupSize.Y / 2) - (textSize.Y / 2));
                 hasChanged |= ImGui.Checkbox($"{text}##materiaStatSTooltipTweak", ref Config.SimpleCombined);
                 ImGui.SetCursorPosY(y);
             }
                 
-            hasChanged |= ImGui.Checkbox("着色##materiaStatsTooltipTweak", ref Config.Colour);
+            hasChanged |= ImGui.Checkbox(LocString("Colour Value") + "##materiaStatsTooltipTweak", ref Config.Colour);
         };
 
         public IEnumerable<TooltipTweaks.ItemTooltipField> Fields() {
@@ -139,14 +140,14 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                     var param = baseParams[bp.Key];
                     if (bp.Value == 0) continue;
                     var hasApplied = false;
-                    foreach (var field in Fields()) {
+                    foreach (var field in Fields().Take(numberArrayData->IntArray[21])) {
                         var data = GetTooltipString(stringArrayData, field);
                         if (data == null) continue;
                         if (data.TextValue.Contains(param.Name)) {
                             hasApplied = true;
                             if (data.TextValue.EndsWith("]")) continue;
                             ApplyMateriaDifference(data, baseParamDeltas[param.RowId], baseParamOriginal[param.RowId], baseParamLimits[param.RowId]);
-                            stringArrayData->SetValue((int) field, data.Encode(), false);
+                            SetTooltipString(stringArrayData, field, data);
                         }
 
                     }
@@ -158,7 +159,8 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                             seString.Payloads.Add(new TextPayload(param.Name));
                             seString.Payloads.Add(new TextPayload($" +{baseParamOriginal[param.RowId]}"));
                             ApplyMateriaDifference(seString, baseParamDeltas[param.RowId], baseParamOriginal[param.RowId], baseParamLimits[param.RowId]);
-                            stringArrayData->SetValue(37 + baseParamLines, seString.Encode(), false);
+
+                            SetTooltipString(stringArrayData, (TooltipTweaks.ItemTooltipField) (37 + baseParamLines), seString);
                             numberArrayData->IntArray[21] += 1;
                         }
                     }

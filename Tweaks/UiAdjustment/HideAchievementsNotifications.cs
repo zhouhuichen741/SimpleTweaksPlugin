@@ -23,8 +23,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public Configs Config { get; private set; }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox("隐藏登录通知", ref this.Config.HideLogIn);
-            hasChanged |= ImGui.Checkbox("隐藏切换区域通知", ref this.Config.HideZoneIn);
+            hasChanged |= ImGui.Checkbox(LocString("HideLogIn", "Hide the login notification."), ref this.Config.HideLogIn);
+            hasChanged |= ImGui.Checkbox(LocString("HideZoneIn", "Hide the zone-in notification."), ref this.Config.HideZoneIn);
         };
 
         public override string Name => "隐藏接近达成成就提示";

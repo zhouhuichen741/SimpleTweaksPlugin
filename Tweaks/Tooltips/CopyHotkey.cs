@@ -51,6 +51,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             if (Config.HideHotkeysOnTooltip) return;
             var seStr = GetTooltipString(stringArrayData, ControlsDisplay);
             if (seStr == null) return;
+            if (seStr.TextValue.Contains('\n')) return;
             var split = seStr.TextValue.Split(new[] { weirdTabChar }, StringSplitOptions.None);
             if (split.Length > 0) {
                 seStr.Payloads.Clear();
@@ -63,7 +64,8 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             if (Config.GamerEscapeLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.GamerEscapeLinkHotkey.Select(k => k.GetKeyName()))}  View on Gamer Escape"));
             if (Config.ErionesLinkHotkeyEnabled) seStr.Payloads.Add(new TextPayload($"\n{string.Join("+", Config.ErionesLinkHotkey.Select(k => k.GetKeyName()))}  View on Eriones (JP)"));
 
-            stringArrayData->SetValue((int) ControlsDisplay, seStr.Encode(), false);
+
+            SetTooltipString(stringArrayData, ControlsDisplay, seStr);
         }
 
         private string settingKey;
@@ -117,7 +119,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                     focused = name;
                 } else {
                     ImGui.SameLine();
-                    if (ImGui.Button(newKeys.Count > 0 ? $"Confirm##{name}" : $"Cancel##{name}")) {
+                    if (ImGui.Button(newKeys.Count > 0 ? LocString("Confirm") + $"##{name}" : LocString("Cancel") + $"##{name}")) {
                         settingKey = null;
                         if (newKeys.Count > 0) keys = newKeys.ToArray();
                         newKeys.Clear();
@@ -134,7 +136,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                 }
             } else {
                 ImGui.SameLine();
-                if (ImGui.Button($"Set Keybind###setHotkeyButton{name}")) {
+                if (ImGui.Button(LocString("Set Keybind") + $"###setHotkeyButton{name}")) {
                     settingKey = name;
                 }
             }
@@ -144,20 +146,20 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
             ImGui.Columns(2);
             ImGui.SetColumnWidth(0, 180 * ImGui.GetIO().FontGlobalScale);
             var c = Config;
-            DrawHotkeyConfig("复制物品名", ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig(LocString("Copy Item Name"), ref c.CopyHotkey, ref c.CopyHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("在Teamcraft查看", ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig(LocString("View on Teamcraft"), ref c.TeamcraftLinkHotkey, ref c.TeamcraftLinkHotkeyEnabled, ref hasChanged);
             ImGui.SameLine();
-            ImGui.Checkbox($"使用浏览器###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
+            ImGui.Checkbox(LocString("Browser Only") + "###teamcraftIgnoreClient", ref Config.TeamcraftLinkHotkeyForceBrowser);
             ImGui.Separator();
-            DrawHotkeyConfig("在Garland Tools查看", ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig(LocString("View on Garland Tools"), ref c.GardlandToolsLinkHotkey, ref c.GardlandToolsLinkHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("在Gamer Escape查看", ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig(LocString("View on Gamer Escape"), ref c.GamerEscapeLinkHotkey, ref c.GamerEscapeLinkHotkeyEnabled, ref hasChanged);
             ImGui.Separator();
-            DrawHotkeyConfig("View on Eriones (JP)", ref c.ErionesLinkHotkey, ref c.ErionesLinkHotkeyEnabled, ref hasChanged);
+            DrawHotkeyConfig(LocString("View on Eriones (JP)"), ref c.ErionesLinkHotkey, ref c.ErionesLinkHotkeyEnabled, ref hasChanged);
             ImGui.Columns();
             ImGui.Dummy(new Vector2(5 * ImGui.GetIO().FontGlobalScale));
-            hasChanged |= ImGui.Checkbox("Don't show hotkey help on Tooltip", ref c.HideHotkeysOnTooltip);
+            hasChanged |= ImGui.Checkbox(LocString("NoHelpText", "Don't show hotkey help on Tooltip"), ref c.HideHotkeysOnTooltip);
         };
 
         private ExcelSheet<ExtendedItem> itemSheet;

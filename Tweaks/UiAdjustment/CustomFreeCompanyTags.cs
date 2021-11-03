@@ -203,9 +203,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
             if (ImGui.BeginTable("fcList#noFreeCompanyOnNamePlate", 4)) {
                 ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, 28 * ImGui.GetIO().FontGlobalScale);
-                ImGui.TableSetupColumn($"启用", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 50 * ImGui.GetIO().FontGlobalScale);
-                ImGui.TableSetupColumn("部队Tag", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 75* ImGui.GetIO().FontGlobalScale);
-                ImGui.TableSetupColumn("替换为", ImGuiTableColumnFlags.NoClip);
+                ImGui.TableSetupColumn(LocString("Replace"), ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 50 * ImGui.GetIO().FontGlobalScale);
+                ImGui.TableSetupColumn(LocString("FC Tag"), ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoClip, 75* ImGui.GetIO().FontGlobalScale);
+                ImGui.TableSetupColumn(LocString("Replacement"), ImGuiTableColumnFlags.NoClip);
                 ImGui.TableHeadersRow();
 
 
@@ -244,7 +244,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 ImGui.SetNextItemWidth(-1);
                 var addNew = ImGui.InputText($"##fcList#{GetType().Name}_new_name", ref newFcName, 6, ImGuiInputTextFlags.EnterReturnsTrue);
                 ImGui.TableNextColumn();
-                if (ImGui.Button($"Add##fcList#{GetType().Name}_new_button") || addNew) {
+                if (ImGui.Button(LocString("AddButton", "Add") + $"##fcList#{GetType().Name}_new_button") || addNew) {
                     if (newFcName.Length > 0 && !config.FcCustomizations.ContainsKey(newFcName)) {
                         config.FcCustomizations.Add(newFcName, new TagCustomization());
                         newFcName = string.Empty;
@@ -253,10 +253,10 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
                 if (newFcName.Length == 0) {
                     ImGui.SameLine();
-                    ImGui.TextDisabled("回车以添加.");
+                    ImGui.TextDisabled(LocString("NoFCNote", "Enter name to add FC to list."));
                 } else if (config.FcCustomizations.ContainsKey(newFcName)) {
                     ImGui.SameLine();
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "该名称已被添加.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), LocString("FCAlreadyAddedError", "FC is already on list."));
                 }
 
 
@@ -304,9 +304,9 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             ImGui.TableNextColumn();
             if (isEditingName) {
                 if (config.FcCustomizations.ContainsKey(name)) {
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "该名称已被添加.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), LocString("DuplicateNameError", "This name is already added."));
                 } else {
-                    ImGui.TextDisabled("回车以保存.");
+                    ImGui.TextDisabled(LocString("SaveMessage", "Press ENTER to save FC Tag."));
                 }
                 
             } else {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Helper;
@@ -28,12 +29,12 @@ namespace SimpleTweaksPlugin.Tweaks.Chat {
         public Configs Config { get; private set; }
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            ImGui.Text("总是允许自动滚动:");
+            ImGui.Text(LocString("AllowAutoscrollLabel", "Always allow autoscrolling in:"));
             ImGui.Indent();
-            hasChanged |= ImGui.Checkbox("聊天框 1##allowAutoscroll", ref Config.DisablePanel0);
-            hasChanged |= ImGui.Checkbox("聊天框 2##allowAutoscroll", ref Config.DisablePanel1);
-            hasChanged |= ImGui.Checkbox("聊天框 3##allowAutoscroll", ref Config.DisablePanel2);
-            hasChanged |= ImGui.Checkbox("聊天框 4##allowAutoscroll", ref Config.DisablePanel3);
+            hasChanged |= ImGui.Checkbox(LocString("TabLabel", "Tab {0}").Format(1) + "##allowAutoscroll", ref Config.DisablePanel0);
+            hasChanged |= ImGui.Checkbox(LocString("TabLabel", "Tab {0}").Format(2) + "##allowAutoscroll", ref Config.DisablePanel1);
+            hasChanged |= ImGui.Checkbox(LocString("TabLabel", "Tab {0}").Format(3) + "##allowAutoscroll", ref Config.DisablePanel2);
+            hasChanged |= ImGui.Checkbox(LocString("TabLabel", "Tab {0}").Format(4) + "##allowAutoscroll", ref Config.DisablePanel3);
             ImGui.Unindent();
         };
         

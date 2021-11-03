@@ -5,8 +5,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Numerics;
 using System.Reflection;
+using System.Threading.Tasks;
+using Dalamud;
 using Dalamud.Data;
 using Dalamud.Game;
 using Dalamud.Game.ClientState;
@@ -25,11 +28,13 @@ using Dalamud.Game.Gui.Toast;
 using Dalamud.Game.Libc;
 using Dalamud.Game.Network;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Logging;
 using FFXIVClientInterface;
 using Newtonsoft.Json.Linq;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
+using XivCommon;
 #if DEBUG
 using System.Runtime.CompilerServices;
 using SimpleTweaksPlugin.Debugging;
@@ -45,6 +50,7 @@ namespace SimpleTweaksPlugin {
         public List<BaseTweak> Tweaks = new List<BaseTweak>();
 
         public IconManager IconManager { get; private set; }
+        public XivCommonBase XivCommon { get; private set; }
         
 
         private bool drawConfigWindow = false;
@@ -58,6 +64,8 @@ namespace SimpleTweaksPlugin {
         public static SimpleTweaksPlugin Plugin { get; private set; }
 
         private CultureInfo setCulture = null;
+
+        public bool LoadingTranslations { get; private set; } = false;
 
         internal CultureInfo Culture {
             get {
@@ -101,6 +109,7 @@ namespace SimpleTweaksPlugin {
                 hook.Dispose();
             }
             Common.HookList.Clear();
+            this.XivCommon.Dispose();
         }
 
         public int UpdateFrom = -1;
@@ -121,6 +130,8 @@ namespace SimpleTweaksPlugin {
             this.PluginConfig.Init(this, pluginInterface);
             
             IconManager = new IconManager(pluginInterface);
+            this.XivCommon = new XivCommonBase(Hooks.ContextMenu);
+            SetupLocalization();
             
             UiHelper.Setup(Service.SigScanner);
             #if DEBUG
@@ -168,6 +179,18 @@ namespace SimpleTweaksPlugin {
 
         }
 
+        public void SetupLocalization() {
+            this.PluginConfig.Language ??= Service.ClientState.ClientLanguage switch {
+                ClientLanguage.English => "en",
+                ClientLanguage.French => "fr",
+                ClientLanguage.German => "de",
+                ClientLanguage.Japanese => "ja",
+                _ => "en"
+            };
+
+            Loc.LoadLanguage(PluginConfig.Language);
+        }
+
         public void SetupCommands() {
             Service.Commands.AddHandler("/tweaks", new Dalamud.Game.Command.CommandInfo(OnConfigCommandHandler) {
                 HelpMessage = $"Open config window for {this.Name}",
@@ -200,11 +223,13 @@ namespace SimpleTweaksPlugin {
                                     if (PluginConfig.EnabledTweaks.Contains(tweak.Key)) {
                                         PluginConfig.EnabledTweaks.Remove(tweak.Key);
                                     }
+                                    Service.PluginInterface.UiBuilder.AddNotification($"Disabled {tweak.Name}", "Simple Tweaks", NotificationType.Info);
                                 } else {
                                     tweak.Enable();
                                     if (!PluginConfig.EnabledTweaks.Contains(tweak.Key)) {
                                         PluginConfig.EnabledTweaks.Add(tweak.Key);
                                     }
+                                    Service.PluginInterface.UiBuilder.AddNotification($"Enabled {tweak.Name}", "Simple Tweaks", NotificationType.Info);
                                 }
                                 PluginConfig.Save();
                                 return;
@@ -226,6 +251,7 @@ namespace SimpleTweaksPlugin {
                                     if (!PluginConfig.EnabledTweaks.Contains(tweak.Key)) {
                                         PluginConfig.EnabledTweaks.Add(tweak.Key);
                                     }
+                                    Service.PluginInterface.UiBuilder.AddNotification($"Enabled {tweak.Name}", "Simple Tweaks", NotificationType.Info);
                                     PluginConfig.Save();
                                 }
                                 return;
@@ -247,6 +273,7 @@ namespace SimpleTweaksPlugin {
                                     if (PluginConfig.EnabledTweaks.Contains(tweak.Key)) {
                                         PluginConfig.EnabledTweaks.Remove(tweak.Key);
                                     }
+                                    Service.PluginInterface.UiBuilder.AddNotification($"Disabled {tweak.Name}", "Simple Tweaks", NotificationType.Info);
                                     PluginConfig.Save();
                                 }
                                 return;
@@ -301,6 +328,12 @@ namespace SimpleTweaksPlugin {
         }
 
         private void BuildUI() {
+            foreach (var e in ErrorList.Where(e => e.IsNew && e.Tweak != null)) {
+                e.IsNew = false;
+                e.Tweak.Disable();
+                Service.PluginInterface.UiBuilder.AddNotification($"{e.Tweak.Name} has been disabled due to an error.", "Simple Tweaks", NotificationType.Error, 5000);
+            }
+
 #if DEBUG
             if (DebugManager.Enabled) {
                 DebugManager.DrawDebugWindow(ref DebugManager.Enabled);
@@ -320,12 +353,6 @@ namespace SimpleTweaksPlugin {
 
                     for (var i = 0; i < ErrorList.Count && i < 5; i++) {
                         var e = ErrorList[i];
-
-                        if (e.IsNew && e.Tweak != null) {
-                            e.IsNew = false;
-                            e.Tweak.Disable();
-                        }
-
                         ImGui.Text($"Error caught in {(e.Manager != null ? $"{e.Manager.Name}@" : "")}{(e.Tweak != null ? e.Tweak.Name : "Tweak Loader")}:");
                         if (!string.IsNullOrEmpty(e.Message)) {
                             ImGui.Text(e.Message);

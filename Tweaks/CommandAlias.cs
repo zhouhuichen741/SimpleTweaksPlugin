@@ -41,12 +41,11 @@ namespace SimpleTweaksPlugin.Tweaks {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool change) => {
-            ImGui.Text("添加命令同义词,不要输入起始的'/'");
-            ImGui.Text("这些同义词在设计上不会在宏中生效");
+            ImGui.Text(LocString("Instruction", "Add list of command alias. Do not start command with the '/'\nThese aliases, by design, do not work with macros."));
             if (ImGui.IsItemHovered()) {
                 ImGui.SetNextWindowSize(new Vector2(280, -1));
                 ImGui.BeginTooltip();
-                ImGui.TextWrapped("不在宏中支持是为了防止你在上传角色数据时将同义词一并上传\n请在宏中使用原始命令");
+                ImGui.TextWrapped(LocString("MacroHelp", "Aliases are not supported in macros to prevent them from being sent to the server in the event you back them up on server.\nPlease use the original command in your macros.", "Macro Help Tooltip"));
                 ImGui.EndTooltip();
             }
             ImGui.Separator();
@@ -55,11 +54,11 @@ namespace SimpleTweaksPlugin.Tweaks {
             ImGui.SetColumnWidth(0, 60 * s );
             ImGui.SetColumnWidth(1, 150 * s );
             ImGui.SetColumnWidth(2, 150 * s );
-            ImGui.Text("已启用");
+            ImGui.Text(LocString("Enabled"));
             ImGui.NextColumn();
-            ImGui.Text("输入命令");
+            ImGui.Text(LocString("Input Command"));
             ImGui.NextColumn();
-            ImGui.Text("输出命令");
+            ImGui.Text(LocString("Output Command"));
             ImGui.NextColumn();
             ImGui.NextColumn();
             ImGui.Separator();
@@ -96,14 +95,14 @@ namespace SimpleTweaksPlugin.Tweaks {
                 ImGui.NextColumn();
                 
                 if (AliasEntry.NoOverwrite.Contains(aliasEntry.Input)) {
-
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), $"'/{aliasEntry.Input}'是一个被保护的命令");
+                    var f = LocString("ProtectedCommandError", "'/{0}' is a protected command.");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), string.Format(f, aliasEntry.Input));
                 } else if (string.IsNullOrEmpty(aliasEntry.Input)) {
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "输入不可为空");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), LocString("EmptyInputError", "Input must not be empty."));
                 } else if (string.IsNullOrEmpty(aliasEntry.Output)) {
-                    ImGui.TextColored(new Vector4(1, 0, 0, 1), "输出不可为空");
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), LocString("EmptyOutputError", "Output must not be empty."));
                 } else if (aliasEntry.Input.StartsWith("/")) {
-                    ImGui.TextColored(new Vector4(1, 1, 0, 1), "不要输入'/'");
+                    ImGui.TextColored(new Vector4(1, 1, 0, 1), LocString("SlashIncludedError", "Don't include the '/'"));
                 }
 
                 ImGui.NextColumn();
@@ -120,7 +119,7 @@ namespace SimpleTweaksPlugin.Tweaks {
             ImGui.Separator();
             var addNew = false;
             var newEntry = new AliasEntry() { UniqueId = TweakConfig.AliasList.Count == 0 ? 1 : TweakConfig.AliasList.Max(a => a.UniqueId) + 1 };
-            ImGui.Text("New:");
+            ImGui.Text(LocString("New Label", "New:"));
             ImGui.NextColumn();
             ImGui.SetNextItemWidth(-1);
             addNew = ImGui.InputText($"###aliasInput{newEntry.UniqueId}", ref newEntry.Input, 500) || addNew;
@@ -205,7 +204,8 @@ namespace SimpleTweaksPlugin.Tweaks {
                                 Marshal.FreeHGlobal(mem2);
                                 return r;
                             }
-                            Service.Chat.PrintError("[Simple Tweaks] 长度超过500字符，该命令不会被执行");
+
+                            Service.Chat.PrintError("[Simple Tweaks] " +  LocString("CommandTooLongError", "Command alias result is longer than the maximum of 500 characters. The command could not be executed.", "Error: Command is too long"));
                             return 0;
                         }
                     }

@@ -51,7 +51,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
 
                     var seStr = GetTooltipString(stringArrayData, useDescription ? ItemDescription : ExtractableProjectableDesynthesizable);
 
-                    if (seStr != null) {
+                    if (seStr != null && seStr.Payloads.Count > 0) {
                         if (seStr.Payloads.Last() is TextPayload textPayload) {
                             if (Config.Delta) {
                                 textPayload.Text = textPayload.Text.Replace($"{item.LevelItem.Row},00", $"{item.LevelItem.Row} ({desynthDelta:+#;-#}");
@@ -60,7 +60,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
                                 textPayload.Text = textPayload.Text.Replace($"{item.LevelItem.Row},00", $"{item.LevelItem.Row} ({desynthLevel:F0})");
                                 textPayload.Text = textPayload.Text.Replace($"{item.LevelItem.Row}.00", $"{item.LevelItem.Row} ({desynthLevel:F0})");
                             }
-                            stringArrayData->SetValue((int) ( useDescription ? ItemDescription : ExtractableProjectableDesynthesizable), seStr.Encode(), false);
+                            SetTooltipString(stringArrayData, useDescription ? ItemDescription : ExtractableProjectableDesynthesizable, seStr);
                         }
                     }
                 }
@@ -68,7 +68,7 @@ namespace SimpleTweaksPlugin.Tweaks.Tooltips {
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
-            hasChanged |= ImGui.Checkbox($"显示差值###{GetType().Name}DesynthesisDelta", ref Config.Delta);
+            hasChanged |= ImGui.Checkbox(LocString("Desynthesis Delta") + $"###{GetType().Name}DesynthesisDelta", ref Config.Delta);
         };
     }
 }

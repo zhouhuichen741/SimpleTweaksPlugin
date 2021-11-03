@@ -34,8 +34,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public Configs Config { get; private set; }
         
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
-            ImGui.Checkbox("禁止点击套装内装备", ref Config.BlockClickOnGearset);
-            ImGui.Checkbox("黄色高亮显示预期可获得的分解经验值", ref Config.YellowForSkillGain);
+            ImGui.Checkbox(LocString("BlockClickOnGearset", "Block clicking on gearset items."), ref Config.BlockClickOnGearset);
+            ImGui.Checkbox(LocString("YellowForSkillGain", "Highlight potential skill gains (Yellow)"), ref Config.YellowForSkillGain);
         };
 
         public override string Name => "分解窗口增强";
