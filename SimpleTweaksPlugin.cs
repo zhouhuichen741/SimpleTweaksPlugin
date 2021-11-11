@@ -5,39 +5,17 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Numerics;
 using System.Reflection;
-using System.Threading.Tasks;
 using Dalamud;
-using Dalamud.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.ClientState.Buddy;
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Fates;
-using Dalamud.Game.ClientState.JobGauge;
-using Dalamud.Game.ClientState.Keys;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Game.ClientState.Party;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
-using Dalamud.Game.Gui.FlyText;
-using Dalamud.Game.Gui.PartyFinder;
-using Dalamud.Game.Gui.Toast;
-using Dalamud.Game.Libc;
-using Dalamud.Game.Network;
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Internal.Notifications;
-using Dalamud.Logging;
 using FFXIVClientInterface;
-using Newtonsoft.Json.Linq;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
 using XivCommon;
+using SimpleTweaksPlugin.Debugging;
 #if DEBUG
 using System.Runtime.CompilerServices;
-using SimpleTweaksPlugin.Debugging;
 #endif
 
 #pragma warning disable CS0659
@@ -47,7 +25,7 @@ namespace SimpleTweaksPlugin {
         public DalamudPluginInterface PluginInterface { get; private set; }
         public SimpleTweaksPluginConfig PluginConfig { get; private set; }
 
-        public List<BaseTweak> Tweaks = new List<BaseTweak>();
+        public List<TweakProvider> TweakProviders = new();
 
         public IconManager IconManager { get; private set; }
         public XivCommonBase XivCommon { get; private set; }
@@ -67,6 +45,8 @@ namespace SimpleTweaksPlugin {
 
         public bool LoadingTranslations { get; private set; } = false;
 
+        public IEnumerable<BaseTweak> Tweaks => TweakProviders.Where(tp => !tp.IsDisposed).SelectMany(tp => tp.Tweaks).OrderBy(t => t.Name);
+
         internal CultureInfo Culture {
             get {
                 if (setCulture != null) return setCulture;
@@ -84,22 +64,16 @@ namespace SimpleTweaksPlugin {
             set => setCulture = value;
         }
 
-
         public void Dispose() {
             SimpleLog.Debug("Dispose");
             
             PluginInterface.UiBuilder.Draw -= this.BuildUI;
             RemoveCommands();
 
-            foreach (var t in Tweaks) {
-                if (t.Enabled || t is SubTweakManager { AlwaysEnabled : true}) {
-                    SimpleLog.Log($"Disable: {t.Name}");
-                    t.Disable();
-                }
-                SimpleLog.Log($"Dispose: {t.Name}");
+            foreach (var t in TweakProviders.Where(t => !t.IsDisposed)) {
                 t.Dispose();
             }
-            Tweaks.Clear();
+            TweakProviders.Clear();
             Client.Dispose();
             #if DEBUG
             DebugManager.Dispose();
@@ -145,37 +119,20 @@ namespace SimpleTweaksPlugin {
 
             SetupCommands();
 
-            var tweakList = new List<BaseTweak>();
+            var simpleTweakProvider = new TweakProvider(Assembly.GetExecutingAssembly());
+            simpleTweakProvider.LoadTweaks();
+            TweakProviders.Add(simpleTweakProvider);
 
-            foreach (var t in Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsSubclassOf(typeof(Tweak)) && !t.IsAbstract)) {
-                SimpleLog.Debug($"Initalizing Tweak: {t.Name}");
-                try {
-                    var tweak = (Tweak) Activator.CreateInstance(t);
-                    tweak.InterfaceSetup(this, pluginInterface, PluginConfig);
-                    if (tweak.CanLoad) {
-                        tweak.Setup();
-                        if (tweak.Ready && (PluginConfig.EnabledTweaks.Contains(t.Name) || tweak is SubTweakManager {AlwaysEnabled: true})) {
-                            SimpleLog.Debug($"Enable: {t.Name}");
-                            try {
-                                tweak.Enable();
-                            } catch (Exception ex) {
-                                this.Error(tweak, ex, true, $"Error in Enable for '{tweak.Name}");
-                            }
-                        }
-
-                        tweakList.Add(tweak);
-                    }
-                } catch (Exception ex) {
-                    PluginLog.Error(ex, $"Failed loading tweak '{t.Name}'.");
-                }
+            foreach (var provider in PluginConfig.CustomProviders) {
+                LoadCustomProvider(provider);
             }
 
-            Tweaks = tweakList.OrderBy(t => t.Name).ToList();
 
 #if DEBUG
             DebugManager.Enabled = true;
             drawConfigWindow = true;
 #endif
+            DebugManager.Reload();
 
         }
 
@@ -189,6 +146,7 @@ namespace SimpleTweaksPlugin {
             };
 
             Loc.LoadLanguage(PluginConfig.Language);
+            foreach (var t in Tweaks) t.LanguageChanged();
         }
 
         public void SetupCommands() {
@@ -303,7 +261,7 @@ namespace SimpleTweaksPlugin {
             }
         }
 
-        public BaseTweak GetTweakById(string s, List<BaseTweak> tweakList = null) {
+        public BaseTweak? GetTweakById(string s, IEnumerable<BaseTweak>? tweakList = null) {
             tweakList ??= Tweaks;
             
             foreach (var t in tweakList) {
@@ -318,8 +276,10 @@ namespace SimpleTweaksPlugin {
         }
 
         public void SaveAllConfig() {
-            foreach (var t in Tweaks) {
-                t.RequestSaveConfig();
+            foreach (var tp in TweakProviders.Where(tp => !tp.IsDisposed)) {
+                foreach (var t in tp.Tweaks) {
+                    t.RequestSaveConfig();
+                }
             }
         }
 
@@ -473,6 +433,16 @@ namespace SimpleTweaksPlugin {
             if (ErrorList.Count > 50) {
                 ErrorList.RemoveRange(50, ErrorList.Count - 50);
             }
+        }
+
+        public void LoadCustomProvider(string path) {
+            if (!File.Exists(path)) return;
+            TweakProviders.RemoveAll(t => t.IsDisposed);
+            var tweakProvider = new CustomTweakProvider(path);
+            tweakProvider.LoadTweaks();
+            TweakProviders.Add(tweakProvider);
+            Loc.ClearCache();
+            DebugManager.Reload();
         }
     }
 }

@@ -16,6 +16,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public override string Description => "显示当前连击结束时间";
 
         private readonly Dictionary<uint, byte> comboActions = new();
+        private bool usingScreenText = false;
         
         public class Configs : TweakConfig {
             [TweakConfigOption("始终可见")]
@@ -39,6 +40,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             [TweakConfigOption("文本轮廓颜色", "Color", 4)]
             public Vector4 EdgeColor = new Vector4(0xF0, 0x8E, 0x37, 0xFF) / 0xFF;
             
+            [TweakConfigOption("Leading Zero")]
+            public bool LeadingZero = true;
+
+            [TweakConfigOption("Decimal Places", 3, IntMin = 0, IntMax = 4, IntType = TweakConfigOptionAttribute.IntEditType.Slider, EditorSize = 150)]
+            public int DecimalPlaces = 2;
+
+            [TweakConfigOption("Alternative UI Attachment", 1)]
+            public bool UseScreenText = false;
         }
         
         public Configs Config { get; private set; }
@@ -80,7 +89,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         }
 
         private void Update(bool reset = false) {
-            var paramWidget = Common.GetUnitBase("_ParameterWidget");
+            var addon = usingScreenText ? "_ScreenText" : "_ParameterWidget";
+            if (usingScreenText != Config.UseScreenText) {
+                reset = true;
+                usingScreenText = Config.UseScreenText;
+            }
+
+            var paramWidget = Common.GetUnitBase(addon);
             if (paramWidget == null) return;
             
             AtkTextNode* textNode = null;
@@ -188,12 +203,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 textNode->FontSize = (byte) (this.Config.FontSize);
                 textNode->LineSpacing = (byte) (this.Config.FontSize);
                 textNode->CharSpacing = 1;
-                if (comboAvailable) {
-                    textNode->SetText(Config.NoComboText ? $"{combo->Timer:00.00}" : $"Combo\n{combo->Timer:00.00}");
-                } else {
-                    textNode->SetText(Config.NoComboText ? $"00.00" : $"Combo\n00.00");;
-                }
-                
+                var comboTimer = (comboAvailable ? combo->Timer : 0.0f).ToString($"{(Config.LeadingZero ? "00" : "0")}{(Config.DecimalPlaces>0 ? "." + new string('0', Config.DecimalPlaces) : "")}");
+                textNode->SetText(Config.NoComboText ? $"{comboTimer}" : $"Combo\n{comboTimer}");
             } else { 
                 UiHelper.Hide(textNode);
             }

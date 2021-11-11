@@ -5,6 +5,7 @@
         <LangVersion>preview</LangVersion>
         <Platforms>x64</Platforms>
         <Configurations>Debug;Release</Configurations>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Label="Build">
         <OutputType>Library</OutputType>
@@ -16,7 +17,7 @@
     </PropertyGroup>
     <PropertyGroup Label="Feature">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Version>1.6.2.0</Version>
+        <Version>1.6.3.0</Version>
     </PropertyGroup>
 	<PropertyGroup>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -33,10 +34,6 @@
       <Compile Remove="FFXIVClientInterface\**" />
       <EmbeddedResource Remove="FFXIVClientInterface\**" />
       <None Remove="FFXIVClientInterface\**" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(Configuration)' == 'Release'">
-        <Compile Remove="Tweaks\Secret\**" />
-        <Compile Remove="Tweaks\SecretTweaks.cs" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="System.Numerics.Vectors" Version="4.1.3.0" />

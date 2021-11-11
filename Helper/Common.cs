@@ -20,7 +20,7 @@ using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace SimpleTweaksPlugin.Helper {
-    internal unsafe class Common {
+    public unsafe class Common {
 
         // Common Delegates
         public delegate void* AddonOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** nums, StringArrayData** strings);
@@ -184,6 +184,13 @@ namespace SimpleTweaksPlugin.Helper {
         public static HookWrapper<T> Hook<T>(string signature, T detour, int addressOffset = 0) where T : Delegate {
             var addr = Scanner.ScanText(signature);
             var h = new Hook<T>(addr + addressOffset, detour);
+            var wh = new HookWrapper<T>(h);
+            HookList.Add(wh);
+            return wh;
+        }
+
+        public static HookWrapper<T> Hook<T>(void* address, T detour) where T : Delegate {
+            var h = new Hook<T>(new IntPtr(address), detour);
             var wh = new HookWrapper<T>(h);
             HookList.Add(wh);
             return wh;

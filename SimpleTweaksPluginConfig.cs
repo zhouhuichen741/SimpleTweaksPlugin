@@ -7,8 +7,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using SimpleTweaksPlugin.Debugging;
 using SimpleTweaksPlugin.Helper;
-using SimpleTweaksPlugin.Tweaks;
 using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin {
@@ -25,6 +25,7 @@ namespace SimpleTweaksPlugin {
 
         public List<string> EnabledTweaks = new List<string>();
         public List<string> HiddenTweaks = new List<string>();
+        public List<string> CustomProviders = new List<string>();
 
         public bool HideKofi;
         public bool ShowExperimentalTweaks;
@@ -50,7 +51,8 @@ namespace SimpleTweaksPlugin {
         [NonSerialized] private string searchInput = string.Empty;
         [NonSerialized] private string lastSearchInput = string.Empty;
         [NonSerialized] private List<BaseTweak> searchResults = new List<BaseTweak>();
-        
+        private string addCustomProviderInput = string.Empty;
+
         private void DrawTweakConfig(BaseTweak t, ref bool hasChange) {
             var enabled = t.Enabled;
             if (t.Experimental && !ShowExperimentalTweaks && !enabled) return;
@@ -201,15 +203,18 @@ namespace SimpleTweaksPlugin {
                                 if (HiddenTweaks.Contains(t.Key) && !t.Enabled) continue;
                                 DrawTweakConfig(t, ref changed);
                             }
-                            
+
                             ImGui.EndChild();
                             ImGui.EndTabItem();
                         }
                     }
-                    
+
                     foreach (var stm in plugin.Tweaks.Where(t => t is SubTweakManager stm && (t.Enabled || stm.AlwaysEnabled)).Cast<SubTweakManager>()) {
+
                         var subTweakList = stm.GetTweakList().Where(t => t.Enabled || !HiddenTweaks.Contains(t.Key)).ToList();
-                        if (subTweakList.Count <= 0) continue;
+                        if (subTweakList.Count <= 0) {
+                            continue;
+                        }
                         if (settingTab == false && setTab == stm) {
                             settingTab = true;
                             continue;
@@ -400,6 +405,57 @@ namespace SimpleTweaksPlugin {
                                 ImGui.TreePop();
                             }
                             ImGui.Separator();
+                        }
+
+                        if (CustomProviders.Count > 0 || ShowExperimentalTweaks) {
+                            ImGui.Text("Tweak Providers:");
+                            string? deleteCustomProvider = null;
+                            for (var i = 0; i < CustomProviders.Count; i++) {
+                                if (ImGui.Button($"X##deleteCustomProvider_{i}")) {
+                                    deleteCustomProvider = CustomProviders[i];
+                                }
+                                ImGui.SameLine();
+                                if (ImGui.Button($"R##reloadcustomProvider_{i}")) {
+                                    foreach (var tp in SimpleTweaksPlugin.Plugin.TweakProviders) {
+                                        if (tp.IsDisposed) continue;
+                                        if (tp is not CustomTweakProvider ctp) continue;
+                                        if (ctp.AssemblyPath == CustomProviders[i]) {
+                                            ctp.Dispose();
+                                        }
+                                    }
+                                    plugin.LoadCustomProvider(CustomProviders[i]);
+                                    Loc.ClearCache();
+                                }
+                                ImGui.SameLine();
+                                ImGui.Text(CustomProviders[i]);
+                            }
+
+                            if (deleteCustomProvider != null) {
+                                CustomProviders.Remove(deleteCustomProvider);
+
+                                foreach (var tp in SimpleTweaksPlugin.Plugin.TweakProviders) {
+                                    if (tp.IsDisposed) continue;
+                                    if (tp is not CustomTweakProvider ctp) continue;
+                                    if (ctp.AssemblyPath == deleteCustomProvider) {
+                                        ctp.Dispose();
+                                    }
+                                }
+                                DebugManager.Reload();
+
+                                Save();
+                            }
+
+                            if (ImGui.Button("+##addCustomProvider")) {
+                                if (!string.IsNullOrWhiteSpace(addCustomProviderInput) && !CustomProviders.Contains(addCustomProviderInput)) {
+                                    CustomProviders.Add(addCustomProviderInput);
+                                    SimpleTweaksPlugin.Plugin.LoadCustomProvider(addCustomProviderInput);
+                                    addCustomProviderInput = string.Empty;
+                                    Save();
+                                }
+                            }
+
+                            ImGui.SameLine();
+                            ImGui.InputText("##addCustomProviderInput", ref addCustomProviderInput, 500);
                         }
 
                         ImGui.EndChild();

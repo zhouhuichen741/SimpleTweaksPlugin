@@ -14,6 +14,7 @@ using System.Text;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using SimpleTweaksPlugin.Debugging;
 using SimpleTweaksPlugin.Helper;
+using SimpleTweaksPlugin.TweakSystem;
 
 namespace SimpleTweaksPlugin {
     public partial class SimpleTweaksPluginConfig {
@@ -41,11 +42,21 @@ namespace SimpleTweaksPlugin.Debugging {
             
         }
 
+        public string FullName {
+            get {
+                if (TweakProvider is CustomTweakProvider ctp) {
+                    return $"[{ctp.Assembly.GetName().Name}] {Name}";
+                }
+                return Name;
+            }
+        }
+
+        internal TweakProvider TweakProvider = null!;
     }
     
     public static class DebugManager {
 
-        private static Dictionary<string, Action> debugPages = new Dictionary<string, Action>();
+        private static Dictionary<string, Action> debugPages = new();
 
         private static float sidebarSize = 0;
         
@@ -69,6 +80,30 @@ namespace SimpleTweaksPlugin.Debugging {
             sidebarSize = 0;
         }
 
+        public static void Reload() {
+            DebugHelpers.RemoveAll(dh => {
+                if (!dh.TweakProvider.IsDisposed) return false;
+                RemoveDebugPage(dh.FullName);
+                dh.Dispose();
+                return true;
+            });
+
+            foreach (var tp in SimpleTweaksPlugin.Plugin.TweakProviders) {
+                if (tp.IsDisposed) continue;
+
+                foreach (var t in tp.Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(DebugHelper)) && !t.IsAbstract)) {
+                    if (DebugHelpers.Any(h => h.GetType() == t)) continue;
+                    var debugger = (DebugHelper)Activator.CreateInstance(t);
+                    debugger.TweakProvider = tp;
+                    debugger.Plugin = _plugin;
+                    RegisterDebugPage(debugger.FullName, debugger.Draw);
+                    DebugHelpers.Add(debugger);
+                }
+            }
+
+
+        }
+
         private static SimpleTweaksPlugin _plugin;
 
         private static bool _setupDebugHelpers = false;
@@ -84,11 +119,16 @@ namespace SimpleTweaksPlugin.Debugging {
 
             if (!_setupDebugHelpers) {
                 _setupDebugHelpers = true;
-                foreach (var t in Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsSubclassOf(typeof(DebugHelper)) && !t.IsAbstract)) {
-                    var debugger = (DebugHelper)Activator.CreateInstance(t);
-                    debugger.Plugin = _plugin;
-                    RegisterDebugPage(debugger.Name, debugger.Draw);
-                    DebugHelpers.Add(debugger);
+                foreach (var tp in SimpleTweaksPlugin.Plugin.TweakProviders) {
+                    if (tp.IsDisposed) continue;
+
+                    foreach (var t in tp.Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(DebugHelper)) && !t.IsAbstract)) {
+                        var debugger = (DebugHelper)Activator.CreateInstance(t);
+                        debugger.TweakProvider = tp;
+                        debugger.Plugin = _plugin;
+                        RegisterDebugPage(debugger.FullName, debugger.Draw);
+                        DebugHelpers.Add(debugger);
+                    }
                 }
             }
 
@@ -109,7 +149,16 @@ namespace SimpleTweaksPlugin.Debugging {
                 
                 if (ImGui.BeginChild("###debugPages", new Vector2(sidebarSize, -1) * ImGui.GetIO().FontGlobalScale, true)) {
 
-                    foreach (var k in debugPages.Keys) {
+
+                    var keys = debugPages.Keys.ToList();
+                    keys.Sort(((s, s1) => {
+                        if (s.StartsWith("[") && !s1.StartsWith("[")) {
+                            return 1;
+                        }
+                        return string.CompareOrdinal(s, s1);
+                    }));
+
+                    foreach (var k in keys) {
 
                         if (ImGui.Selectable($"{k}##debugPageOption", _plugin.PluginConfig.Debugging.SelectedPage == k)) {
                             _plugin.PluginConfig.Debugging.SelectedPage = k;
@@ -141,10 +190,11 @@ namespace SimpleTweaksPlugin.Debugging {
 
         public static void Dispose() {
             foreach (var debugger in DebugHelpers) {
-                RemoveDebugPage(debugger.Name);
+                RemoveDebugPage(debugger.FullName);
                 debugger.Dispose();
             }
             DebugHelpers.Clear();
+            debugPages.Clear();
         }
 
 
