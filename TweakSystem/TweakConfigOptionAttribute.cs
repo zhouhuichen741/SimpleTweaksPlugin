@@ -10,11 +10,17 @@ namespace SimpleTweaksPlugin.TweakSystem {
 
         public int Priority { get; } = 0;
         public int EditorSize { get; set; } = -1;
-        
+
+        public bool SameLine { get; set; } = false;
+
+        public bool ConditionalDisplay { get; set; } = false;
+
         // Int 
         public int IntMin { get; set; } = int.MinValue;
         public int IntMax { get; set; } = int.MaxValue;
         public IntEditType IntType { get; set; } = IntEditType.Slider;
+
+        public bool EnforcedLimit { get; set; } = true;
 
         public delegate bool ConfigOptionEditor(string name, ref object configOption);
         

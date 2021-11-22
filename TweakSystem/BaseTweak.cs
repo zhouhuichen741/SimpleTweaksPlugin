@@ -174,6 +174,17 @@ namespace SimpleTweaksPlugin.TweakSystem {
 
                 var configOptionIndex = 0;
                 foreach (var (f, attr) in fields) {
+                    if (attr.ConditionalDisplay) {
+                        var conditionalMethod = configObj.GetType().GetMethod($"ShouldShow{f.Name}", BindingFlags.Public | BindingFlags.Instance);
+                        if (conditionalMethod != null) {
+                            var shouldShow = (bool) (conditionalMethod.Invoke(configObj, Array.Empty<object?>()) ?? true);
+                            if (!shouldShow) continue;
+                        }
+                    }
+
+
+                    if (attr.SameLine) ImGui.SameLine();
+
                     var localizedName = LocString(attr.LocalizeKey, attr.Name, $"[Config] {attr.Name}");
                     if (attr.Editor != null) {
                         var v = f.GetValue(configObj);
@@ -198,12 +209,12 @@ namespace SimpleTweaksPlugin.TweakSystem {
                             _ => false
                         };
                         
-                        if (v < attr.IntMin) {
+                        if (attr.EnforcedLimit && v < attr.IntMin) {
                             v = attr.IntMin;
                             e = true;
                         }
 
-                        if (v > attr.IntMax) {
+                        if (attr.EnforcedLimit &&v > attr.IntMax) {
                             v = attr.IntMax;
                             e = true;
                         }

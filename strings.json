@@ -467,6 +467,14 @@
     "message": "Show ID",
     "description": "[ShowItemID] Tweak Name"
   },
+  "TooltipTweaks@ShowItemID / Show Both HEX and Decimal": {
+    "message": "Show Both HEX and Decimal",
+    "description": "[ShowItemID] [Config] Show Both HEX and Decimal"
+  },
+  "TooltipTweaks@ShowItemID / Use Hexadecimal ID": {
+    "message": "Use Hexadecimal ID",
+    "description": "[ShowItemID] [Config] Use Hexadecimal ID"
+  },
   "UiAdjustments / Name": {
     "message": "UI Tweaks",
     "description": "[UiAdjustments] Tweak Name"
@@ -771,6 +779,14 @@
     "message": "Large Cooldown Counter",
     "description": "[LargeCooldownCounter] Tweak Name"
   },
+  "UiAdjustments@LargeCooldownCounter / Out Of Range Colour": {
+    "message": "Out Of Range Colour",
+    "description": "[LargeCooldownCounter] Large Cooldown Counter - Out Of Range Colour"
+  },
+  "UiAdjustments@LargeCooldownCounter / Out Of Range Edge Colour": {
+    "message": "Out Of Range Edge Colour",
+    "description": "[LargeCooldownCounter] Large Cooldown Counter - Out Of Range Edge Colour"
+  },
   "UiAdjustments@LargeCooldownCounter / Simple Mode": {
     "message": "Simple Mode",
     "description": "[LargeCooldownCounter] Large Cooldown Counter - Simple Mode"
@@ -958,6 +974,14 @@
   "UiAdjustments@RemoveCommunityFinder / Name": {
     "message": "Remove Community Finder",
     "description": "[RemoveCommunityFinder] Tweak Name"
+  },
+  "UiAdjustments@RemoveQuestMarkerLimit / Description": {
+    "message": "Allow the map and minimap to display markers for more than 5 active quests.",
+    "description": "[RemoveQuestMarkerLimit] Tweak Description"
+  },
+  "UiAdjustments@RemoveQuestMarkerLimit / Name": {
+    "message": "Remove Quest Marker Limit",
+    "description": "[RemoveQuestMarkerLimit] Tweak Name"
   },
   "UiAdjustments@SellMaxTripleTriadCards / Description": {
     "message": "Set the default number of cards to sell at the Triple Triad Trader to the number of cards you have.",

@@ -5,7 +5,6 @@
         <LangVersion>preview</LangVersion>
         <Platforms>x64</Platforms>
         <Configurations>Debug;Release</Configurations>
-        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Label="Build">
         <OutputType>Library</OutputType>
@@ -17,7 +16,7 @@
     </PropertyGroup>
     <PropertyGroup Label="Feature">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Version>1.6.3.0</Version>
+        <Version>1.6.4.1</Version>
     </PropertyGroup>
 	<PropertyGroup>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
