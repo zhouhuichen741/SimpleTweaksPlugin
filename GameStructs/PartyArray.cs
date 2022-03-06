@@ -113,8 +113,9 @@ namespace SimpleTweaksPlugin.GameStructs
         [FieldOffset(0x40)] public fixed uint BuffIcon[20];
 
         //[FieldOffset(0x8C)] FFFFFFF
-        [FieldOffset(0x94)] public uint ActorId;
-        [FieldOffset(0x98)] public uint Occupied;
+        [FieldOffset(0x98)] public uint Unknown3;
+        [FieldOffset(0x9C)] public uint ActorId;
+        [FieldOffset(0xA0)] public uint Unknown4;
     }
 
 
@@ -128,24 +129,24 @@ namespace SimpleTweaksPlugin.GameStructs
         [FieldOffset(0x18)] public int LeaderNumber;
 
         [FieldOffset(0x1C)] private MemberData MemberData0; //数量未知
-        [FieldOffset(0xB8)] private MemberData MemberData1;
-        [FieldOffset(0x154)] private MemberData MemberData2;
-        [FieldOffset(0x1F0)] private MemberData MemberData3;
-        [FieldOffset(0x28C)] private MemberData MemberData4;
-        [FieldOffset(0x328)] private MemberData MemberData5;
-        [FieldOffset(0x3C4)] private MemberData MemberData6;
-        [FieldOffset(0x460)] private MemberData MemberData7;
+        [FieldOffset(0xC0)] private MemberData MemberData1;
+        [FieldOffset(0x164)] private MemberData MemberData2;
+        [FieldOffset(0x208)] private MemberData MemberData3;
+        [FieldOffset(0x2AC)] private MemberData MemberData4;
+        [FieldOffset(0x350)] private MemberData MemberData5;
+        [FieldOffset(0x3F4)] private MemberData MemberData6;
+        [FieldOffset(0x498)] private MemberData MemberData7;
 
-        [FieldOffset(0x4FC)] public int QinXinCount;
-        [FieldOffset(0x500)] private MemberData MemberData8;
-        [FieldOffset(0x59C)] private MemberData MemberData9;
-        [FieldOffset(0x638)] private MemberData MemberData10;
+        [FieldOffset(0x53C)] public int QinXinCount;
+        [FieldOffset(0x540)] private MemberData MemberData8;
+        [FieldOffset(0x5E4)] private MemberData MemberData9;
+        [FieldOffset(0x688)] private MemberData MemberData10;
 
-        [FieldOffset(0x6D4)] private MemberData MemberData11;
-        [FieldOffset(0x770)] private MemberData MemberData12;
+        [FieldOffset(0x72C)] private MemberData MemberData11;
+        [FieldOffset(0x7D0)] private MemberData MemberData12;
 
-        [FieldOffset(0x80C)] public int CPCount;
-        [FieldOffset(0x810)] public int PetCount;
+        [FieldOffset(0xB04)] public int CPCount;
+        [FieldOffset(0xB08)] public int PetCount;
 
         public MemberData MemberData(int index)
         {

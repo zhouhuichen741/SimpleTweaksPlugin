@@ -65,10 +65,7 @@ public class IconManager : IDisposable {
     /// <param name="iconId">The icon ID.</param>
     /// <returns>The <see cref="T:Lumina.Data.Files.TexFile" /> containing the icon.</returns>
     public TexFile GetIcon(ClientLanguage iconLanguage, int iconId, bool hq = false)
-    {
-        string type;
-        switch (iconLanguage)
-        {
+    { 
             string type;
             switch (iconLanguage)
             {
@@ -91,8 +88,7 @@ public class IconManager : IDisposable {
                     throw new ArgumentOutOfRangeException("Language", "Unknown Language: " + Service.Data.Language.ToString());
             }
             return this.GetIcon(type, iconId, hq);
-        }
-        return this.GetIcon(type, iconId, hq);
+        
     }
         
     public TexFile GetIcon(string type, int iconId, bool hq = false)

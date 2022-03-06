@@ -71,16 +71,13 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             changed |= ImGui.Checkbox("HP及盾值百分比显示", ref Config.HpPercent);
             changed |= ImGui.Checkbox("使用盾值(估计值)替换MP值", ref Config.MpShield);
             changed |= ImGui.Checkbox("将护盾条与血条重合显示", ref Config.ShieldShift);
-            if (Config.PartyName || Config.Target || Config.Focus)
-            {
-                #if DEBUG
+#if DEBUG
                 changed |= ImGui.Checkbox("将队伍栏的队友姓名替换为职业名", ref Config.PartyName);
                 ImGui.SameLine();
                 changed |= ImGui.Checkbox("将目标栏的队友姓名替换为职业名", ref Config.Target);
                 ImGui.SameLine();
                 changed |= ImGui.Checkbox("将焦点栏的队友姓名替换为职业名", ref Config.Focus);
-                #endif
-            }
+#endif
             if (changed) RefreshHooks();
         };
 
