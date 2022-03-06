@@ -5,87 +5,61 @@ using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.GameStructs;
 using SimpleTweaksPlugin.Helper;
 
-namespace SimpleTweaksPlugin.Debugging {
-    public unsafe class InventoryDebug : DebugHelper {
-        private InventoryType inventoryType;
+namespace SimpleTweaksPlugin.Debugging; 
 
-        public override void Draw() {
-            DebugManager.ClickToCopyText($"{Common.InventoryManagerAddress.ToInt64():X}");
-            if (ImGui.BeginTabBar("inventoryDebuggingTabs")) {
-                if (ImGui.BeginTabItem("Container/Slot")) {
-                    ImGui.PushItemWidth(200);
-                    if (ImGui.BeginCombo("###containerSelect", $"{inventoryType} [{(int)inventoryType}]")) {
+public unsafe class InventoryDebug : DebugHelper {
+    private InventoryType inventoryType;
 
-                        foreach (var i in (InventoryType[]) Enum.GetValues(typeof(InventoryType))) {
-                            if (ImGui.Selectable($"{i} [{(int) i}]##inventoryTypeSelect", i == inventoryType)) {
-                                inventoryType = i;
-                            }
+    public override void Draw() {
+        DebugManager.ClickToCopyText($"{Common.InventoryManagerAddress.ToInt64():X}");
+        if (ImGui.BeginTabBar("inventoryDebuggingTabs")) {
+            if (ImGui.BeginTabItem("Container/Slot")) {
+                ImGui.PushItemWidth(200);
+                if (ImGui.BeginCombo("###containerSelect", $"{inventoryType} [{(int)inventoryType}]")) {
+
+                    foreach (var i in (InventoryType[]) Enum.GetValues(typeof(InventoryType))) {
+                        if (ImGui.Selectable($"{i} [{(int) i}]##inventoryTypeSelect", i == inventoryType)) {
+                            inventoryType = i;
                         }
-                        ImGui.EndCombo();
                     }
+                    ImGui.EndCombo();
+                }
                     
-                    var container = Common.GetContainer(inventoryType); 
+                var container = Common.GetContainer(inventoryType); 
 
-                    ImGui.PopItemWidth();
+                ImGui.PopItemWidth();
                     
                     
-                    if (container != null) {
+                if (container != null) {
                         
-                        ImGui.Text($"Container Address:");
-                        ImGui.SameLine();
-                        DebugManager.ClickToCopyText($"{(ulong)container:X}");
+                    ImGui.Text($"Container Address:");
+                    ImGui.SameLine();
+                    DebugManager.ClickToCopyText($"{(ulong)container:X}");
                         
-                        ImGui.SameLine();
-                        DebugManager.PrintOutObject(*container, (ulong) container, new List<string>());
+                    ImGui.SameLine();
+                    DebugManager.PrintOutObject(*container, (ulong) container, new List<string>());
 
-                        if (ImGui.TreeNode("Items##containerItems")) {
+                    if (ImGui.TreeNode("Items##containerItems")) {
                             
-                            for (var i = 0; i < container->SlotCount; i++) {
-                                var item = container->Items[i];
-                                var itemAddr = ((ulong) container->Items) + (ulong)sizeof(InventoryItem) * (ulong)i;
-                                DebugManager.ClickToCopyText($"{itemAddr:X}");
-                                ImGui.SameLine();
-                                DebugManager.PrintOutObject(item, (ulong) &item, new List<string> {$"Items[{i}]"},false, $"[{i:00}] {item.Item?.Name ?? "<Not Found>"}" );
-                            }
-                            ImGui.TreePop();
+                        for (var i = 0; i < container->SlotCount; i++) {
+                            var item = container->Items[i];
+                            var itemAddr = ((ulong) container->Items) + (ulong)sizeof(InventoryItem) * (ulong)i;
+                            DebugManager.ClickToCopyText($"{itemAddr:X}");
+                            ImGui.SameLine();
+                            DebugManager.PrintOutObject(item, (ulong) &item, new List<string> {$"Items[{i}]"},false, $"[{i:00}] {item.Item?.Name ?? "<Not Found>"}" );
                         }
-                    } else {
-                        ImGui.Text("Container not found.");
+                        ImGui.TreePop();
                     }
-                    ImGui.EndTabItem();
+                } else {
+                    ImGui.Text("Container not found.");
                 }
-
-                if (ImGui.BeginTabItem("Sorting")) {
-
-                    var module = SimpleTweaksPlugin.Client.UiModule.ItemOrderModule;
-                    
-                    ImGui.Text("Item Order Module:");
-                    ImGui.SameLine();
-                    DebugManager.ClickToCopyText($"{(ulong) module:X}");
-                    
-                    ImGui.SameLine();
-                    DebugManager.PrintOutObject(module, (ulong) module, new List<string>());
-                    
-                    ImGui.EndTabItem();
-                }
-
-                if (ImGui.BeginTabItem("Finder")) {
-
-                    var module = SimpleTweaksPlugin.Client.UiModule.ItemFinderModule;
-
-                    ImGui.Text("ItemFinderModule:");
-                    ImGui.SameLine();
-                    DebugManager.ClickToCopyText($"{(ulong) module:X}");
-                    ImGui.SameLine();
-                    DebugManager.PrintOutObject(module, (ulong) module, new List<string>());
-                }
-                
-                
-                ImGui.EndTabBar();
+                ImGui.EndTabItem();
             }
 
+            ImGui.EndTabBar();
         }
 
-        public override string Name => "Inventory Debugging";
     }
+
+    public override string Name => "Inventory Debugging";
 }

@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Dalamud.Game.Text;
 using Dalamud.Hooking;
-using FFXIVClientInterface.Client.UI.Misc;
-using FFXIVClientStructs;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.Graphics;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using FFXIVClientStructs.FFXIV.Component.GUI.ULD;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using SimpleTweaksPlugin.GameStructs;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
 using SimpleTweaksPlugin.TweakSystem;
-using AlignmentType = FFXIVClientStructs.FFXIV.Component.GUI.AlignmentType;
 
 namespace SimpleTweaksPlugin {
     public partial class UiAdjustmentsConfig {
@@ -29,6 +26,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         public class Configs : TweakConfig {
             public bool BlockClickOnGearset;
             public bool YellowForSkillGain = true;
+            public bool Delta;
         }
 
         public Configs Config { get; private set; }
@@ -36,6 +34,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
             ImGui.Checkbox(LocString("BlockClickOnGearset", "Block clicking on gearset items."), ref Config.BlockClickOnGearset);
             ImGui.Checkbox(LocString("YellowForSkillGain", "Highlight potential skill gains (Yellow)"), ref Config.YellowForSkillGain);
+            ImGui.Checkbox(LocString("DesynthesisDelta", "Show desynthesis delta"), ref Config.Delta);
         };
 
         public override string Name => "分解窗口增强";
@@ -121,8 +120,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
                 var itemData = Service.Data.Excel.GetSheet<Item>().GetRow(item->ItemId);
 
-                var classJobOffset = 2 * (int)(itemData.ClassJobRepair.Row - 8);
-                var desynthLevel = *(ushort*)(Common.PlayerStaticAddress + (0x6A6 + classJobOffset)) / 100f;
+                var desynthLevel = UIState.Instance()->PlayerState.GetDesynthesisLevel(itemData.ClassJobRepair.Row);
 
                 ByteColor c;
 
@@ -141,21 +139,25 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 }
                 
                 skillTextNode->TextColor = c;
-                skillTextNode->SetText($"{desynthLevel:F0}/{itemData.LevelItem.Row}");
+
+                if (Config.Delta) {
+                    var desynthDelta = itemData.LevelItem.Row - desynthLevel;
+                    skillTextNode->SetText($"{itemData.LevelItem.Row} ({desynthDelta:+#;-#})");
+                } else {
+                    skillTextNode->SetText($"{desynthLevel:F0}/{itemData.LevelItem.Row}");
+                }
 
                 var itemIdWithHQ = item->ItemId;
                 if ((item->Flags & ItemFlags.HQ) > 0) itemIdWithHQ += 1000000;
-                var gearsetModule = SimpleTweaksPlugin.Client.UiModule.RaptureGearsetModule;
+                var gearsetModule = RaptureGearsetModule.Instance();
                 var itemInGearset = false;
                 for (var i = 0; i < 101; i++) {
-                    var gearset = &gearsetModule.Gearset[i];
+                    var gearset = gearsetModule->Gearset[i];
                     if (gearset->ID != i) break;
-                    if ((gearset->Flags & GearsetFlag.Exists) != GearsetFlag.Exists) continue;
-                    
-                    var items = (GearsetItem*) gearset->ItemsData;
+                    if (!gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists)) continue;
+                    var items = (RaptureGearsetModule.GearsetItem*)gearset->ItemsData;
                     for (var j = 0; j < 14; j++) {
                         if (items[j].ItemID == itemIdWithHQ) {
-                            var name = Encoding.UTF8.GetString(gearset->Name, 0x2F);
                             itemInGearset = true;
                             break;
                         }
@@ -210,19 +212,19 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 UiHelper.SetSize(listNodeList[0], NewWidth - 32, null);
                 UiHelper.SetPosition(listNodeList[1], NewWidth - 40, null);
 
-                
+
                 UiHelper.ExpandNodeList(atkUnitBase, 2);
                 var newHeaderItem = (AtkTextNode*)UiHelper.CloneNode(nodeList[6]);
                 newHeaderItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)newHeaderItem->NodeText.BufSize);
-                newHeaderItem->SetText("技能");
-                
+                newHeaderItem->SetText("Skill");
+
                 newHeaderItem->AtkResNode.X = NewWidth - (AddedWidth + 60);
                 newHeaderItem->AtkResNode.Width = AddedWidth;
                 newHeaderItem->AtkResNode.ParentNode = nodeList[5];
                 newHeaderItem->AtkResNode.NextSiblingNode = nodeList[8];
                 nodeList[8]->PrevSiblingNode = (AtkResNode*)newHeaderItem;
                 atkUnitBase->UldManager.NodeList[atkUnitBase->UldManager.NodeListCount++] = (AtkResNode*)newHeaderItem;
-                
+
                 var gsHeaderItem = (AtkTextNode*)UiHelper.CloneNode(nodeList[6]);
                 gsHeaderItem->NodeText.StringPtr = (byte*)UiHelper.Alloc((ulong)gsHeaderItem->NodeText.BufSize);
                 gsHeaderItem->SetText("套装");

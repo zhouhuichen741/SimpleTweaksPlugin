@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using Lumina.Excel;
 using SimpleTweaksPlugin.Debugging;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
@@ -23,7 +24,7 @@ namespace SimpleTweaksPlugin {
         public bool ShouldSerializeDebugging() {
             return DebugManager.Enabled;
         }
-        
+
     }
 }
 
@@ -40,7 +41,7 @@ namespace SimpleTweaksPlugin.Debugging {
         public abstract string Name { get; }
 
         public virtual void Dispose() {
-            
+
         }
 
         public string FullName {
@@ -52,16 +53,16 @@ namespace SimpleTweaksPlugin.Debugging {
             }
         }
 
-        internal TweakProvider TweakProvider = null!;
+        public TweakProvider TweakProvider = null!;
     }
-    
+
     public static class DebugManager {
 
         private static Dictionary<string, Action> debugPages = new();
 
         private static float sidebarSize = 0;
-        
-        public static bool Enabled = true;
+
+        public static bool Enabled = false;
 
         public static void RegisterDebugPage(string key, Action action) {
             if (debugPages.ContainsKey(key)) {
@@ -117,37 +118,48 @@ namespace SimpleTweaksPlugin.Debugging {
 
         public static void DrawDebugWindow(ref bool open) {
             if (_plugin == null) return;
-
             if (!_setupDebugHelpers) {
                 _setupDebugHelpers = true;
-                foreach (var tp in SimpleTweaksPlugin.Plugin.TweakProviders) {
-                    if (tp.IsDisposed) continue;
-
-                    foreach (var t in tp.Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(DebugHelper)) && !t.IsAbstract)) {
-                        var debugger = (DebugHelper)Activator.CreateInstance(t);
-                        debugger.TweakProvider = tp;
-                        debugger.Plugin = _plugin;
-                        RegisterDebugPage(debugger.FullName, debugger.Draw);
-                        DebugHelpers.Add(debugger);
+                try {
+                    foreach (var tp in SimpleTweaksPlugin.Plugin.TweakProviders) {
+                        if (tp.IsDisposed) continue;
+                        foreach (var t in tp.Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(DebugHelper)) && !t.IsAbstract)) {
+                            var debugger = (DebugHelper)Activator.CreateInstance(t);
+                            debugger.TweakProvider = tp;
+                            debugger.Plugin = _plugin;
+                            RegisterDebugPage(debugger.FullName, debugger.Draw);
+                            DebugHelpers.Add(debugger);
+                        }
                     }
+                } catch (Exception ex) {
+                    SimpleLog.Error(ex);
+                    _setupDebugHelpers = false;
+                    Enabled = false;
+                    DebugHelpers.Clear();
+                    return;
                 }
             }
 
             if (sidebarSize < 150) {
                 sidebarSize = 150;
-                foreach (var k in debugPages.Keys) {
-                    var s = ImGui.CalcTextSize(k).X + ImGui.GetStyle().FramePadding.X * 5 + ImGui.GetStyle().ScrollbarSize;
-                    if (s > sidebarSize) {
-                        sidebarSize = s;
+                try {
+                    foreach (var k in debugPages.Keys) {
+                        var s = ImGui.CalcTextSize(k).X + ImGui.GetStyle().FramePadding.X * 5 + ImGui.GetStyle().ScrollbarSize;
+                        if (s > sidebarSize) {
+                            sidebarSize = s;
+                        }
                     }
+                } catch (Exception ex) {
+                    SimpleLog.Error(ex);
                 }
+
             }
 
             ImGui.SetNextWindowSize(new Vector2(500, 350) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver);
             ImGui.SetNextWindowSizeConstraints(new Vector2(350, 350) * ImGui.GetIO().FontGlobalScale, new Vector2(2000, 2000) * ImGui.GetIO().FontGlobalScale);
             ImGui.PushStyleColor(ImGuiCol.WindowBg, 0xFF000000);
-            if (ImGui.Begin($"SimpleTweaksPlugin - Debug", ref open)) {
-                
+            if (ImGui.Begin($"SimpleTweaksPlugin - Debug [{Assembly.GetExecutingAssembly().GetName().Version}]###stDebugMenu", ref open)) {
+
                 if (ImGui.BeginChild("###debugPages", new Vector2(sidebarSize, -1) * ImGui.GetIO().FontGlobalScale, true)) {
 
 
@@ -165,7 +177,7 @@ namespace SimpleTweaksPlugin.Debugging {
                             _plugin.PluginConfig.Debugging.SelectedPage = k;
                             _plugin.PluginConfig.Save();
                         }
-                        
+
                     }
 
 
@@ -181,6 +193,7 @@ namespace SimpleTweaksPlugin.Debugging {
                         try {
                             debugPages[_plugin.PluginConfig.Debugging.SelectedPage]();
                         } catch (Exception ex) {
+                            SimpleLog.Error(ex);
                             ImGui.TextColored(new Vector4(1, 0, 0, 1), ex.ToString());
                         }
 
@@ -233,7 +246,7 @@ namespace SimpleTweaksPlugin.Debugging {
             }
             return true;
         }
-        
+
         public static unsafe void HighlightResNode(AtkResNode* node) {
             var position = GetNodePosition(node);
             var scale = GetNodeScale(node);
@@ -242,7 +255,7 @@ namespace SimpleTweaksPlugin.Debugging {
             var nodeVisible = GetNodeVisible(node);
             ImGui.GetForegroundDrawList().AddRectFilled(position, position+size, (uint) (nodeVisible ? 0x5500FF00 : 0x550000FF));
             ImGui.GetForegroundDrawList().AddRect(position, position + size, nodeVisible ? 0xFF00FF00 : 0xFF0000FF);
-            
+
         }
 
         public static void ClickToCopyText(string text, string textCopy = null) {
@@ -253,6 +266,13 @@ namespace SimpleTweaksPlugin.Debugging {
                 if (textCopy != text) ImGui.SetTooltip(textCopy);
             }
             if (ImGui.IsItemClicked()) ImGui.SetClipboardText($"{textCopy}");
+        }
+
+        public static unsafe void ClickToCopy(void* address) {
+            ClickToCopyText($"{(ulong)address:X}");
+        }
+        public static unsafe void ClickToCopy<T>(T* address) where T : unmanaged {
+            ClickToCopy((void*) address);
         }
 
         public static unsafe void SeStringToText(SeString seStr) {
@@ -287,7 +307,7 @@ namespace SimpleTweaksPlugin.Debugging {
 
         private static ulong beginModule = 0;
         private static ulong endModule = 0;
-        
+
         private static unsafe void PrintOutValue(ulong addr, List<string> path, Type type, object value, MemberInfo member) {
             try {
                 var valueParser = member.GetCustomAttribute(typeof(ValueParser));
@@ -334,10 +354,22 @@ namespace SimpleTweaksPlugin.Debugging {
                             }
                             ImGui.TreePop();
                         }
-                        
-                        
+
+
                     } else if (!type.IsPrimitive) {
                         switch (value) {
+                            case ILazyRow ilr:
+                                var p = ilr.GetType().GetProperty("Value", BindingFlags.Public | BindingFlags.Instance);
+                                if (p != null) {
+                                    var getter = p.GetGetMethod();
+                                    if (getter != null) {
+                                        var rowValue = getter.Invoke(ilr, new object?[] { });
+                                        PrintOutObject(rowValue, addr, new List<string>(path));
+                                        break;
+                                    }
+                                }
+                                PrintOutObject(value, addr, new List<string>(path));
+                                break;
                             case Lumina.Text.SeString seString:
                                 ImGui.Text($"{seString.RawString}");
                                 break;
@@ -346,13 +378,25 @@ namespace SimpleTweaksPlugin.Debugging {
                                 break;
                         }
                     } else {
-                        ImGui.Text($"{value}");
+                        if (value is IntPtr p) {
+                            var pAddr = (ulong)p.ToInt64();
+                            ClickToCopyText($"{p:X}");
+                            if (beginModule > 0 && pAddr >= beginModule && pAddr <= endModule) {
+                                ImGui.SameLine();
+                                ImGui.PushStyleColor(ImGuiCol.Text, 0xffcbc0ff);
+                                ClickToCopyText($"ffxiv_dx11.exe+{(pAddr - beginModule):X}");
+                                ImGui.PopStyleColor();
+                            }
+                        } else {
+                            ImGui.Text($"{value}");
+                        }
+
                     }
                 }
             } catch (Exception ex) {
                 ImGui.Text($"{{{ex}}}");
             }
-            
+
         }
 
         public static unsafe void PrintOutObject<T>(T* ptr, bool autoExpand = false, string headerText = null) where T : unmanaged {
@@ -401,9 +445,9 @@ namespace SimpleTweaksPlugin.Debugging {
                     ImGui.Text($"\"{text}\"");
                     ImGui.SameLine();
                 }
-                
+
             }
-            
+
             var pushedColor = 0;
             var openedNode = false;
             try {
@@ -415,7 +459,7 @@ namespace SimpleTweaksPlugin.Debugging {
                         endModule = 1;
                     }
                 }
-                
+
                 ImGui.PushStyleColor(ImGuiCol.Text, 0xFF00FFFF);
                 pushedColor++;
                 if (autoExpand) {
@@ -446,18 +490,26 @@ namespace SimpleTweaksPlugin.Debugging {
                         }
 
                         ImGui.SameLine();
+
                         ImGui.TextColored(new Vector4(0.2f, 0.9f, 0.4f, 1), $"{f.Name}: ");
                         ImGui.SameLine();
-                        
+
                         PrintOutValue(addr, new List<string>(path) { f.Name }, f.FieldType, f.GetValue(obj), f);
                     }
 
                     foreach (var p in obj.GetType().GetProperties()) {
-                        ImGui.TextColored(new Vector4(0.2f, 0.9f, 0.9f, 1), $"{p.PropertyType.Name}");
+                        if (p.PropertyType.IsGenericType) {
+                            var gTypeName = string.Join(',', p.PropertyType.GetGenericArguments().Select(gt => gt.Name));
+                            var baseName = p.PropertyType.Name.Split('`')[0];
+                            ImGui.TextColored(new Vector4(0.2f, 0.9f, 0.9f, 1), $"{baseName}<{gTypeName}>");
+                        } else {
+                            ImGui.TextColored(new Vector4(0.2f, 0.9f, 0.9f, 1), $"{p.PropertyType.Name}");
+                        }
+
                         ImGui.SameLine();
                         ImGui.TextColored(new Vector4(0.2f, 0.6f, 0.4f, 1), $"{p.Name}: ");
                         ImGui.SameLine();
-                        
+
                         PrintOutValue(addr, new List<string>(path) { p.Name }, p.PropertyType, p.GetValue(obj), p);
                     }
 
@@ -470,7 +522,7 @@ namespace SimpleTweaksPlugin.Debugging {
             } catch (Exception ex) {
                 ImGui.Text($"{{{ ex }}}");
             }
-            
+
             if (openedNode) ImGui.TreePop();
             if (pushedColor > 0) ImGui.PopStyleColor(pushedColor);
 

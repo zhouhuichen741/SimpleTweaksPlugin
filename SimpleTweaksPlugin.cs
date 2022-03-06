@@ -8,12 +8,12 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using Dalamud;
+using Dalamud.Game;
 using Dalamud.Interface.Internal.Notifications;
-using FFXIVClientInterface;
 using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
-using XivCommon;
 using SimpleTweaksPlugin.Debugging;
+using XivCommon;
 #if DEBUG
 using System.Runtime.CompilerServices;
 #endif
@@ -29,15 +29,13 @@ namespace SimpleTweaksPlugin {
 
         public IconManager IconManager { get; private set; }
         public XivCommonBase XivCommon { get; private set; }
-        
+
 
         private bool drawConfigWindow = false;
 
         public string AssemblyLocation { get; private set; } = Assembly.GetExecutingAssembly().Location;
 
         internal Common Common;
-
-        public static ClientInterface Client;
 
         public static SimpleTweaksPlugin Plugin { get; private set; }
 
@@ -66,7 +64,7 @@ namespace SimpleTweaksPlugin {
 
         public void Dispose() {
             SimpleLog.Debug("Dispose");
-            
+            Service.Framework.Update -= FrameworkOnUpdate;
             PluginInterface.UiBuilder.Draw -= this.BuildUI;
             RemoveCommands();
 
@@ -74,7 +72,6 @@ namespace SimpleTweaksPlugin {
                 t.Dispose();
             }
             TweakProviders.Clear();
-            Client.Dispose();
             #if DEBUG
             DebugManager.Dispose();
             #endif
@@ -98,19 +95,16 @@ namespace SimpleTweaksPlugin {
 #endif
             this.PluginInterface = pluginInterface;
 
-            Client = new ClientInterface(Service.SigScanner, Service.Data);
-            
             this.PluginConfig = (SimpleTweaksPluginConfig)pluginInterface.GetPluginConfig() ?? new SimpleTweaksPluginConfig();
             this.PluginConfig.Init(this, pluginInterface);
-            
+
             IconManager = new IconManager(pluginInterface);
             this.XivCommon = new XivCommonBase(Hooks.ContextMenu);
             SetupLocalization();
-            
+
             UiHelper.Setup(Service.SigScanner);
-            #if DEBUG
+
             DebugManager.SetPlugin(this);
-            #endif
 
             Common = new Common();
 
@@ -134,7 +128,11 @@ namespace SimpleTweaksPlugin {
 #endif
             DebugManager.Reload();
 
+
+            Service.Framework.Update += FrameworkOnUpdate;
         }
+
+        private void FrameworkOnUpdate(Framework framework) => Common.InvokeFrameworkUpdate();
 
         public void SetupLocalization() {
             this.PluginConfig.Language ??= Service.ClientState.ClientLanguage switch {
@@ -156,15 +154,21 @@ namespace SimpleTweaksPlugin {
             });
         }
 
-        private void OnOpenConfig() => OnConfigCommandHandler(null, null);
+        private void OnOpenConfig() {
+            if (ImGui.GetIO().KeyShift && ImGui.GetIO().KeyCtrl) {
+                DebugManager.Enabled = true;
+                return;
+            }
+            OnConfigCommandHandler(null, null);
+        }
+
         public void OnConfigCommandHandler(object command, object args) {
             if (args is string argString) {
-#if DEBUG
                 if (argString == "Debug") {
                     DebugManager.Enabled = !DebugManager.Enabled;
                     return;
                 }
-#endif
+
                 if (!string.IsNullOrEmpty(argString.Trim())) {
                     var splitArgString = argString.Split(' ');
                     switch (splitArgString[0].ToLowerInvariant()) {
@@ -250,7 +254,7 @@ namespace SimpleTweaksPlugin {
                             Service.Chat.PrintError($"\"{splitArgString[1]}\" is not a valid tweak id.");
                             return;
                         }
-                        
+
                     }
                 }
             }
@@ -263,7 +267,7 @@ namespace SimpleTweaksPlugin {
 
         public BaseTweak? GetTweakById(string s, IEnumerable<BaseTweak>? tweakList = null) {
             tweakList ??= Tweaks;
-            
+
             foreach (var t in tweakList) {
                 if (string.Equals(t.Key, s, StringComparison.InvariantCultureIgnoreCase)) return t;
                 if (t is SubTweakManager stm) {
@@ -294,18 +298,17 @@ namespace SimpleTweaksPlugin {
                 Service.PluginInterface.UiBuilder.AddNotification($"{e.Tweak.Name} has been disabled due to an error.", "Simple Tweaks", NotificationType.Error, 5000);
             }
 
-#if DEBUG
             if (DebugManager.Enabled) {
                 DebugManager.DrawDebugWindow(ref DebugManager.Enabled);
             }
-#endif
+
             var windowWasOpen = drawConfigWindow;
             drawConfigWindow = drawConfigWindow && PluginConfig.DrawConfigUI();
 
             if (windowWasOpen && !drawConfigWindow) {
                 SaveAllConfig();
             }
-            
+
             if (ShowErrorWindow) {
                 if (ErrorList.Count > 0) {
                     var errorsStillOpen = true;
@@ -399,8 +402,8 @@ namespace SimpleTweaksPlugin {
             SimpleLog.Error($"{exception}");
 #endif
             var err = new CaughtError {
-                Tweak = tweak, 
-                Exception = exception, 
+                Tweak = tweak,
+                Exception = exception,
                 IsNew = !allowContinue,
                 Message = message
             };
@@ -442,7 +445,7 @@ namespace SimpleTweaksPlugin {
             } else {
                 ErrorList.Insert(0, err);
             }
-            
+
             if (ErrorList.Count > 50) {
                 ErrorList.RemoveRange(50, ErrorList.Count - 50);
             }
