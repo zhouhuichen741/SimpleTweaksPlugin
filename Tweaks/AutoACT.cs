@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Xml.Serialization;
@@ -40,11 +41,12 @@ public unsafe class AutoACT : Tweak {
         var startInfo = new ProcessStartInfo();
         startInfo.UseShellExecute = true;
         startInfo.WorkingDirectory = Config.Path;
-        startInfo.FileName = Config.Path+"\\Advanced Combat Tracker.exe";
+        if (File.Exists(Config.Path+"\\Advanced Combat Tracker.exe")) startInfo.FileName = Config.Path+"\\Advanced Combat Tracker.exe";
+        else if (File.Exists(Config.Path+"\\CafeACT.exe")) startInfo.FileName = Config.Path+"\\CafeACT.exe";
         //startInfo.Verb = "runas";
         try
         {
-            if (Process.GetProcessesByName("Advanced Combat Tracker").Length == 0) Process.Start(startInfo);
+            if (Process.GetProcessesByName("Advanced Combat Tracker").Length == 0 && Process.GetProcessesByName("CafeACT").Length == 0) Process.Start(startInfo);
         }
         catch
         {
