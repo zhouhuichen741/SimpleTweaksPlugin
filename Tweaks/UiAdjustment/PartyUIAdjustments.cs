@@ -4,7 +4,6 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
 using System;
 using System.Collections.Generic;
@@ -13,6 +12,7 @@ using System.Diagnostics;
 using SimpleTweaksPlugin.Debugging;
 #endif
 using SimpleTweaksPlugin.GameStructs;
+using SimpleTweaksPlugin.Utility;
 
 
 namespace SimpleTweaksPlugin
@@ -239,7 +239,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         private void SetName(AtkTextNode* node, string payload)
         {
             if (node == null || payload == string.Empty) return;
-            Plugin.Common.WriteSeString(node->NodeText, payload);
+            Common.WriteSeString(node->NodeText, payload);
         }
 
         private void SetHp(AtkTextNode* node, MemberData member)
@@ -272,7 +272,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
                 se.Payloads.Add(new TextPayload("%"));
             }
 
-            Plugin.Common.WriteSeString(node->NodeText, se);
+            Common.WriteSeString(node->NodeText, se);
         }
 
         private string GetJobName(int id)
@@ -396,14 +396,14 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             SeString se = new(new List<Payload>());
             se.Payloads.Add(uiYellow);
             se.Payloads.Add(new TextPayload(shield.ToString()));
-            Plugin.Common.WriteSeString(node1->NodeText, se);
+            Common.WriteSeString(node1->NodeText, se);
             if (node1->FontSize != 12)
             {
                 node1->FontSize = 12;
                 node1->AlignmentFontType -= 2;
             }
 
-            Plugin.Common.WriteSeString(node2->NodeText, "");
+            Common.WriteSeString(node2->NodeText, "");
         }
 
         private void ResetMp()
@@ -443,7 +443,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
                         if (namejob != GetJobName(job) ||
                             data->MemberData(index).JobId != party->JobId[index])
                         {
-                            Plugin.Common.WriteSeString(stringarray->MemberStrings(index).Name, lvl+" "+GetJobName(job));
+                            Common.WriteSeString(stringarray->MemberStrings(index).Name, lvl+" "+GetJobName(job));
                             *((byte*)data + 0x1C + index * 0x9C) = 1; //Changed
                         }
 #endif
@@ -471,8 +471,8 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             try
             {
                 if (tTextNode == null || ttTextNode == null) return;
-                var tname = Plugin.Common.ReadSeString(tTextNode->NodeText.StringPtr).TextValue.Trim();
-                var ttname = Plugin.Common.ReadSeString(ttTextNode->NodeText.StringPtr).TextValue.Trim();
+                var tname = Common.ReadSeString(tTextNode->NodeText.StringPtr).TextValue.Trim();
+                var ttname = Common.ReadSeString(ttTextNode->NodeText.StringPtr).TextValue.Trim();
                 if (tname.Length >= 1)
                 {
                     var number = tname.Substring(0, 1);
@@ -513,7 +513,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
         {
             try
             {
-                SplitString(Plugin.Common.ReadSeString(focusTextNode->NodeText.StringPtr).ToString().Trim(), true,
+                SplitString(Common.ReadSeString(focusTextNode->NodeText.StringPtr).ToString().Trim(), true,
                     out var part1,
                     out var part2);
                 if (part2 != "")

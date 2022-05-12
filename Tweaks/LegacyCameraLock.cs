@@ -37,11 +37,12 @@ public class LegacyCameraLock : Tweak {
         
     }
 
-    private void OnFrameworkUpdate() {
+    private void OnFrameworkUpdate()
+    {
 
-        var isAutoRunning = InputManager.IsAutoRunning();
+        var isAutoRunning = false;// InputManager.IsAutoRunning();
 
-        if (changesEnabled == InputManager.IsAutoRunning()) {
+        if (changesEnabled == isAutoRunning) {
             if (changesEnabled) {
                 DisableChanges();
             } else {

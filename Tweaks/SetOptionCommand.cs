@@ -62,10 +62,10 @@ public unsafe class SetOptionCommand : Tweak {
         new OptionDefinition("OtherPlayerDisplayName", ConfigOption.OtherPCsDisplayNameSettings, OptionType.NameDisplayModeBattle, "opcdn"),
         new OptionDefinition("FriendDisplayName", ConfigOption.FriendsDisplayNameSettings, OptionType.NameDisplayModeBattle, "fdn"),
         
-        new OptionDefinition("DisplayNameSize", ConfigOption.DisplayNameSize, OptionType.IntList, "dns") {
-            Values = new() { ["maximum"] = 0, ["large"] = 1, ["standard"] = 2 },
-            ValueAlias = new() { ["m"] = 0, ["max"] = 0, ["l"] = 1, ["s"] = 2, }
-        },
+        //new OptionDefinition("DisplayNameSize", ConfigOption.DisplayNameSize, OptionType.IntList, "dns") {
+        //    Values = new() { ["maximum"] = 0, ["large"] = 1, ["standard"] = 2 },
+        //    ValueAlias = new() { ["m"] = 0, ["max"] = 0, ["l"] = 1, ["s"] = 2, }
+        //},
     };
 
 

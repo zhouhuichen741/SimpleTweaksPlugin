@@ -43,14 +43,14 @@ public class ChrDirCommand : Tweak
         Process.Start("explorer.exe", dir);
     }
 
-    // private void CommandHandler(string command, string arguments)
-    // {
-    //     var saveDir = Path.Combine(Service.ClientState.ClientLanguage == ClientLanguage.ChineseSimplified ? Process.GetCurrentProcess().MainModule.FileName.Replace("ffxiv_dx11.exe", "").Replace("ffxiv.exe", "") : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "FINAL FANTASY XIV - A Realm Reborn", $"FFXIV_CHR{Service.ClientState.LocalContentId:X16}"); 
-    //     if (arguments == "open")
-    //     {
-    private unsafe void CommandHandler(string command, string arguments) {
-        var saveDir = Path.Combine(Framework.Instance()->UserPath, $"FFXIV_CHR{Service.ClientState.LocalContentId:X16}");
-        if (arguments == "open") {
+    private void CommandHandler(string command, string arguments)
+    {
+        var saveDir = Path.Combine(Service.ClientState.ClientLanguage == ClientLanguage.ChineseSimplified ? Process.GetCurrentProcess().MainModule.FileName.Replace("ffxiv_dx11.exe", "").Replace("ffxiv.exe", "") : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "FINAL FANTASY XIV - A Realm Reborn", $"FFXIV_CHR{Service.ClientState.LocalContentId:X16}");
+        if (arguments == "open")
+        {
+            //private unsafe void CommandHandler(string command, string arguments) {
+            //    var saveDir = Path.Combine(Framework.Instance()->UserPath, $"FFXIV_CHR{Service.ClientState.LocalContentId:X16}");
+            //    if (arguments == "open") {
             Process.Start("explorer.exe", saveDir);
             return;
         }
