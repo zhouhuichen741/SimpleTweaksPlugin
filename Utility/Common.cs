@@ -9,9 +9,8 @@ using System.Text;
 using Dalamud.Game;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
-using Dalamud.Plugin;
+using Dalamud.Memory;
 using FFXIVClientStructs.Attributes;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -20,14 +19,16 @@ using SimpleTweaksPlugin.GameStructs;
 using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
-namespace SimpleTweaksPlugin.Helper; 
+namespace SimpleTweaksPlugin.Utility; 
 
-public unsafe class Common {
+public static unsafe class Common {
 
     // Common Delegates
     public delegate void* AddonOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** nums, StringArrayData** strings);
-    public delegate void* AddonOnSetup(AtkUnitBase* atkUnitBase, void* a2, void* a3);
     public delegate void NoReturnAddonOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** numberArrayData, StringArrayData** stringArrayData);
+
+    private delegate void* AddonSetupDelegate(AtkUnitBase* addon);
+    private static HookWrapper<AddonSetupDelegate> addonSetupHook;
 
     private delegate IntPtr GameAlloc(ulong size, IntPtr unk, IntPtr allocator, IntPtr alignment);
 
@@ -53,10 +54,13 @@ public unsafe class Common {
     public static SigScanner Scanner => Service.SigScanner;
 
     public static event Action FrameworkUpdate;
-
+    
     public static void InvokeFrameworkUpdate() => FrameworkUpdate?.Invoke();
+    public static void* ThrowawayOut { get; private set; } = (void*) Marshal.AllocHGlobal(1024);
 
-    public Common() {
+    public static event Action<SetupAddonArgs> AddonSetup; 
+    
+    public static void Setup() {
         var gameAllocPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 49 83 CF FF 4C 8B F0");
         var getGameAllocatorPtr = Scanner.ScanText("E8 ?? ?? ?? ?? 8B 75 08");
 
@@ -73,6 +77,22 @@ public unsafe class Common {
 
         _getInventoryContainer = Marshal.GetDelegateForFunctionPointer<GetInventoryContainer>(getInventoryContainerPtr);
         _getContainerSlot = Marshal.GetDelegateForFunctionPointer<GetContainerSlot>(getContainerSlotPtr);
+        
+        addonSetupHook = Hook<AddonSetupDelegate>("E8 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? C1 E8 14", AddonSetupDetour);
+        addonSetupHook?.Enable();
+    }
+
+    private static void* AddonSetupDetour(AtkUnitBase* addon) {
+        var retVal = addonSetupHook.Original(addon);
+        try {
+            AddonSetup?.Invoke(new SetupAddonArgs() {
+                Addon = addon
+            });
+        } catch (Exception ex) {
+            SimpleLog.Error(ex);
+        }
+
+        return retVal;
     }
 
     public static UIModule* UIModule => Framework.Instance()->GetUiModule();
@@ -115,7 +135,7 @@ public unsafe class Common {
         return _gameAlloc(size, IntPtr.Zero, _getGameAllocator(), IntPtr.Zero);
     }
         
-    public void WriteSeString(byte** startPtr, IntPtr alloc, SeString seString) {
+    public static void WriteSeString(byte** startPtr, IntPtr alloc, SeString seString) {
         if (startPtr == null) return;
         var start = *(startPtr);
         if (start == null) return;
@@ -124,14 +144,14 @@ public unsafe class Common {
         *startPtr = (byte*)alloc;
     }
 
-    public SeString ReadSeString(byte** startPtr) {
+    public static SeString ReadSeString(byte** startPtr) {
         if (startPtr == null) return null;
         var start = *(startPtr);
         if (start == null) return null;
         return ReadSeString(start);
     }
 
-    public SeString ReadSeString(byte* ptr) {
+    public static SeString ReadSeString(byte* ptr) {
         var offset = 0;
         while (true) {
             var b = *(ptr + offset);
@@ -145,7 +165,7 @@ public unsafe class Common {
         return SeString.Parse(bytes);
     }
 
-    public void WriteSeString(byte* dst, SeString s) {
+    public static void WriteSeString(byte* dst, SeString s) {
         var bytes = s.Encode();
         for (var i = 0; i < bytes.Length; i++) {
             *(dst + i) = bytes[i];
@@ -153,14 +173,14 @@ public unsafe class Common {
         *(dst + bytes.Length) = 0;
     }
 
-    public SeString ReadSeString(Utf8String xivString) {
+    public static SeString ReadSeString(Utf8String xivString) {
         var len = (int) (xivString.BufUsed > int.MaxValue ? int.MaxValue : xivString.BufUsed);
         var bytes = new byte[len];
         Marshal.Copy(new IntPtr(xivString.StringPtr), bytes, 0, len);
         return SeString.Parse(bytes);
     }
 
-    public void WriteSeString(Utf8String xivString, SeString s) {
+    public static void WriteSeString(Utf8String xivString, SeString s) {
         var bytes = s.Encode();
         int i;
         xivString.BufUsed = 0;
@@ -184,7 +204,7 @@ public unsafe class Common {
     }
 
 
-    public T GetGameOption<T>(GameOptionKind opt) {
+    public static T GetGameOption<T>(GameOptionKind opt) {
         var optionBase = (byte**)(Service.Framework.Address.BaseAddress + 0x2B28);
         return Marshal.PtrToStructure<T>(new IntPtr(*optionBase + 0xAAE0 + (16 * (uint)opt)));
     }
@@ -236,9 +256,9 @@ public unsafe class Common {
         Process.Start(new ProcessStartInfo {FileName = url, UseShellExecute = true});
     }
 
-    public static void GenerateCallback(AtkUnitBase* unitBase, params object[] values) {
+    public static AtkValue* CreateAtkValueArray(params object[] values) {
         var atkValues = (AtkValue*) Marshal.AllocHGlobal(values.Length * sizeof(AtkValue));
-        if (atkValues == null) return;
+        if (atkValues == null) return null;
         try {
             for (var i = 0; i < values.Length; i++) {
                 var v = values[i];
@@ -272,7 +292,17 @@ public unsafe class Common {
                         throw new ArgumentException($"Unable to convert type {v.GetType()} to AtkValue");
                 }
             }
+        } catch {
+            return null;
+        }
 
+        return atkValues;
+    }
+    
+    public static void GenerateCallback(AtkUnitBase* unitBase, params object[] values) {
+        var atkValues = CreateAtkValueArray(values);
+        if (atkValues == null) return;
+        try {
             unitBase->FireCallback(values.Length, atkValues);
         } finally {
             for (var i = 0; i < values.Length; i++) {
@@ -309,4 +339,51 @@ public unsafe class Common {
         return null;
     }
 
+    public static void Shutdown() {
+        if (ThrowawayOut != null) {
+            Marshal.FreeHGlobal(new IntPtr(ThrowawayOut));
+            ThrowawayOut = null;
+        }
+        
+        addonSetupHook?.Disable();
+        addonSetupHook?.Dispose();
+    }
+
+    public const int UnitListCount = 18;
+    public static AtkUnitBase* GetAddonByID(uint id) {
+        var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
+        for (var i = 0; i < UnitListCount; i++) {
+            var unitManager = &unitManagers[i];
+            var unitBaseArray = &(unitManager->AtkUnitEntries);
+            for (var j = 0; j < unitManager->Count; j++) {
+                var unitBase = unitBaseArray[j];
+                if (unitBase->ID == id) {
+                    return unitBase;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static string ValueString(this AtkValue v) {
+        return v.Type switch {
+            ValueType.Int => $"{v.Int}",
+            ValueType.String => Marshal.PtrToStringUTF8(new IntPtr(v.String)),
+            ValueType.UInt => $"{v.UInt}",
+            ValueType.Bool => $"{v.Byte != 0}",
+            ValueType.Float => $"{v.Float}",
+            ValueType.Vector => "[Vector]",
+            ValueType.AllocatedString => "[Allocated String]",
+            ValueType.AllocatedVector => "[Allocated Vector]",
+            _ => $"Unknown Type: {v.Type}"
+        };
+    }
+    
+}
+
+public unsafe class SetupAddonArgs {
+    public AtkUnitBase* Addon { get; init; }
+    private string addonName;
+    public string AddonName => addonName ??= MemoryHelper.ReadString(new IntPtr(Addon->Name), 0x20).Split('\0')[0];
 }

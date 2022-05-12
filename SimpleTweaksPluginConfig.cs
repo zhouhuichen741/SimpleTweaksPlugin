@@ -8,8 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using SimpleTweaksPlugin.Debugging;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin; 
 
@@ -27,6 +27,7 @@ public partial class SimpleTweaksPluginConfig : IPluginConfiguration {
     public List<string> EnabledTweaks = new List<string>();
     public List<string> HiddenTweaks = new List<string>();
     public List<string> CustomProviders = new List<string>();
+    public List<string> BlacklistedTweaks = new List<string>();
 
     public bool HideKofi;
     public bool ShowExperimentalTweaks;
@@ -475,4 +476,6 @@ public partial class SimpleTweaksPluginConfig : IPluginConfiguration {
             
         return drawConfig;
     }
+
+    public void RefreshSearch() => lastSearchInput = string.Empty;
 }

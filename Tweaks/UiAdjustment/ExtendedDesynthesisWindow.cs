@@ -9,9 +9,10 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using SimpleTweaksPlugin.GameStructs;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.Tweaks.UiAdjustment;
 using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Utility;
+using InventoryItem = FFXIVClientStructs.FFXIV.Client.Game.InventoryItem;
 
 namespace SimpleTweaksPlugin {
     public partial class UiAdjustmentsConfig {
@@ -54,7 +55,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
         private static readonly ByteColor Green = new() { A = 0xFF, R = 0x00, G = 0xCC, B = 0x00 };
         private static readonly ByteColor Yellow = new() { A = 0xFF, R = 0xCC, G = 0xCC, B = 0x00 };
 
-        private uint maxDesynthLevel = 520;
+        private uint maxDesynthLevel = 590;
 
         public override void Setup() {
             foreach (var i in Service.Data.Excel.GetSheet<Item>()) {
@@ -148,7 +149,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 }
 
                 var itemIdWithHQ = item->ItemId;
-                if ((item->Flags & ItemFlags.HQ) > 0) itemIdWithHQ += 1000000;
+                if ((item->Flags & InventoryItem.ItemFlags.HQ) > 0) itemIdWithHQ += 1000000;
                 var gearsetModule = RaptureGearsetModule.Instance();
                 var itemInGearset = false;
                 for (var i = 0; i < 101; i++) {

@@ -5,7 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.Excel;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
-using SimpleTweaksPlugin.Helper;
+using SimpleTweaksPlugin.Utility;
 using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
 namespace SimpleTweaksPlugin.Debugging; 
@@ -110,7 +110,9 @@ public unsafe class ExcelSheetDebugging : DebugHelper {
                     ImGui.TableNextColumn();
                     DebugManager.ClickToCopyText($"{byNameValues[key]:X}");
                     ImGui.TableNextColumn();
+                    ImGui.PushID($"##sheetByName_{key}");
                     DebugManager.PrintOutObject(e);
+                    ImGui.PopID();
                 } else {
                     ImGui.TableNextRow();
                 }

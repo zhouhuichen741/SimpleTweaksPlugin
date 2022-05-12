@@ -10,9 +10,9 @@ using System.Reflection;
 using Dalamud;
 using Dalamud.Game;
 using Dalamud.Interface.Internal.Notifications;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
 using SimpleTweaksPlugin.Debugging;
+using SimpleTweaksPlugin.Utility;
 using XivCommon;
 #if DEBUG
 using System.Runtime.CompilerServices;
@@ -34,9 +34,7 @@ namespace SimpleTweaksPlugin {
         private bool drawConfigWindow = false;
 
         public string AssemblyLocation { get; private set; } = Assembly.GetExecutingAssembly().Location;
-
-        internal Common Common;
-
+        
         public static SimpleTweaksPlugin Plugin { get; private set; }
 
         private CultureInfo setCulture = null;
@@ -80,6 +78,7 @@ namespace SimpleTweaksPlugin {
                 hook.Dispose();
             }
             Common.HookList.Clear();
+            Common.Shutdown();
             this.XivCommon.Dispose();
         }
 
@@ -99,20 +98,35 @@ namespace SimpleTweaksPlugin {
             this.PluginConfig.Init(this, pluginInterface);
 
             IconManager = new IconManager(pluginInterface);
-            this.XivCommon = new XivCommonBase(Hooks.ContextMenu);
+            this.XivCommon = new XivCommonBase();
             SetupLocalization();
 
             UiHelper.Setup(Service.SigScanner);
 
             DebugManager.SetPlugin(this);
 
-            Common = new Common();
+            Common.Setup();
 
             PluginInterface.UiBuilder.Draw += this.BuildUI;
             pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfig;
 
             SetupCommands();
 
+            try {
+                // Update Tweak Blacklist
+                using var webClient = new System.Net.WebClient();
+                var blacklistedTweaksString = webClient.DownloadString("https://raw.githubusercontent.com/Caraxi/SimpleTweaksPlugin/main/tweakBlacklist.txt");
+                SimpleLog.Log("Tweak Blacklist:\n" + blacklistedTweaksString);
+                var blacklistedTweaks = new List<string>();
+                foreach (var l in blacklistedTweaksString.Split("\n")) {
+                    if (string.IsNullOrWhiteSpace(l)) continue;
+                    blacklistedTweaks.Add(l.Trim());
+                }
+                PluginConfig.BlacklistedTweaks = blacklistedTweaks;
+            } catch {
+                //
+            }
+            
             var simpleTweakProvider = new TweakProvider(Assembly.GetExecutingAssembly());
             simpleTweakProvider.LoadTweaks();
             TweakProviders.Add(simpleTweakProvider);

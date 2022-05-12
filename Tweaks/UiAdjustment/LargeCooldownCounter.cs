@@ -1,4 +1,4 @@
-﻿using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using System;
 using System.Numerics;
@@ -9,8 +9,8 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using SimpleTweaksPlugin.GameStructs;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
 
@@ -133,8 +133,17 @@ public unsafe class LargeCooldownCounter : UiAdjustments.SubTweak {
 
             if (name == "_ActionCross") {
                 var cBar = (AddonActionCross*)ab;
-                if (cBar->ExpandedHoldControls > 0) {
-                    reset = true;
+                var ex = cBar->ExpandedHoldControls;
+                if (ex > 0) {                           // char config setting for this returns 0-19, but here it returns 1-20 so that 0 can represent non-ex bar
+                    if (i < 4 || i > 11) reset = true;  // ignore first and last 4 slots (non-visible)
+                    else
+                    {
+                        reset = false;                                                      
+                        var exBarTarget = (ex < 17) ? (((ex - 1) >> 1) + 10) :                          // ex value  1-16 = left/right sides of cross bars 1-8 (IDs 10-17)
+                                                      (ab->HotbarID + (ex < 19 ? 1 : -1) - 2) % 8 + 10; //          17-20 = "Cycle" options (uses bar before/after main active bar)
+                        var exUseLeftSide = (ex < 17 ? ex : ex + 1) & 1;                                // for some reason, the Cycle options invert the left/right pattern
+                        slotStruct = hotbarModule->HotBar[exBarTarget]->Slot[i + (exUseLeftSide != 0 ? -4 : 4)];
+                    }
                 }
             }
 

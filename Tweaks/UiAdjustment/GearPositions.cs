@@ -1,7 +1,7 @@
 ﻿using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
-using SimpleTweaksPlugin.Helper;
 using System;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
 
@@ -15,21 +15,118 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
     private HookWrapper<AddonOnSetup> pvpCharacterOnSetup;
     private HookWrapper<AddonOnSetup> inspectOnSetup;
     private HookWrapper<Common.AddonOnUpdate> bagWidgetUpdate;
+    
+    private delegate byte AddonControllerInput(AtkUnitBase* atkUnitBase, Dir a2, byte a3);
+    private HookWrapper<AddonControllerInput> addonControllerInputHook;
+
 
     public override void Enable() {
-        characterOnSetup ??= Common.Hook<AddonOnSetup>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC 60 4D 8B F0", CharacterOnSetup);
-        pvpCharacterOnSetup ??= Common.Hook<AddonOnSetup>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC 30 49 8B E8 48 8B D9", PvpCharacterOnSetup);
-        inspectOnSetup ??= Common.Hook<AddonOnSetup>("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F9 48 8B D1", InspectOnSetup);
         bagWidgetUpdate ??= Common.HookAfterAddonUpdate("48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 20 4C 8B 62 38", BagWidgetUpdate);
-        characterOnSetup?.Enable();
-        pvpCharacterOnSetup?.Enable();
-        inspectOnSetup?.Enable();
         bagWidgetUpdate?.Enable();
+        
+        Common.AddonSetup += OnAddonSetup;
+        addonControllerInputHook ??= Common.Hook<AddonControllerInput>("E8 ?? ?? ?? ?? EB B0 CC", ControllerInputDetour);
+        addonControllerInputHook?.Enable();
 
         var bagWidget = Common.GetUnitBase("_BagWidget");
         if (bagWidget != null) BagWidgetUpdate(bagWidget, null, null);
 
         base.Enable();
+    }
+
+    private void OnAddonSetup(SetupAddonArgs obj) {
+        switch (obj.AddonName) {
+            case "Character": CharacterOnSetup(obj.Addon); break;
+            case "PvPCharacter": PvpCharacterOnSetup(obj.Addon); break;
+            case "CharacterInspect": InspectOnSetup(obj.Addon); break;
+        }
+    }
+
+    private enum Dir : uint {
+        Left = 8,
+        Right = 9,
+        Up = 10,
+        Down = 11,
+    }
+
+    private enum Node : int {
+        None = -1,
+        
+        RecommendedGear = 4,
+        GlamourPlate = 5,
+        GearSetList = 6,
+        
+        MainHand = 8,
+        OffHand = 9,
+        Head = 10,
+        Body = 11,
+        Hands = 13,
+        Legs = 12,
+        Feet = 14,
+        Ears = 15,
+        Neck = 16,
+        Wrist = 17,
+        FingerRight = 18,
+        FingerLeft = 19,
+        SoulCrystal = 20,
+        
+        DrawSheathe = 25,
+        ToggleCharacterDisplayMode = 26,
+        ResetDisplay = 27,
+        
+    }
+
+    private int GetCollisionNodeIndex(AtkUnitBase* atkUnitBase) {
+        for (var i = 0; i < atkUnitBase->CollisionNodeListCount; i++) {
+            if (atkUnitBase->CollisionNodeList[i] == atkUnitBase->CursorTarget) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    
+    
+    private byte ControllerInputDetour(AtkUnitBase* atkUnitBase, Dir d, byte a3) {
+        try {
+            if (atkUnitBase != Common.GetUnitBase("Character")) return addonControllerInputHook.Original(atkUnitBase, d, a3);
+
+            var currentSelectedNodeIndex = (Node)GetCollisionNodeIndex(atkUnitBase);
+
+            byte F(Node node) {
+                if ((int)node < 0 || (int)node >= atkUnitBase->CollisionNodeListCount) return 1;
+                atkUnitBase->SetFocusNode(atkUnitBase->CollisionNodeList[(int)node]);
+                atkUnitBase->CursorTarget = atkUnitBase->CollisionNodeList[(int)node];
+                return 1;
+            }
+
+            return currentSelectedNodeIndex switch {
+                Node.SoulCrystal when d == Dir.Right => F(Node.OffHand),
+                Node.SoulCrystal when d == Dir.Down => F(Node.MainHand),
+                Node.SoulCrystal when d == Dir.Up => F(Node.GearSetList),
+                Node.SoulCrystal when d == Dir.Left => F(Node.MainHand),
+                Node.MainHand when d == Dir.Up => F(Node.SoulCrystal),
+                Node.Head when d == Dir.Right => F(Node.Ears),
+                Node.Body when d == Dir.Right => F(Node.Neck),
+                Node.Hands when d == Dir.Right => F(Node.Wrist),
+                Node.Legs when d == Dir.Right => F(Node.FingerRight),
+                Node.Feet when d == Dir.Right => F(Node.FingerLeft),
+                Node.OffHand when d == Dir.Left => F(Node.MainHand),
+                Node.Ears when d == Dir.Left => F(Node.Head),
+                Node.Neck when d == Dir.Left => F(Node.Body),
+                Node.Wrist when d == Dir.Left => F(Node.Hands),
+                Node.FingerRight when d == Dir.Left => F(Node.Legs),
+                Node.FingerLeft when d == Dir.Left => F(Node.Feet),
+                Node.FingerLeft when d == Dir.Down => F(Node.ResetDisplay),
+                Node.ResetDisplay when d == Dir.Right => F(Node.FingerLeft),
+                Node.ResetDisplay or Node.ToggleCharacterDisplayMode or Node.DrawSheathe when d == Dir.Up => F(Node.FingerLeft),
+                Node.GearSetList or Node.GlamourPlate or Node.RecommendedGear when d == Dir.Down => F(Node.SoulCrystal),
+                _ => addonControllerInputHook.Original(atkUnitBase, d, a3)
+            };
+        } catch {
+            return addonControllerInputHook.Original(atkUnitBase, d, a3);
+        }
+        
     }
 
     private void BagWidgetUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** numberArrayData, StringArrayData** stringArrayData) {
@@ -156,9 +253,7 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
         }
     }
 
-    private void* InspectOnSetup(AtkUnitBase* atkUnitBase, int a2, void* a3) {
-        var retVal = inspectOnSetup.Original(atkUnitBase, a2, a3);
-
+    private void InspectOnSetup(AtkUnitBase* atkUnitBase) {
         // Slots
         MoveNode(atkUnitBase, 47, 0, -120); // Job Stone
         MoveNode(atkUnitBase, 12, 9, 125); // Main Weapon
@@ -176,13 +271,9 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
         MoveNode(atkUnitBase, 52, 0, 46 * 3); // Hands
         MoveNode(atkUnitBase, 53, 0, 46 * 4); // Legs
         MoveNode(atkUnitBase, 54, 0, 46 * 5); // Feet
-
-        return retVal;
     }
 
-    private void* CharacterOnSetup(AtkUnitBase* atkUnitBase, int a2, void* a3) {
-        var retVal = characterOnSetup.Original(atkUnitBase, a2, a3);
-
+    private void CharacterOnSetup(AtkUnitBase* atkUnitBase) {
         // Slots
         MoveNode(atkUnitBase, 60, 0, -1); // Job Stone
         MoveNode(atkUnitBase, 48, -8, 60); // Main Weapon
@@ -208,13 +299,10 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
         MoveNode(atkUnitBase, 25, 18, 227); // Hands
         MoveNode(atkUnitBase, 24, 18, 274); // Legs
         MoveNode(atkUnitBase, 26, 18, 321); // Feet
-
-        return retVal;
     }
     
-    private void* PvpCharacterOnSetup(AtkUnitBase* atkUnitBase, int a2, void* a3) {
-        var retVal = pvpCharacterOnSetup.Original(atkUnitBase, a2, a3);
-
+    private void PvpCharacterOnSetup(AtkUnitBase* atkUnitBase) {
+        
         // Slots
         MoveNode(atkUnitBase, 126, 0, -1); // Job Stone
         MoveNode(atkUnitBase, 114, -8, 60); // Main Weapon
@@ -240,8 +328,6 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
         MoveNode(atkUnitBase, 91, 18, 227); // Hands
         MoveNode(atkUnitBase, 90, 18, 274); // Legs
         MoveNode(atkUnitBase, 92, 18, 321); // Feet
-        
-        return retVal;
     }
 
     private void MoveNode(AtkComponentBase* componentBase, uint nodeId, float x, float y) {
@@ -261,18 +347,14 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
     public override void Disable() {
         var bagWidget = Common.GetUnitBase("_BagWidget");
         if (bagWidget != null) ResetBagWidget(bagWidget);
-        characterOnSetup?.Disable();
-        pvpCharacterOnSetup?.Disable();
-        inspectOnSetup?.Disable();
         bagWidgetUpdate?.Disable();
+        addonControllerInputHook?.Disable();
         base.Disable();
     }
 
     public override void Dispose() {
-        characterOnSetup?.Dispose();
-        pvpCharacterOnSetup?.Dispose();
-        inspectOnSetup?.Dispose();
         bagWidgetUpdate?.Dispose();
+        addonControllerInputHook?.Dispose();
         base.Dispose();
     }
 }

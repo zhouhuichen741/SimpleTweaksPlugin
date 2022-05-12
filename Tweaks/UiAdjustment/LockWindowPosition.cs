@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Game.Gui.ContextMenus;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -9,9 +11,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using SimpleTweaksPlugin;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
-using XivCommon.Functions.ContextMenu;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
 
@@ -29,8 +30,8 @@ public unsafe class LockWindowPosition : UiAdjustments.SubTweak {
     private HookWrapper<MoveAddon> moveAddonHook;
 
     public override void LanguageChanged() {
-        lockText = new SeString(new UIForegroundPayload(539), new TextPayload($"{(char)SeIconChar.ServerTimeEn} "), new UIForegroundPayload(0), new TextPayload(LocString("Lock Window Position")));
-        unlockText = new SeString(new UIForegroundPayload(539), new TextPayload($"{(char)SeIconChar.ServerTimeEn} "), new UIForegroundPayload(0), new TextPayload(LocString("Unlock Window Position")));
+        lockText = new SeString(new TextPayload(LocString("Lock Window Position")));
+        unlockText = new SeString(new TextPayload(LocString("Unlock Window Position")));
     }
 
     public override void Enable() {
@@ -39,7 +40,7 @@ public unsafe class LockWindowPosition : UiAdjustments.SubTweak {
         moveAddonHook ??= Common.Hook<MoveAddon>("40 53 48 83 EC 20 80 A2 ?? ?? ?? ?? ??", MoveAddonDetour);
         moveAddonHook?.Enable();
 
-        Plugin.XivCommon.Functions.ContextMenu.OpenContextMenu += ContextMenuOnOpenContextMenu;
+        Service.ContextMenu.ContextMenuOpened += ContextMenuOnOpenContextMenu;
         defaultText = Service.Data.Excel.GetSheet<Addon>()?.GetRow(8660)?.Text?.RawString ?? "Return to Default Position";
 
         LanguageChanged();
@@ -71,30 +72,31 @@ public unsafe class LockWindowPosition : UiAdjustments.SubTweak {
     private SeString unlockText = SeString.Empty;
     private string defaultText = string.Empty;
 
-
-    private void ContextMenuOnOpenContextMenu(ContextMenuOpenArgs args) {
+    
+    private void ContextMenuOnOpenContextMenu(ContextMenuOpenedArgs args) {
         if (args.ParentAddonName == null) return;
-        var index = args.Items.FindIndex(i => i is NativeContextMenuItem ni && ni.Name.TextValue == defaultText);
-        if (index >= 0) {
-            args.Items.Add(new NormalContextMenuItem(Config.LockedWindows.Contains(args.ParentAddonName) ? unlockText : lockText, ToggleWindowPositionLock));
+        
+        var items = args.GetItems();
+        if (items.Any(i => i.Name.TextValue == defaultText)) {
+            args.AddSimpleItem(Config.LockedWindows.Contains(args.ParentAddonName) ? unlockText : lockText, ToggleWindowPositionLock);
         }
     }
 
-    private void ToggleWindowPositionLock(ContextMenuItemSelectedArgs args) {
+    private void ToggleWindowPositionLock(CustomContextMenuItemSelectedArgs args) {
         if (!Enabled) return;
-        if (args.ParentAddonName == null) return;
-        if (string.IsNullOrWhiteSpace(args.ParentAddonName)) return;
+        if (args.ContextMenuOpenedArgs.ParentAddonName == null) return;
+        if (string.IsNullOrWhiteSpace(args.ContextMenuOpenedArgs.ParentAddonName)) return;
 
-        if (Config.LockedWindows.Contains(args.ParentAddonName))
-            Config.LockedWindows.Remove(args.ParentAddonName);
+        if (Config.LockedWindows.Contains(args.ContextMenuOpenedArgs.ParentAddonName))
+            Config.LockedWindows.Remove(args.ContextMenuOpenedArgs.ParentAddonName);
         else
-            Config.LockedWindows.Add(args.ParentAddonName);
+            Config.LockedWindows.Add(args.ContextMenuOpenedArgs.ParentAddonName);
     }
 
     public override void Disable() {
         moveAddonHook?.Disable();
         SaveConfig(Config);
-        Plugin.XivCommon.Functions.ContextMenu.OpenContextMenu -= ContextMenuOnOpenContextMenu;
+        Service.ContextMenu.ContextMenuOpened -= ContextMenuOnOpenContextMenu;
         base.Disable();
     }
 

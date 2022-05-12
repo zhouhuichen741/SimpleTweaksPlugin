@@ -7,8 +7,8 @@ using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
 
@@ -67,7 +67,7 @@ public unsafe class AccurateVentureTimes : UiAdjustments.SubTweak {
         try {
             var addon = Common.GetUnitBase("RetainerList");
             if (addon == null) return false;
-            var listNode = (AtkComponentNode*)addon->GetNodeById(24);
+            var listNode = (AtkComponentNode*)addon->GetNodeById(27);
             if (listNode == null || (ushort)listNode->AtkResNode.Type < 1000) return false;
             var retainerManager = RetainerManager.Instance();
             for (uint i = 0; i < 10; i++) {

@@ -6,8 +6,8 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using SimpleTweaksPlugin.Helper;
 using Lumina.Excel.GeneratedSheets;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
 
@@ -125,8 +125,8 @@ public unsafe class ReducedDeepDungeonInfo : UiAdjustments.SubTweak {
         UiHelper.SetPosition(textNode, 148, 0);
         textNode->FontSize = 14;
         textNode->AlignmentFontType = 5;
-        var armAetherpoolSeStr = Plugin.Common.ReadSeString(armAetherpoolTextNode->NodeText.StringPtr);
-        var armorAetherpoolSeStr = Plugin.Common.ReadSeString(armorAetherpoolTextNode->NodeText.StringPtr);
+        var armAetherpoolSeStr = Common.ReadSeString(armAetherpoolTextNode->NodeText.StringPtr);
+        var armorAetherpoolSeStr = Common.ReadSeString(armorAetherpoolTextNode->NodeText.StringPtr);
 
         var payloads = new List<Payload>();
         payloads.AddRange(GetAetherpoolPayloads(armAetherpoolSeStr));

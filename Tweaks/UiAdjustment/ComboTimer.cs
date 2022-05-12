@@ -6,8 +6,8 @@ using System.Runtime.InteropServices;
 using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Utility;
 using Action = Lumina.Excel.GeneratedSheets.Action;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
@@ -64,7 +64,7 @@ public unsafe class ComboTimer : UiAdjustments.SubTweak {
         
     public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();
-        if (combo == null) combo = (Combo*) Common.Scanner.GetStaticAddressFromSig("48 89 2D ?? ?? ?? ?? 85 C0");
+        if (combo == null) combo = (Combo*) Common.Scanner.GetStaticAddressFromSig("F3 0F 11 05 ?? ?? ?? ?? F3 0F 10 45");
         Service.Framework.Update += FrameworkUpdate;
         base.Enable();
     }

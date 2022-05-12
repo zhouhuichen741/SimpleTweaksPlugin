@@ -9,8 +9,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Enums;
 using SimpleTweaksPlugin.GameStructs;
-using SimpleTweaksPlugin.Helper;
 using SimpleTweaksPlugin.TweakSystem;
+using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks.UiAdjustment; 
 
@@ -103,7 +103,7 @@ public unsafe class ExamineItemLevel : UiAdjustments.SubTweak {
 
             var seStr = new SeString(new List<Payload>() {new TextPayload($"{avgItemLevel:0000}"),});
 
-            Plugin.Common.WriteSeString((byte*) allocText, seStr);
+            Common.WriteSeString((byte*) allocText, seStr);
 
             textNode->NodeText.StringPtr = (byte*) allocText;
 
