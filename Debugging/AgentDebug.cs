@@ -13,6 +13,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Utility;
+using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace SimpleTweaksPlugin.Debugging; 
 
@@ -33,6 +34,73 @@ public unsafe class AgentDebug : DebugHelper {
     private bool agentListActiveOnly = false;
     private bool agentListKnownOnly = true;
     private Type selectedAgentType;
+
+    
+    
+    public class AgentEventHandlerHook : IDisposable {
+        public AgentId AgentId { get; }
+        private readonly AgentInterface* agentInterface;
+        private readonly HookWrapper<AgentEventHandler> hook;
+        
+        public bool Disposed { get; private set; }
+
+        public delegate void* AgentEventHandler(AgentInterface* agentInterface, void* a2, AtkValue* values, ulong atkValueCount, ulong eventType);
+
+        public AgentEventHandlerHook(AgentId agentId) {
+            AgentId = agentId;
+            agentInterface = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(agentId);
+            hook = Common.Hook<AgentEventHandler>(agentInterface->AtkEventInterface.vtbl[0], HandleEvent);
+            hook?.Enable();
+        }
+
+        public void* HandleEvent(AgentInterface* agent, void* a2, AtkValue* values, ulong atkValueCount, ulong eventType) {
+            if (Disposed || agent != agentInterface) return hook.Original(agent, a2, values, atkValueCount, eventType);
+
+            try {
+                var call = new EventCall() {
+                    EventType = eventType,
+                    UnknownPointer = a2,
+                    UnknownPointerData = *(ulong*)a2, 
+                };
+
+                var v = values;
+                for (var i = 0UL; i < atkValueCount; i++) {
+                    call.AtkValueTypes.Add(v->Type);
+                    call.AtkValues.Add((*v).ValueString());
+                    v++;
+                }
+                
+                EventCalls.Add(call);
+
+                return hook.Original(agent, a2, values, atkValueCount, eventType);
+            } catch (Exception ex) {
+                //
+            }
+            
+            
+            return hook.Original(agent, a2, values, atkValueCount, eventType);
+        }
+
+        public class EventCall {
+            public ulong EventType;
+            public List<object> AtkValues = new();
+            public List<ValueType> AtkValueTypes = new();
+            public void* UnknownPointer;
+            public ulong UnknownPointerData;
+        } 
+        
+        public List<EventCall> EventCalls = new();
+
+
+        public void Dispose() {
+            if (Disposed) return;
+            hook?.Disable();
+            hook?.Dispose();
+            Disposed = true;
+        }
+    }
+    
+    public Dictionary<AgentId, AgentEventHandlerHook> AgentEventHooks = new();
     
     public override void Draw() {
         if (sortedAgentList == null) {
@@ -111,7 +179,8 @@ public unsafe class AgentDebug : DebugHelper {
 
                     var agentInterface = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(selectAgent);
 
-                    
+                    var agentHook = AgentEventHooks.ContainsKey(selectAgent) ? AgentEventHooks[selectAgent] : null;
+
                     if (selectedAgentType == null) {
                         try {
                             var agentClasses = typeof(AgentInterface).Assembly.GetTypes().Select((t) => (t, t.GetCustomAttributes(typeof(AgentAttribute)).Cast<AgentAttribute>().ToArray())).Where(t => t.Item2.Length > 0).ToArray();
@@ -133,17 +202,63 @@ public unsafe class AgentDebug : DebugHelper {
                         ImGui.SameLine();
                         ImGui.Text("      VTable:");
                         ImGui.SameLine();
-                        DebugManager.ClickToCopyText($"{(ulong)agentInterface->VTable:X}");
+                        DebugManager.ClickToCopyText($"{(ulong)agentInterface->AtkEventInterface.vtbl:X}");
 
                         var beginModule = (ulong) Process.GetCurrentProcess().MainModule.BaseAddress.ToInt64();
                         var endModule = (beginModule + (ulong)Process.GetCurrentProcess().MainModule.ModuleMemorySize);
-                        if (beginModule > 0 && (ulong)agentInterface->VTable >= beginModule && (ulong)agentInterface->VTable <= endModule) {
+                        if (beginModule > 0 && (ulong)agentInterface->AtkEventInterface.vtbl >= beginModule && (ulong)agentInterface->AtkEventInterface.vtbl <= endModule) {
                             ImGui.SameLine();
                             ImGui.PushStyleColor(ImGuiCol.Text, 0xffcbc0ff);
-                            DebugManager.ClickToCopyText($"ffxiv_dx11.exe+{((ulong)agentInterface->VTable - beginModule):X}");
+                            DebugManager.ClickToCopyText($"ffxiv_dx11.exe+{((ulong)agentInterface->AtkEventInterface.vtbl - beginModule):X}");
                             ImGui.PopStyleColor();
                         }
 
+                        ImGui.Separator();
+                        
+                        ImGui.Text("Event Log:");
+                        ImGui.SameLine();
+                        if (agentHook == null || agentHook.Disposed) {
+                            if (ImGui.Button("Hook Events")) {
+                                if (agentHook != null) AgentEventHooks.Remove(selectAgent);
+                                AgentEventHooks.Add(selectAgent, new AgentEventHandlerHook(selectAgent));
+                            }
+                        } else {
+                            if (ImGui.Button("Disable Hook")) {
+                                agentHook.Dispose();
+                            }
+                        }
+
+                        if (agentHook != null) {
+                            if (ImGui.TreeNode($"Event Calls({agentHook.EventCalls.Count})###eventCalls_{selectAgent}")) {
+
+                                foreach (var call in agentHook.EventCalls) {
+                                    
+                                    ImGui.Text($"Event#{call.EventType} - {call.AtkValueTypes.Count} Values");
+                                    ImGui.SameLine();
+                                    DebugManager.ClickToCopy(call.UnknownPointer);
+                                    ImGui.SameLine();
+                                    DebugManager.ClickToCopyText($"[{call.UnknownPointerData:X}]", $"{call.UnknownPointerData:X}");
+                                    ImGui.Indent();
+
+                                    for (var i = 0; i < call.AtkValueTypes.Count && i < call.AtkValues.Count; i++) {
+                                        ImGui.Text($"[#{i}] {call.AtkValueTypes[i]} : {call.AtkValues[i]}");
+                                    }
+
+                                    ImGui.Unindent();
+                                    
+                                    
+                                }
+                                
+                                
+                                ImGui.TreePop();
+                            }
+                        }
+                        
+                        
+                        
+                        
+                        
+                        
                         ImGui.Separator();
 
                         ImGui.Text("Is Active:");
@@ -237,8 +352,8 @@ public unsafe class AgentDebug : DebugHelper {
 
     private void SetupLogging() {
         agentGetLog = new List<(AgentId, ulong, ulong)>();
-        getAgentByInternalIdHook ??= new Hook<GetAgentByInternalIDDelegate>(Common.Scanner.ScanText("E8 ?? ?? ?? ?? 83 FF 0D"), new GetAgentByInternalIDDelegate(GetAgentByInternalIDDetour));
-        getAgentByInternalId2Hook ??= new Hook<GetAgentByInternalIDDelegate>(Common.Scanner.ScanText("E8 ?? ?? ?? ?? 48 85 C0 74 12 0F BF 80"), new GetAgentByInternalIDDelegate(GetAgentByInternalIDDetour));
+        getAgentByInternalIdHook ??= new Hook<GetAgentByInternalIDDelegate>(Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 FF 0D"), new GetAgentByInternalIDDelegate(GetAgentByInternalIDDetour));
+        getAgentByInternalId2Hook ??= new Hook<GetAgentByInternalIDDelegate>(Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 48 85 C0 74 12 0F BF 80"), new GetAgentByInternalIDDelegate(GetAgentByInternalIDDetour));
             
         getAgentByInternalIdHook?.Enable();
         getAgentByInternalId2Hook?.Enable();
@@ -270,6 +385,12 @@ public unsafe class AgentDebug : DebugHelper {
         getAgentByInternalId2Hook?.Disable();
         getAgentByInternalIdHook?.Dispose();
         getAgentByInternalId2Hook?.Dispose();
+
+        foreach (var h in AgentEventHooks.Values) {
+            h.Dispose();
+        }
+        AgentEventHooks.Clear();
+        
         base.Dispose();
     }
 

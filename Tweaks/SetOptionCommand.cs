@@ -3,21 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using Dalamud.Game.Command;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
-using SimpleTweaksPlugin.TweakSystem;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using SimpleTweaksPlugin.Tweaks.AbstractTweaks;
 using SimpleTweaksPlugin.Utility;
 
 namespace SimpleTweaksPlugin.Tweaks; 
 
-public unsafe class SetOptionCommand : Tweak {
+public unsafe class SetOptionCommand : CommandTweak {
 
     public override string Name => "Set Option Command";
     public override string Description => "Adds commands to change various settings.";
+    protected override string Command => "setoption";
+    protected override string HelpMessage => "Usage: /setoption <option> <value>";
+    protected override string[] Alias => new[] { "setopt" };
 
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)] 
     private delegate void DispatchEvent(AgentInterface* agentConfigCharacter, void* outVal, AtkValue* atkValue, uint atkValueCount);
@@ -50,21 +52,22 @@ public unsafe class SetOptionCommand : Tweak {
     }
 
     private readonly List<OptionDefinition> optionDefinitions = new() {
-        new OptionDefinition("GamepadMode", ConfigOption.GamepadMode, OptionType.ToggleGamepadMode, "gp"),
+        new OptionDefinition("GamepadMode", ConfigOption.PadMode, OptionType.ToggleGamepadMode, "gp"),
 
-        new OptionDefinition("ItemTooltips", ConfigOption.DisplayItemHelp, OptionType.Bool, "itt"),
-        new OptionDefinition("ActionTooltips", ConfigOption.DisplayActionHelp, OptionType.Bool, "att"),
-        new OptionDefinition("LegacyMovement", ConfigOption.LegacyMovement, OptionType.Bool, "lm"),
+        new OptionDefinition("ItemTooltips", ConfigOption.ItemDetailDisp, OptionType.Bool, "itt"),
+        new OptionDefinition("ActionTooltips", ConfigOption.ActionDetailDisp, OptionType.Bool, "att"),
+        new OptionDefinition("LegacyMovement", ConfigOption.MoveMode, OptionType.Bool, "lm"),
+        new OptionDefinition("HideUnassignedHotbarSlots", ConfigOption.HotbarEmptyVisible, OptionType.Bool, "huhs"),
 
-        new OptionDefinition("OwnDisplayName", ConfigOption.OwnDisplayNameSettings, OptionType.NameDisplayModeBattle, "odn"),
-        new OptionDefinition("PartyDisplayName", ConfigOption.PartyDisplayNameSettings, OptionType.NameDisplayModeBattle, "pdn"),
-        new OptionDefinition("AllianceDisplayName", ConfigOption.AllianceDisplayNameSettings, OptionType.NameDisplayModeBattle, "adn"),
-        new OptionDefinition("OtherPlayerDisplayName", ConfigOption.OtherPCsDisplayNameSettings, OptionType.NameDisplayModeBattle, "opcdn"),
-        new OptionDefinition("FriendDisplayName", ConfigOption.FriendsDisplayNameSettings, OptionType.NameDisplayModeBattle, "fdn"),
+        new OptionDefinition("OwnDisplayName", ConfigOption.NamePlateDispTypeSelf, OptionType.NameDisplayModeBattle, "odn"),
+        new OptionDefinition("PartyDisplayName", ConfigOption.NamePlateDispTypeParty, OptionType.NameDisplayModeBattle, "pdn"),
+        new OptionDefinition("AllianceDisplayName", ConfigOption.NamePlateDispTypeAlliance, OptionType.NameDisplayModeBattle, "adn"),
+        new OptionDefinition("OtherPlayerDisplayName", ConfigOption.NamePlateDispTypeOther, OptionType.NameDisplayModeBattle, "opcdn"),
+        new OptionDefinition("FriendDisplayName", ConfigOption.NamePlateDispTypeFriend, OptionType.NameDisplayModeBattle, "fdn"),
         
-        //new OptionDefinition("DisplayNameSize", ConfigOption.DisplayNameSize, OptionType.IntList, "dns") {
-        //    Values = new() { ["maximum"] = 0, ["large"] = 1, ["standard"] = 2 },
-        //    ValueAlias = new() { ["m"] = 0, ["max"] = 0, ["l"] = 1, ["s"] = 2, }
+        //new OptionDefinition("DisplayNameSize", ConfigOption.NamePlateDispSize, OptionType.IntList, "dns") {
+           // Values = new() { ["maximum"] = 0, ["large"] = 1, ["standard"] = 2 },
+            //ValueAlias = new() { ["m"] = 0, ["max"] = 0, ["l"] = 1, ["s"] = 2, }
         //},
     };
 
@@ -126,17 +129,7 @@ public unsafe class SetOptionCommand : Tweak {
             ImGui.TreePop();
         }
     };
-
-    public override void Enable() {
-        if (!Ready) return;
-
-        Service.Commands.AddHandler("/setoption", new CommandInfo(OptionCommand) {HelpMessage = "Set the skill tooltips on or off.", ShowInHelp = true});
-        Service.Commands.AddHandler("/setopt", new CommandInfo(OptionCommand) {HelpMessage = "Set the skill tooltips on or off.", ShowInHelp = false});
-
-        Enabled = true;
-    }
-
-    private void OptionCommand(string command, string arguments) {
+    protected override void OnCommand(string arguments) {
         var configModule = ConfigModule.Instance();
         if (configModule == null) return;
 
@@ -275,16 +268,5 @@ public unsafe class SetOptionCommand : Tweak {
                 Service.Chat.PrintError("Unsupported Option");
                 return;
         }
-    }
-
-    public override void Disable() {
-        Service.Commands.RemoveHandler("/setoption");
-        Service.Commands.RemoveHandler("/setopt");
-        Enabled = false;
-    }
-
-    public override void Dispose() {
-        Enabled = false;
-        Ready = false;
     }
 }

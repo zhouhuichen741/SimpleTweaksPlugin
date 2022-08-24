@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Globalization;
 using System.Numerics;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -27,6 +26,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             public bool UseCustomColor = false;
             public Vector4 CustomColor = new Vector4(1);
             public byte FontSize = 14;
+            public bool HideAutoAttack = false;
             
             public bool NoFocus;
             public Vector2 FocusPosition = new Vector2(0);
@@ -72,6 +72,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 ImGui.SameLine();
                 hasChanged |= ImGui.ColorEdit4("##TargetHPCustomColor", ref Config.CustomColor);
             }
+            hasChanged |= ImGui.Checkbox("Hide Auto Attack Icon", ref Config.HideAutoAttack);
             
             ImGui.Dummy(new Vector2(5) * ImGui.GetIO().FontGlobalScale);
             hasChanged |= ImGui.Checkbox("不显示焦点目标HP", ref Config.NoFocus);
@@ -145,7 +146,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             if (unitBase == null || unitBase->UldManager.NodeList == null || unitBase->UldManager.NodeListCount < 40) return;
             var gauge = (AtkComponentNode*) unitBase->UldManager.NodeList[36];
             var textNode = (AtkTextNode*) unitBase->UldManager.NodeList[39];
-            UiHelper.SetSize(unitBase->UldManager.NodeList[37], reset ? 44 : 0, reset ? 20 : 0);
+            UiHelper.SetSize(unitBase->UldManager.NodeList[37], reset || !Config.HideAutoAttack ? 44 : 0, reset || !Config.HideAutoAttack ? 20 : 0);
             UpdateGaugeBar(gauge, textNode, target, Config.Position, Config.UseCustomColor ? Config.CustomColor : null, Config.FontSize, reset);
         }
         private void UpdateFocusTarget(AtkUnitBase* unitBase, GameObject target, bool reset = false) {
@@ -159,7 +160,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             if (unitBase == null || unitBase->UldManager.NodeList == null || unitBase->UldManager.NodeListCount < 9) return;
             var gauge = (AtkComponentNode*) unitBase->UldManager.NodeList[5];
             var textNode = (AtkTextNode*) unitBase->UldManager.NodeList[8];
-            UiHelper.SetSize(unitBase->UldManager.NodeList[6], reset ? 44 : 0, reset ? 20 : 0);
+            UiHelper.SetSize(unitBase->UldManager.NodeList[6], reset || !Config.HideAutoAttack ? 44 : 0, reset || !Config.HideAutoAttack ? 20 : 0);
             UpdateGaugeBar(gauge, textNode, target, Config.Position, Config.UseCustomColor ? Config.CustomColor : null, Config.FontSize, reset);
         }
         
@@ -201,7 +202,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             }
 
             if (reset) {
-                UiHelper.Hide(textNode);
+                textNode->AtkResNode.ToggleVisibility(false);
                 return;
             }
 
@@ -209,7 +210,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
             
             UiHelper.SetPosition(textNode, positionOffset.X, positionOffset.Y);
             UiHelper.SetSize(textNode, gauge->AtkResNode.Width - 5, gauge->AtkResNode.Height);
-            UiHelper.Show(textNode);
+            textNode->AtkResNode.ToggleVisibility(true);
             if (!customColor.HasValue) {
                 textNode->TextColor = cloneTextNode->TextColor;
             } else {

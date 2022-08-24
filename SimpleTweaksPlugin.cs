@@ -70,9 +70,7 @@ namespace SimpleTweaksPlugin {
                 t.Dispose();
             }
             TweakProviders.Clear();
-            #if DEBUG
             DebugManager.Dispose();
-            #endif
             foreach (var hook in Common.HookList.Where(hook => !hook.IsDisposed)) {
                 if (hook.IsEnabled) hook.Disable();
                 hook.Dispose();
@@ -80,6 +78,7 @@ namespace SimpleTweaksPlugin {
             Common.HookList.Clear();
             Common.Shutdown();
             this.XivCommon.Dispose();
+            SimpleEvent.Destroy();
         }
 
         public int UpdateFrom = -1;
@@ -137,8 +136,10 @@ namespace SimpleTweaksPlugin {
 
 
 #if DEBUG
-            DebugManager.Enabled = false;
-            drawConfigWindow = false;
+            if (!PluginConfig.DisableAutoOpen) {
+                DebugManager.Enabled = true;
+                drawConfigWindow = true;
+            }
 #endif
             DebugManager.Reload();
 
@@ -293,6 +294,19 @@ namespace SimpleTweaksPlugin {
             return null;
         }
 
+        public T GetTweak<T>(IEnumerable<BaseTweak>? tweakList = null) where T : BaseTweak {
+            tweakList ??= Tweaks;
+            foreach (var t in tweakList) {
+                if (t is T tweak) return tweak;
+                if (t is SubTweakManager stm) {
+                    var fromSub = GetTweak<T>(stm.GetTweakList());
+                    if (fromSub != null) return fromSub;
+                }
+            }
+            return null;
+        }
+        
+
         public void SaveAllConfig() {
             foreach (var tp in TweakProviders.Where(tp => !tp.IsDisposed)) {
                 foreach (var t in tp.Tweaks) {
@@ -366,7 +380,7 @@ namespace SimpleTweaksPlugin {
                 }
             }
 
-            if (Service.PluginInterface.IsDebugging && Service.PluginInterface.IsDev) {
+            if (Service.PluginInterface.IsDevMenuOpen && Service.PluginInterface.IsDev) {
                 if (ImGui.BeginMainMenuBar()) {
                     if (ImGui.MenuItem("Simple Tweaks")) {
                         if (ImGui.GetIO().KeyShift) {
@@ -466,6 +480,7 @@ namespace SimpleTweaksPlugin {
         }
 
         public void LoadCustomProvider(string path) {
+            if (path.StartsWith("!")) return;
             if (!File.Exists(path)) return;
             TweakProviders.RemoveAll(t => t.IsDisposed);
             var tweakProvider = new CustomTweakProvider(path);

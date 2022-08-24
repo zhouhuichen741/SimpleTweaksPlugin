@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
-using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -74,12 +73,17 @@ public unsafe class AddonDebug : DebugHelper {
                             atkValueList.Add(a->Int);
                             break;
                         }
+                        case ValueType.String8:
                         case ValueType.String: {
                             atkValueList.Add(Marshal.PtrToStringUTF8(new IntPtr(a->String)));
                             break;
                         }
                         case ValueType.UInt: {
                             atkValueList.Add(a->UInt);
+                            break;
+                        }
+                        case ValueType.Bool: {
+                            atkValueList.Add(a->Byte != 0);
                             break;
                         }
                         default: {

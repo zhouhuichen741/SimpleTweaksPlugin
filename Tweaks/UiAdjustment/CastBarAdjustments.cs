@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin.Enums;
-using SimpleTweaksPlugin.GameStructs;
 using SimpleTweaksPlugin.TweakSystem;
 using SimpleTweaksPlugin.Utility;
 
@@ -40,11 +39,11 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
     }
 
     public Configs Config { get; private set; }
-
-
-        
+    
     private float configAlignmentX;
-        
+    private delegate void CastBarOnUpdateDelegate(AddonCastBar* castBar, void* a2);
+    private HookWrapper<CastBarOnUpdateDelegate> castBarOnUpdateHook;
+
     protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
         hasChanged |= ImGui.Checkbox(LocString("Hide Casting", "Hide 'Casting' Text"), ref Config.RemoveCastingText);
         hasChanged |= ImGui.Checkbox(LocString("Hide Icon"), ref Config.RemoveIcon);
@@ -104,34 +103,41 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
 
 
         if (hasChanged) {
-            UpdateCastBar(true);
+            UpdateCastBar(null, true);
         }
     };
 
     public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();
-        Service.Framework.Update += FrameworkOnUpdate;
+        castBarOnUpdateHook ??= Common.Hook<CastBarOnUpdateDelegate>("48 83 EC 38 48 8B 92", CastBarOnUpdateDetour);
+        castBarOnUpdateHook.Enable();
         base.Enable();
     }
 
     public override void Disable() {
-        Service.Framework.Update -= FrameworkOnUpdate;
-        UpdateCastBar(true);
+        castBarOnUpdateHook.Disable();
+        UpdateCastBar(null, true);
         SaveConfig(Config);
         base.Disable();
     }
 
-    private void FrameworkOnUpdate(Framework framework) {
+    private void CastBarOnUpdateDetour(AddonCastBar* castBar, void* a2) {
+        castBarOnUpdateHook.Original(castBar, a2);
+        
         try {
-            UpdateCastBar();
+            UpdateCastBar(castBar);
         } catch (Exception ex) {
             SimpleLog.Error(ex);
         }
-    }
         
-    public void UpdateCastBar(bool reset = false) {
-        var castBar = Common.GetUnitBase<AddonCastBar>();
-        if (castBar == null) return;
+    }
+
+    private void UpdateCastBar(AddonCastBar* castBar, bool reset = false) {
+        if (castBar == null) {
+            castBar = Common.GetUnitBase<AddonCastBar>();
+            if (castBar == null) return;
+        }
+        
         if (castBar->AtkUnitBase.UldManager.NodeList == null || castBar->AtkUnitBase.UldManager.NodeListCount < 12) return;
 
         var barNode = castBar->AtkUnitBase.UldManager.NodeList[3];
@@ -155,10 +161,10 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
         }
             
         if (reset) {
-            UiHelper.Show(icon);
-            UiHelper.Show(countdownText);
-            UiHelper.Show(castingText);
-            UiHelper.Show(skillNameText);
+            icon->AtkResNode.ToggleVisibility(true);
+            countdownText->AtkResNode.ToggleVisibility(true);
+            castingText->AtkResNode.ToggleVisibility(true);
+            skillNameText->AtkResNode.ToggleVisibility(true);
 
             UiHelper.SetSize(skillNameText, 170, null);
             UiHelper.SetPosition(skillNameText, barNode->X + 4, null);
@@ -168,11 +174,11 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
             interruptedText->AtkResNode.SetScale(1, 1);
 
             if (slideMarker != null) {
-                UiHelper.Hide(slideMarker);
+                slideMarker->AtkResNode.ToggleVisibility(false);
             }
 
             if (classicSlideMarker != null) {
-                UiHelper.Hide(classicSlideMarker);
+                classicSlideMarker->AtkResNode.ToggleVisibility(false);
                 if (classicSlideMarker->AtkResNode.PrevSiblingNode != null)
                     classicSlideMarker->AtkResNode.PrevSiblingNode->NextSiblingNode = classicSlideMarker->AtkResNode.NextSiblingNode;
                 if (classicSlideMarker->AtkResNode.NextSiblingNode != null)
@@ -191,10 +197,10 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
             return;
         }
 
-        if (Config.RemoveIcon) UiHelper.Hide(icon);
-        if (Config.RemoveName) UiHelper.Hide(skillNameText);
-        if (Config.RemoveCounter) UiHelper.Hide(countdownText);
-        if (Config.RemoveCastingText) UiHelper.Hide(castingText);
+        if (Config.RemoveIcon) icon->AtkResNode.ToggleVisibility(false);
+        if (Config.RemoveName) skillNameText->AtkResNode.ToggleVisibility(false);
+        if (Config.RemoveCounter) countdownText->AtkResNode.ToggleVisibility(false);
+        if (Config.RemoveCastingText) castingText->AtkResNode.ToggleVisibility(false);
 
         if (Config.RemoveCastingText && !Config.RemoveCounter) {
             countdownText->AlignmentFontType = (byte) (0x20 | (byte) Config.AlignCounter);
@@ -217,7 +223,7 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
         }
 
         if (Config.SlideCast && Config.ClassicSlideCast == false) {
-            if (classicSlideMarker != null) UiHelper.Hide(classicSlideMarker);
+            if (classicSlideMarker != null) classicSlideMarker->AtkResNode.ToggleVisibility(false);
             if (slideMarker == null) {
                 // Create Node
 
@@ -233,7 +239,7 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
                 
                 var slidePer = ((float)(castBar->CastTime * 10) - Config.SlideCastAdjust) / (castBar->CastTime * 10);
                 var pos = 160 * slidePer;
-                UiHelper.Show(slideMarker);
+                slideMarker->AtkResNode.ToggleVisibility(true);
                 UiHelper.SetSize(slideMarker, 168 - (int)pos, 20);
                 UiHelper.SetPosition(slideMarker, pos - 8, 0);
                 var c = (slidePer * 100) >= castBar->CastPercent ? Config.SlideCastColor : Config.SlideCastReadyColor;
@@ -249,7 +255,7 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
             }
             
         } else if (Config.SlideCast && Config.ClassicSlideCast) {
-            if (slideMarker != null) UiHelper.Hide(slideMarker);
+            if (slideMarker != null) slideMarker->AtkResNode.ToggleVisibility(false);
             if (classicSlideMarker == null) {
                 if (progressBar == null) return;
                 
@@ -325,7 +331,7 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
 
             if (classicSlideMarker != null) {
                 
-                UiHelper.Show(classicSlideMarker);
+                classicSlideMarker->AtkResNode.ToggleVisibility(true);
                 
                 var slidePer = ((float)(castBar->CastTime * 10) - Config.SlideCastAdjust) / (castBar->CastTime * 10);
                 var pos = 160 * slidePer;
@@ -345,8 +351,6 @@ public unsafe class CastBarAdjustments : UiAdjustments.SubTweak {
                 classicSlideMarker->AtkResNode.Flags_2 |= 1;
                 
             }
-            
-            
         }
     }
 }

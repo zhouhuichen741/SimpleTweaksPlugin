@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Dalamud.Game.ClientState.Conditions;
@@ -7,8 +8,8 @@ using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Gui.ContextMenus;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.System.String;
-using TextPayload = Dalamud.Game.Text.SeStringHandling.Payloads.TextPayload;
 
 namespace SimpleTweaksPlugin.Utility; 
 
@@ -80,30 +81,60 @@ public static class Extensions {
     /// <summary>
     /// Adds a new context menu item, and removes the [D] from the name.
     /// </summary>
-public static void AddSimpleItem(this ContextMenuOpenedArgs args, SeString name, CustomContextMenuItemSelectedDelegate action) {
-    args.AddCustomItem(name, action);
-    try {
-        var itemList = args.GetItems();
-        if (itemList == null || itemList.Count < 1) return;
-        var lastItem = itemList[^1];
-        if (lastItem.Name.Payloads.Count > 3 && lastItem.Name.Payloads[1] is TextPayload tpl) {
-            tpl.Text = $"{(char)SeIconChar.ServerTimeEn} ";
+    public static void AddSimpleItem(this ContextMenuOpenedArgs args, SeString name, CustomContextMenuItemSelectedDelegate action) {
+        args.AddCustomItem(name, action);
+        try {
+            var itemList = args.GetItems();
+            if (itemList == null || itemList.Count < 1) return;
+            var lastItem = itemList[^1];
+            if (lastItem.Name.Payloads.Count > 3 && lastItem.Name.Payloads[1] is TextPayload tpl) {
+                tpl.Text = $"{(char)SeIconChar.ServerTimeEn} ";
+            }
+        } catch (Exception ex) {
+            SimpleLog.Log(ex);
         }
-    } catch (Exception ex) {
-        SimpleLog.Log(ex);
     }
-}
 
-public static List<ContextMenuItem> GetItems(this ContextMenuOpenedArgs args) {
-    try {
-        var itemList = (List<ContextMenuItem>)args.GetType().GetProperty("Items", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(args);
-        return itemList ?? new List<ContextMenuItem>();
-    } catch (Exception ex) {
-        SimpleLog.Log(ex);
-        return new List<ContextMenuItem>();
+    public static List<ContextMenuItem> GetItems(this ContextMenuOpenedArgs args) {
+        try {
+            var itemList = (List<ContextMenuItem>)args.GetType().GetProperty("Items", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(args);
+            return itemList ?? new List<ContextMenuItem>();
+        } catch (Exception ex) {
+            SimpleLog.Log(ex);
+            return new List<ContextMenuItem>();
+        }
     }
-}
+
+    public static void Replace(this List<byte> byteList, IEnumerable<byte> search, IEnumerable<byte> replace) {
+        for (var i = 0; i < byteList.Count; i++) {
+            if (Equals(byteList.Skip(i).Take(search.Count()), search)) {
+                
+            }
+        }
+    }
+        
+    public static void AppendLine(this SeString str, List<Payload> payloads) {
+        str.Append(payloads);
+        str.Append(NewLinePayload.Payload);
+    }
+    public static void AppendLine(this SeString str, Payload payload) {
+        str.Append(payload);
+        str.Append(NewLinePayload.Payload);
+    }
+    public static void AppendLine(this SeString str, SeString other) {
+        str.Append(other);
+        str.Append(NewLinePayload.Payload);
+    }
+    public static void AppendLine(this SeString str, params Payload[] payloads) {
+        str.Append(new List<Payload>(payloads));
+        str.Append(NewLinePayload.Payload);
+    }
     
-    
-    
+    public static bool AnyExcept(this Condition condition, params ConditionFlag[] exceptFlags) {
+        for (int flag = 0; flag < 100; ++flag) {
+            if (exceptFlags.Contains((ConditionFlag)flag)) continue;
+            if (condition[flag]) return true;
+        }
+        return false;
+    }
 }
