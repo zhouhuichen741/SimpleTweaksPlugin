@@ -118,7 +118,7 @@ public unsafe class GearPositions : UiAdjustments.SubTweak {
 
                 byte F(CharacterNode node) {
                     if ((int)node < 0 || (int)node >= atkUnitBase->CollisionNodeListCount) return 1;
-                    //atkUnitBase->SetFocusNode(atkUnitBase->CollisionNodeList[(int)node]);
+                    atkUnitBase->SetFocusNode(atkUnitBase->CollisionNodeList[(int)node]);
                     atkUnitBase->CursorTarget = atkUnitBase->CollisionNodeList[(int)node];
                     return 1;
                 }

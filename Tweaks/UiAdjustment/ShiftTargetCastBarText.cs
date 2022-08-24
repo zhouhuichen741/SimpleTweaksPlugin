@@ -188,7 +188,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
 
             if (!visible)
             {
-                UiHelper.Hide(textNode);
+                UiHelper.Hide((AtkResNode*)textNode);
             }
             else
             {
@@ -199,7 +199,7 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment {
                 //UiHelper.SetSize(textNode, cloneTextNode->AtkResNode.Width, cloneTextNode->AtkResNode.Height);
                 textNode->FontSize = 15;//(byte) PluginConfig.UiAdjustments.ShiftTargetCastBarText.CastTimeFontSize;
                 textNode->SetText(GetTargetCastTime().ToString("00.00"));
-                UiHelper.Show(textNode);
+                UiHelper.Show((AtkResNode*)textNode);
             }
 
         }

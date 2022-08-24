@@ -87,22 +87,22 @@ namespace SimpleTweaksPlugin.Tweaks.UiAdjustment
             try
             {
                 partyUiUpdateHook ??= new Hook<PartyUiUpdate>(
-                    Common.Scanner.ScanText(
+                    Service.SigScanner.ScanText(
                         "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B 7A ?? 48 8B D9 49 8B 70 ?? 48 8B 47"),
                     new PartyUiUpdate(PartyListUpdateDelegate));
                 
                 targetUpdateHook ??= new Hook<MainTargetUiUpdate>(
-                    Common.Scanner.ScanText(
+                    Service.SigScanner.ScanText(
                         "40 55 57 41 56 48 83 EC 40 48 8B 6A 48 48 8B F9 4D 8B 70 40 48 85 ED 0F 84 ?? ?? ?? ?? 4D 85 F6 0F 84 ?? ?? ?? ?? 48 8B 45 20 48 89 74 24 ?? 4C 89 7C 24 ?? 44 0F B6 B9 ?? ?? ?? ?? 83 38 00 8B 70 08 0F 95 C0"),
                     new MainTargetUiUpdate(TargetUpdateDelegate));
                 
                 mainTargetUpdateHook ??= new Hook<MainTargetUiUpdate>(
-                    Common.Scanner.ScanText(
+                    Service.SigScanner.ScanText(
                         "40 55 57 41 56 48 83 EC 40 48 8B 6A 48 48 8B F9 4D 8B 70 40 48 85 ED 0F 84 ?? ?? ?? ?? 4D 85 F6 0F 84 ?? ?? ?? ?? 48 8B 45 20 48 89 74 24 ?? 4C 89 7C 24 ?? 44 0F B6 B9 ?? ?? ?? ?? 83 38 00 8B 70 08 0F 94 C0"),
                     new MainTargetUiUpdate(MainTargetUpdateDelegate));
                 
                 focusUpdateHook ??= new Hook<FocusUiUpdate>(
-                    Common.Scanner.ScanText("40 53 41 54 41 56 41 57 48 83 EC 78 4C 8B 7A 48"),
+                    Service.SigScanner.ScanText("40 53 41 54 41 56 41 57 48 83 EC 78 4C 8B 7A 48"),
                     new FocusUiUpdate(FocusUpdateDelegate));
 
                 if (Enabled) partyUiUpdateHook?.Enable();
