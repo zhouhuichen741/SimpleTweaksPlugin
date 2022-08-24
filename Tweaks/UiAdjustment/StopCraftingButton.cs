@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Dalamud.Game.Command;
@@ -233,7 +234,7 @@ public unsafe class StopCraftingButton : UiAdjustments.SubTweak {
         
         var buttonText = ready switch {
             CraftReadyState.Ready => Service.Data.Excel.GetSheet<Addon>()?.GetRow(1404)?.Text?.ToDalamudString(),
-            CraftReadyState.WrongClass => "Switch Job",
+            CraftReadyState.WrongClass => "切换至配方职业",
             CraftReadyState.AlreadyCrafting => Service.Data.Excel.GetSheet<Addon>()?.GetRow(643)?.Text?.ToDalamudString(),
             _ => null
         };
