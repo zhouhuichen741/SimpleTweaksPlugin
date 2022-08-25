@@ -17,7 +17,7 @@ namespace SimpleTweaksPlugin.Tweaks;
 // TODO: Add a context menu to items when dalamud brings back context menus.
 
 public unsafe class NoSellList : Tweak {
-    public override string Name => "No Sell List";
+    public override string Name => "禁止出售列表";
     public override string Description => "Allows you to define a list of items that can not be sold to a vendor.";
 
     public class Configs : TweakConfig {
@@ -224,7 +224,7 @@ public unsafe class NoSellList : Tweak {
                     if (Config.NoSellList.Any(i => i == slot->ItemID)) {
                         var item = Service.Data.Excel.GetSheet<Item>()?.GetRow(slot->ItemID);
                         if (!string.IsNullOrEmpty(item?.Name?.RawString)) {
-                            Service.Toasts.ShowError($"{item.Name.RawString} 在禁止出售列表 {Name} 中 - {Plugin.Name}.");
+                            Service.Toasts.ShowError($"{item.Name.RawString} 在 {Name}中 - {Plugin.Name}.");
                             return;
                         }
                     }
@@ -235,7 +235,7 @@ public unsafe class NoSellList : Tweak {
                         if (!string.IsNullOrEmpty(item?.Name?.RawString)) {
                             Service.Toasts.ShowError(new SeString(
                                     new TextPayload(item.Name.ToDalamudString().TextValue),
-                                    new TextPayload(" 在禁止出售列表 "),
+                                    new TextPayload(" 在 "),
                                     new TextPayload(customListMatch.Name),
                                     new NewLinePayload(),
                                     new TextPayload(Name),

@@ -52,7 +52,6 @@
 			<Private>true</Private>
 			<HintPath>$(SolutionDir)\lib\FFXIVClientStructs\bin\$(ConfigurationName)\FFXIVClientStructs.dll</HintPath>
 		</Reference>
-		<Reference Include="Microsoft.CSharp" />
         <Reference Include="Newtonsoft.Json">
             <Private>false</Private>
             <HintPath>$(DalamudPath)\Newtonsoft.Json.dll</HintPath>
