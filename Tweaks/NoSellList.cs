@@ -224,7 +224,7 @@ public unsafe class NoSellList : Tweak {
                     if (Config.NoSellList.Any(i => i == slot->ItemID)) {
                         var item = Service.Data.Excel.GetSheet<Item>()?.GetRow(slot->ItemID);
                         if (!string.IsNullOrEmpty(item?.Name?.RawString)) {
-                            Service.Toasts.ShowError($"{item.Name.RawString} is locked by {Name} in {Plugin.Name}.");
+                            Service.Toasts.ShowError($"{item.Name.RawString} 在禁止出售列表 {Name} 中 - {Plugin.Name}.");
                             return;
                         }
                     }
@@ -235,11 +235,11 @@ public unsafe class NoSellList : Tweak {
                         if (!string.IsNullOrEmpty(item?.Name?.RawString)) {
                             Service.Toasts.ShowError(new SeString(
                                     new TextPayload(item.Name.ToDalamudString().TextValue),
-                                    new TextPayload(" is locked by "),
+                                    new TextPayload(" 在禁止出售列表 "),
                                     new TextPayload(customListMatch.Name),
                                     new NewLinePayload(),
                                     new TextPayload(Name),
-                                    new TextPayload(" in "),
+                                    new TextPayload(" 中 - "),
                                     new TextPayload(Plugin.Name),
                                     new TextPayload(".")
                                 )
