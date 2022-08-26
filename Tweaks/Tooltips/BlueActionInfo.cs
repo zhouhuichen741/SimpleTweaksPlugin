@@ -17,6 +17,7 @@ public unsafe class BlueActionInfo : TooltipTweaks.SubTweak {
         var descriptionString = GetTooltipString(stringArrayData, TooltipTweaks.ActionTooltipField.Description);
         if (descriptionString.TextValue.Contains(Service.ClientState.ClientLanguage switch {
                 Dalamud.ClientLanguage.English => "Rank: ★",
+                Dalamud.ClientLanguage.ChineseSimplified => "评级：★",
                 Dalamud.ClientLanguage.German => "Rang: ★",
                 Dalamud.ClientLanguage.French => "Rang: ★",
                 Dalamud.ClientLanguage.Japanese => "ランク：★",

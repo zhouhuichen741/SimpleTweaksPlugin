@@ -94,7 +94,7 @@ public unsafe class AdditionalItemInfo : TooltipTweaks.SubTweak {
                     c.Add(cj.Abbreviation.ToDalamudString().TextValue);
                 }
 
-                str.AppendLine(j.Count == 8 ? $"Craftable - All" : j.Count >= 4 ? $"Craftable - {string.Join(",", c)}" : $"Craftable - {string.Join(", ", j)}");
+                str.AppendLine(j.Count == 8 ? $"生产职业 - 全部" : j.Count >= 4 ? $"生产职业 - {string.Join(",", c)}" : $"生产职业 - {string.Join(", ", j)}");
             }
         }
         
@@ -110,7 +110,7 @@ public unsafe class AdditionalItemInfo : TooltipTweaks.SubTweak {
                         _ => BitmapFontIcon.NoCircle
                     }));
                     
-                    str.AppendLine(new TextPayload($"Seals: {gcSealValue.SealsExpertDelivery:N0}"));
+                    str.AppendLine(new TextPayload($"军票: {gcSealValue.SealsExpertDelivery:N0}"));
                 }
             }
         }
@@ -119,13 +119,13 @@ public unsafe class AdditionalItemInfo : TooltipTweaks.SubTweak {
             var gearSets = GetGearSetsWithItem(item.RowId, hq);
 
             if (gearSets.Count == 1) {
-                str.AppendLine($"Gearset: {gearSets[0].name}");
+                str.AppendLine($"套装: {gearSets[0].name}");
             } else if (gearSets.Count > 1) {
 
                 var l = 10;
                 var c = 0;
                 
-                str.Append($"Gearsets: ");
+                str.Append($"套装: ");
 
                 foreach(var gearSet in gearSets) {
                     if (l + gearSet.name.Length > 55) {
@@ -158,7 +158,7 @@ public unsafe class AdditionalItemInfo : TooltipTweaks.SubTweak {
                 var config = tweak.Config;
                 if (config.NoSellList.Contains(item.RowId) || config.CustomLists.Any(l => l.Enabled && l.NoSellList.Contains(item.RowId))) {
                     str.Append(new UIForegroundPayload(539));
-                    str.Append($"Selling blocked by {tweak.Name}");
+                    str.Append($"禁止出售 {tweak.Name}");
                     str.Append(UIForegroundPayload.UIForegroundOff);
                     str.AppendLine();
                 }
