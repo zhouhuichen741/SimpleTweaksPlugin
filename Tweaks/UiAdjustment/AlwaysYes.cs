@@ -153,7 +153,7 @@ public unsafe class AlwaysYes : UiAdjustments.SubTweak {
         var yesCollision = ((AtkComponentNode *)yesButton)->Component->UldManager.SearchNodeById(isYesHoldVersion ? 7u : 4u);
         if (yesCollision == null) return;
 
-        //unitBase->SetFocusNode(yesCollision);
+        unitBase->SetFocusNode(yesCollision);
         unitBase->CursorTarget = yesCollision;
     }
 
