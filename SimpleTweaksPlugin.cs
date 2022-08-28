@@ -110,11 +110,11 @@ namespace SimpleTweaksPlugin {
             pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfig;
 
             SetupCommands();
-
+            
             try {
                 // Update Tweak Blacklist
                 using var webClient = new System.Net.WebClient();
-                var blacklistedTweaksString = webClient.DownloadString("https://raw.githubusercontent.com/Caraxi/SimpleTweaksPlugin/main/tweakBlacklist.txt");
+                var blacklistedTweaksString = webClient.DownloadString("https://raw.githubusercontent.com/LittleNightmare/SimpleTweaksPlugin/net5/tweakBlacklist.txt");
                 SimpleLog.Log("Tweak Blacklist:\n" + blacklistedTweaksString);
                 var blacklistedTweaks = new List<string>();
                 foreach (var l in blacklistedTweaksString.Split("\n")) {
@@ -155,6 +155,7 @@ namespace SimpleTweaksPlugin {
                 ClientLanguage.French => "fr",
                 ClientLanguage.German => "de",
                 ClientLanguage.Japanese => "ja",
+                ClientLanguage.ChineseSimplified => "zh-CN",
                 _ => "en"
             };
 
